@@ -325,15 +325,20 @@
            ,@body)))
 
 ;;; not sure if these should be handled like this or not...
-(define-asm-macro %label (name)
+(define-asm-macro :%label (name)
   (push (cons name *code-offset*) (label *current-method*))
   (assemble `((:label))))
 
 
-(define-asm-macro %dlabel (name)
+(define-asm-macro :%dlabel (name)
   ;; !!!! if this gets moved somewhere before the peephole optimizer, make
   ;; !!!! sure it leaves a nop of some sort in the instruction stream so we
   ;; !!!! don't combine stuff on either side of a jump target
   ;; for forward jumps, just mark the location but don't put a label instr
   (push (cons name *code-offset*) (label *current-method*))
   nil)
+
+
+(defmacro with-assembler-context (&body body)
+  `(let ((*assembler-context* (make-instance 'assembler-context)))
+     ,@body))
