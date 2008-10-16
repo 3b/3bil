@@ -8,6 +8,42 @@
 ;; http://www.lispworks.com/documentation/HyperSpec/Body/03_ababa.htm#clspecialops
 
 
+;;+ let*
+;;+ if
+;;+ progn
+;;+ let
+;;
+;;+ go
+;;+ tagbody
+;;
+;; quote
+;;
+;; function
+;; setq
+;;
+;; symbol-macrolet
+;; flet
+;; macrolet
+;; labels
+;;
+;; block
+;; catch
+;; return-from
+;; throw
+;; unwind-protect
+;;
+;; progv
+;;
+;; multiple-value-call
+;; multiple-value-prog1
+;;
+;; the
+;;
+;; load-time-value
+;; eval-when
+;; locally
+
+
 (define-special progn (&rest cdr)
   (loop for rest on cdr
      for form = (car rest)
@@ -33,7 +69,7 @@
 
 
 (define-special let (bindings &rest body)
-  (let ((*current-lambda* *current-lambda*))
+  (with-nested-lambda-context
     (append
      ;; set up bindings
      (loop for binding in bindings
@@ -57,7 +93,7 @@
 
 
 (define-special let* (bindings &rest body)
-  (let ((*current-lambda* *current-lambda*))
+  (with-nested-lambda-context
     (append
      ;; set up bindings
      (loop for binding in bindings
@@ -86,26 +122,44 @@
 
 (define-special %asm (&rest cdr)
   ;; (%asm '((op1 args) (op2 ...) ... ))
-  (:copy-list cdr))
+  (copy-list cdr))
 
 
 (define-special %label (target)
   ;; (%label name) ;; for reverse jumps only
-  `((%label ,target)
+  `((:%label ,target)
     ;; hack since we always pop after each statement in a progn, gets
     ;; removed later by peephole pass
     (:push-null)))
 
 (define-special %dlabel (target)
   ;; (%dlabel name) ;; for forward jumps only
-  `((%dlabel ,target)
+  `((:%dlabel ,target)
     (:push-null)))
 
-(define-special go (target)
-  ;; (go label)
+(define-special %go (target)
+  ;; (go asm-label)
   `((:jump ,target)
     (:push-null)))
 
+(define-special* tagbody (cdr)
+  (with-nested-lambda-context
+    (loop for (tag form) on cdr by #'cddr
+       for label = (gensym (format nil "TAGBODY-~a-" tag))
+       do (push (cons tag label) (tags *current-lambda*)))
+    ;; fixme: use dlabel for forward jumps
+    `(,@(loop for (tag form) on cdr by #'cddr
+           for label = (cdr (assoc tag (tags *current-lambda*)))
+           collect `(:%label ,label)
+           append (scompile form)
+           collect `(:pop) ;?
+             )
+        (:push-null))))
+
+(define-special go (tag)
+  (scompile-cons '%go (list (cdr (assoc tag (tags *current-lambda*))))))
+
+;; (with-lambda-context () (scompile '(tagbody foo (go baz) bar 1 baz 2)))
 
 (define-special %when (cond label)
   ;; (%when cond label)
@@ -188,4 +242,10 @@
 ;;(scompile '(and 1))
 ;;(scompile '(and 1 2))
 
+
+(define-special* %array (args)
+  ;; (%array ... ) -> array
+  `(,@(loop for i in args
+         append (scompile i)) ;; calculate args
+      (:new-array ,(length args))))
 

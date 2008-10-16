@@ -12,7 +12,8 @@
 (defclass lambda-context ()
   ;; using an alist for local name-index mapping, so we can push/pop
   ;; state a bit more easily than with hash tables...
-  ((locals :initform () :accessor locals)))
+  ((locals :initform () :accessor locals)
+   (tags :initform () :accessor tags)))
 
 (defparameter *current-lambda* nil)
 
@@ -30,6 +31,14 @@
 
 (defmacro with-lambda-context ((&rest args) &body body)
   `(let ((*current-lambda* (make-lambda-context '(,@args))))
+     ,@body))
+
+(defmacro with-nested-lambda-context (&body body)
+  ;;; probably broken, copied from old code...
+  ;;; seems like this should have a special per namespace, and bind those
+  ;;; so we can restore previous state, or else copy previous state into a
+  ;;; new object of we keep a single object
+  `(let ((*current-lambda* *current-lambda*))
      ,@body))
 
 ;;; top level (internal?) compiler interface
@@ -75,11 +84,19 @@
   (scompile-cons (car form) (cdr form)))
 
 (defmacro define-special (name (&rest args) &body body)
+  "define a special operator, destructuring form into ARGS"
   (let ((car (gensym "CAR"))
         (cdr (gensym "CDR")))
     `(defmethod scompile-cons ((,car (eql ',name)) ,cdr)
        (destructuring-bind ,args ,cdr
          ,@body))))
+
+
+(defmacro define-special* (name (cdr) &body body)
+  "define a special operator without any destructuring"
+  (let ((car (gensym "CAR")))
+    `(defmethod scompile-cons ((,car (eql ',name)) ,cdr)
+       ,@body)))
 
 #||
 (scompile "foo")
