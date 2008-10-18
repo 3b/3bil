@@ -1,4 +1,13 @@
-;;; sample from old version, not fully converted yet...
+(in-package :as3-compiler)
+;;; sample from old version. works but needs more refactoring
+
+(define-special %to-double (a)
+  `(,@(scompile a)
+    (:convert-double)))
+
+(define-special %to-integer (a)
+  `(,@(scompile a)
+    (:convert-integer)))
 
 (with-open-file (s "/tmp/roots.swf"
                    :direction :output
@@ -7,23 +16,42 @@
   (with-compilation-to-stream s ("frame1" `((0 "test-class")))
     (let*
         ((constr
-          (swf-constructor "-constr-" ()
-            (:main this)))
+          (as3-asm::as3-method
+           0 NIL 0 0
+           :body
+           (as3-asm::assemble-method-body
+            `((:GET-LOCAL-0)
+              (:PUSH-SCOPE)
+              (:GET-LOCAL-0)
+              (:CONSTRUCT-SUPER 0)
+              (:FIND-PROPERTY-STRICT MAIN)
+              (:GET-LOCAL 0)
+              (:CALL-PROPERTY MAIN 1)
+              (:RETURN-VOID))))
 
-         (cinit (as3-method 0 nil 0 0 ;; meta-class init
+          #+nil(swf-constructor .constr. ()
+            (main this)))
+
+         (cinit (as3-asm::as3-method 0 nil 0 0 ;; meta-class init
                             :body
-                            (assemble-method-body
+                            (as3-asm::assemble-method-body
                              `((:get-local-0)
                                (:push-scope)
                                (:return-void))
                              :init-scope 0)))
+         #+nil(cinit (swf-defmemfun .cinit.
+                             `((:get-local-0)
+                               (:push-scope)
+                               (:return-void))))
 
-         (junk (as3-ns-intern "test-class"))
-         (class (as3-class
-                 (qname "" "test-class")
-                 (qname "flash.display" "Sprite")
-                 09 nil constr nil
-                 cinit
+         (junk (as3-asm::as3-ns-intern "test-class"))
+         (class (as3-asm::as3-class
+                 (as3-asm::qname "" "test-class")
+                 (as3-asm::qname "flash.display" "Sprite")
+                 09 nil
+                 constr #+nil(as3-asm::symbol-to-qname-list '.constr.)
+                 nil
+                 cinit ;;(as3-asm::symbol-to-qname-list '.cinit.)
                  :protected-ns junk )))
 
       (push (list "test-class" class) (class-names *compiler-context*))
@@ -31,8 +59,10 @@
       (swf-defmemfun random-range (a b)
         (+ a (floor (random (- b a)))))
 
-      (swf-defmemfun radians (a)
+      #+nil(swf-defmemfun radians (a)
         (/ (* a flash::math.PI) 180.0))
+      (swf-defmemfun radians (a)
+        (/ (* a 3.1415926) 180.0))
 
       (swf-defmemfun i255 (a)
         (flash::Math.max (flash::Math.min (floor (* a 256)) 255) 0))
@@ -40,17 +70,25 @@
       (swf-defmemfun rgb (r g b)
         (+ (* (i255 r) 65536) (* (i255 g) 256) (i255 b)))
 
-      (swf-defmemfun :main (arg)
-        (let ((foo (%asm (:new (qname "flash.text" "TextField") 0)))
-              (canvas (%asm (:new (qname "flash.display" "Sprite") 0))))
+      (swf-defmemfun main (arg)
+        (let ((foo (%new flash.text::Text-Field 0))
+              (canvas (%new flash.display::Sprite 0)))
           (%set-property foo :auto-size "left")
-          (%set-property foo :text (+ "testing..." (%call-property (%array 1 2 3) :to-string)))
+          (%set-property foo :text-color (rgb 200 100 100))
+          (%set-property foo :word-wrap :true)
+          (let ((str"abc..." ))
+            (%set-local str (+ str (flash::string.from-char-code 26085)))
+            (%set-local str (+ str (flash::string.from-char-code 26412)))
+            (%set-local str (+ str (flash::string.from-char-code 21566)))
+            (%set-local str (+ str (%get-property str :length )))
+            (dotimes (x 15) (%set-local str (+ str " [" (flash::.char-code-at str x) "]")))
+            (%set-property foo :text (+ str (%call-property (%array 1 2 3) :to-string))))
           (:add-child arg canvas)
           (:add-child arg foo)
           (%set-property this :canvas canvas)
           (frame :null)
           #+nil(:add-event-listener arg "enterFrame" (%get-lex :frame))
-          (:add-event-listener canvas "click" (%get-lex frame))))
+          (:add-event-listener canvas "click" (%asm (:get-lex frame)))))
 
       (swf-defmacro with-fill (gfx (color alpha &key line-style) &body body)
         `(progn
@@ -63,7 +101,7 @@
       (swf-defmemfun frame (evt)
         (let* ((canvas (%get-property this :canvas))
                (gfx (:graphics canvas))
-               (matrix (%asm (:new (qname "flash.geom" "Matrix") 0))))
+               (matrix (%new flash.geom::Matrix 0)))
 
           (%set-property canvas :opaque-background #x0d0f00)
           (:clear gfx)

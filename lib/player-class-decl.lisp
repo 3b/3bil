@@ -1,7 +1,10 @@
 (in-package :as3-compiler)
 
-;; possibly should setf this, to keep top-level so these compile faster?
-(let ((*symbol-table* *player-symbol-table*))
+;; wrapping the whole file in a let makes it take too long to compile, so
+;;; we save and restore *symbol-table* for now
+;; fixme: use a macro to let bind *symbol-table* for each class def?
+(defparameter *%temp-symbol-table%* *symbol-table*)
+(setf *symbol-table* *player-symbol-table*)
 
   (declare-swf-class object ()
     :swf-name "Object"
@@ -6145,4 +6148,5 @@
     :methods
     ())
 
-)
+
+(setf *symbol-table* *%temp-symbol-table%*)

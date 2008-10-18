@@ -42,8 +42,9 @@
 
 (defun assemble (forms)
   "simple assembler, returns sequence of octets containing the
-  bytecode corresponding to forms, doesn't currently do any interning,
-  so pass indices into constant pool instead of actual values"
+  bytecode corresponding to forms, interns stuff as needed, or
+  optionally uses constant pool indices (with no error checking
+  currently) when operand is a list of the form (:id ###). "
   (format t "assembling :~%---------~% ~s~%-------~%" forms)
   (let ((*code-offset* 0))
     (loop for i in (peephole forms)
@@ -51,8 +52,8 @@
        for octets = (when opcode (apply opcode (cdr i)))
        if opcode
        append octets
-       and do (format t "assemble ~s-> ~s ofs = ~s + ~s ~%"
-                      i octets *code-offset* (length octets))
+       ;;and do (format t "assemble ~s-> ~s ofs = ~s + ~s ~%"
+       ;;               i octets *code-offset* (length octets))
        and do (incf *code-offset* (length octets))
        else do (error "invalid opcode ~s " i))))
 
@@ -143,18 +144,6 @@
      while (logbitp 7 j)
      finally (return (values sum (1+ i)))))
 
-(defun decode-qname (sequence &key (start 0))
-  (multiple-value-bind (id start)
-      (decode-variable-length sequence :start start)
-    (if (boundp '*assembler-context*)
-        (let* ((mn (elt (multinames *assembler-context*) id)))
-          (values (list (car mn)
-                        (elt (strings *assembler-context*) (second mn))
-                        (elt (strings *assembler-context*) (third mn))
-                        (nthcdr 3 mn ))
-                  start))
-        (values id start))))
-
 (defun decode-counted-s24 (sequence &key (start 0))
   (multiple-value-bind (count start)
       (decode-variable-length sequence :start start)
@@ -165,6 +154,17 @@
         collect value)
      start)))
 
+;;; new types for automatic interning
+;;; (many of these probably just map to the same qname code, but
+;;;   separating just in case)
+;; string-u30 int-u30 uint-u30 double-u30 namespace-q30 multiname-q30 class-u30
+;; fix runtime-name-count? or just set arg to index after interning
+;;   and before calling arg count stuff?
+
+;;; todo: figure out if these need handled:
+;;;     method-index arg for :new-function
+;;;     slot-index for :get-slot/:set-slot/etc
+;;;     exception-index for new-catch
 
 ;(decode-u16 (u16-to-sequence 12345))
 ;(decode-u24 (u24-to-sequence 12345))
@@ -224,56 +224,179 @@
       (setf (max-scope-depth *current-method*)
             (current-scope *current-method*)))))
 
+(macrolet
+    ((make-interner (intern-name lookup-name interner pool)
+       `(progn
+          (defun ,intern-name (value)
+            (if (typep value '(cons (eql :id)))
+                (second value)
+                (,interner value)))
+          (defun ,lookup-name (value)
+            (if *assembler-context*
+                (aref (,pool *assembler-context*) value)
+                (list :id value))))))
+
+  (make-interner asm-intern-string lookup-string as3-string strings)
+  ;; fixme: as3-intern-* can break if first thing interned is wrong type
+  (make-interner asm-intern-int lookup-int as3-intern-int ints)
+  (make-interner asm-intern-uint lookup-uint as3-intern-uint uints)
+  (make-interner asm-intern-double lookup-double as3-intern-double doubles)
+  (make-interner asm-intern-namespace lookup-namespace as3-ns-intern namespaces))
+;; (asm-intern-string "foo")
+;; (asm-intern-string '(:id 2))
+;; (asm-intern-string :id)
+;; (asm-intern-int 1232)
+;; (asm-intern-int '(:id 3))
+;; x(asm-intern-int :id) ;; should fail even if no ints interned yet, but doesn't
+
+
+(defun symbol-to-qname-list (name &key init-cap)
+  ;; just a quick hack for now, doesn't actually try to determine if
+  ;; there is a valid property or not...
+  (let ((package (symbol-package name))
+        (sym (coerce
+              (loop
+                 for prev = (if init-cap #\- #\Space) then c
+                 for c across (symbol-name name)
+                 when (or (not (alpha-char-p prev)) (char/= c #\-))
+                 collect (if (char= prev #\-)
+                             (char-upcase c)
+                             (char-downcase c)))
+              'string)))
+    (if (eql package (find-package :keyword))
+        (setf package "")
+        (setf package (string-downcase (or (package-name package) ""))))
+    (values (list :qname package sym) sym)))
+
+;; fixme: not sure we want this anymore, instead store a symbol->qname
+;; hash in compiler-context, and use that for lookups?
+;;; --- still used by defun stuff, so keeping for now... not calling automatically any more though, need to actually have a valid *symbol-table*
+(defun symbol-to-qname-old (name &key init-cap)
+  ;; just a quick hack for now, doesn't actually try to determine if
+  ;; there is a valid property or not...
+  (let ((package (symbol-package name))
+        (sym (coerce
+              (loop
+                 for prev = (if init-cap #\- #\Space) then c
+                 for c across (symbol-name name)
+                 when (or (not (alpha-char-p prev)) (char/= c #\-))
+                 collect (if (char= prev #\-)
+                             (char-upcase c)
+                             (char-downcase c)))
+              'string)))
+    (if (eql package (find-package :keyword))
+        (setf package "")
+        (setf package (string-downcase (or (package-name package) ""))))
+    (values (as3-asm::qname package sym) sym)))
+
+(defun asm-intern-multiname (mn)
+  (typecase mn
+    ((cons (eql :qname)) (apply 'qname (cdr mn)))
+    ;; todo: add other types of multinames
+    ((cons (eql :id)) (second mn))
+    (symbol (apply 'qname (cdr (symbol-to-qname-list mn)))) ;; not sure if this is good or not, needed for calling as-yet undefined functions though...
+    (t (parsed-qname mn))))
+;; (asm-intern-multiname '(:qname "foo" "bar"))
+;; (asm-intern-multiname '(:id 321))
+;; (asm-intern-multiname "foo:bax")
+;; (asm-intern-multiname '(:qname "foo" "bax"))
+;; (asm-intern-multiname '(:qname "foo" "bax"))
+;; x(asm-intern-multiname 'cos) ;; not sure if we should support symbols or not
+
+(defparameter *multiname-kinds* (make-hash-table))
+(setf (gethash +qname+ *multiname-kinds*) :qname)
+(setf (gethash +qname-a+ *multiname-kinds*) :qname-a)
+(setf (gethash +rt-qname+ *multiname-kinds*) :rt-qname)
+(setf (gethash +rt-qname-a+ *multiname-kinds*) :rt-qname-a)
+(setf (gethash +rt-qname-l+ *multiname-kinds*) :rt-qname-l)
+(setf (gethash +rt-qname-la+ *multiname-kinds*) :rt-qname-la)
+(setf (gethash +multiname+ *multiname-kinds*) :multiname)
+(setf (gethash +multiname-a+ *multiname-kinds*) :multiname-a)
+(setf (gethash +multiname-l+ *multiname-kinds*) :multiname-l)
+(setf (gethash +multiname-la+ *multiname-kinds*) :multiname-la)
+
+(defun lookup-multiname (id)
+  (if (boundp '*assembler-context*)
+      (destructuring-bind (kind ns name)
+          (elt (multinames *assembler-context*) id)
+        (list (gethash kind *multiname-kinds* kind)
+              (elt (strings *assembler-context*)
+                   (second (elt (namespaces *assembler-context*) ns)))
+              (elt (strings *assembler-context*) name)))
+      (list :id id)))
 
 (defmacro define-ops (&body ops)
   (let ((coders
-         `((u8 . list)
-           (u16 . u16-to-sequence)
-           (u24 . u24-to-sequence)
-           (s24 . u24-to-sequence)
-           (ofs24 . u24-to-sequence) ;; for using labels directly in branches
-           (u30 . variable-length-encode)
-           (q30 . variable-length-encode) ;; hack for name interning
-           (u32 . variable-length-encode)
-           (s32 . variable-length-encode)
-           (double . double-to-sequence)
-           (counted-s24 . counted-s24-to-sequence)))
+         ;; type tag , encoder , optional interner
+         `((u8  list)
+           (u16  u16-to-sequence)
+           (u24  u24-to-sequence)
+           (s24  u24-to-sequence)
+           (ofs24  u24-to-sequence) ;; for using labels directly in branches
+           (u30  variable-length-encode)
+           (q30  variable-length-encode) ;; hack for name interning
+           (u32  variable-length-encode)
+           (s32  variable-length-encode)
+           (double  double-to-sequence)
+           (counted-s24  counted-s24-to-sequence)
+
+           (string-u30    variable-length-encode asm-intern-string)
+           (int-u30       variable-length-encode asm-intern-int)
+           (uint-u30      variable-length-encode asm-intern-uint)
+           (double-u30    variable-length-encode asm-intern-double)
+           (namespace-q30 variable-length-encode asm-intern-namespace)
+           (multiname-q30 variable-length-encode asm-intern-multiname)
+           (class-u30     variable-length-encode asm-intern-class)
+           ))
         (decoders
-         `((u8 . (lambda (s &key (start 0)) (elt s start)))
-           (u16 . decode-u16)
-           (u24 . decode-u24)
-           (s24 . decode-u24)
-           (ofs24 . decode-u24) ;; for using labels directly in branches
-           (u30 . decode-variable-length)
-           (q30 . decode-qname) ;; hack for name interning
-           (u32 . decode-variable-length)
-           (s32 . decode-variable-length)
-           (double . (lambda (s) (error "not done")))
-           (counted-s24 . decode-counted-s24))))
+         ;; type tag, decoder, optional constant pool lookup function
+         `((u8  (lambda (s &key (start 0)) (elt s start)))
+           (u16  decode-u16)
+           (u24  decode-u24)
+           (s24  decode-u24)
+           (ofs24  decode-u24) ;; for using labels directly in branches
+           (u30  decode-variable-length)
+           (q30  decode-variable-length) ;; hack for name interning
+           (u32  decode-variable-length)
+           (s32  decode-variable-length)
+           (double  (lambda (s) (error "not done")))
+           (counted-s24  decode-counted-s24)
+
+           (string-u30    decode-variable-length lookup-string)
+           (int-u30       decode-variable-length lookup-int)
+           (uint-u30      decode-variable-length lookup-uint)
+           (double-u30    decode-variable-length lookup-double)
+           (namespace-q30 decode-variable-length lookup-namespace)
+           (multiname-q30 decode-variable-length lookup-multiname)
+           (class-u30     decode-variable-length lookup-class)
+)))
     (flet ((defop (name args opcode
                         &optional (pop 0) (push 0) (pop-scope 0) (push-scope 0) (local 0) (flag 0))
              `(setf (gethash ',name *opcodes*)
-                    (lambda ,(mapcar 'car args)
+                    (lambda (,@(mapcar 'car args) &aux (#:debug-name ',name))
                       ,@(when args `((declare (ignorable ,@(mapcar 'car args)))))
                       ;;(format t "assemble ~a ~%" ',name)
                       ,@(loop
                            for (name type) in args
-                           when (eq 'q30 type)
-                           collect `(when (and (consp ,name)
-                                               (eql 'qname (car ,name)))
-                                      (setf ,name (apply 'qname (rest ,name))))
+                           for interner = (third (assoc type coders))
+                           when interner
+                           collect `(setf ,name (,interner ,name))
+                           ;;when (eq 'q30 type)
+                           ;;collect `(when (and (consp ,name)
+                           ;;                    (eql 'qname (car ,name)))
+                           ;;           (setf ,name (apply 'qname (rest ,name))))
                            when (eq 'ofs24 type)
                            collect
-                             (let ((dest (gensym "DEST-"))
-                                   (here (gensym "HERE-")))
-                               `(when (symbolp ,name)
-                                  (let ((,dest (cdr (assoc ,name (label *current-method*))))
-                                        (,here *code-offset*))
-                                    (unless ,dest
-                                      (push (cons ,name ,here) (fixups *current-method*))
-                                      (setf ,dest (+ 4 ,here)))
-                                    (setf ,name (- ,dest ,here 4))
-                                    #+ (or) (format t ">>>set ~s to ~s" ',name ,name)))))
+                           (let ((dest (gensym "DEST-"))
+                                 (here (gensym "HERE-")))
+                             `(when (symbolp ,name)
+                                (let ((,dest (cdr (assoc ,name (label *current-method*))))
+                                      (,here *code-offset*))
+                                  (unless ,dest
+                                    (push (cons ,name ,here) (fixups *current-method*))
+                                    (setf ,dest (+ 4 ,here)))
+                                  (setf ,name (- ,dest ,here 4))
+                                  #+ (or) (format t ">>>set ~s to ~s" ',name ,name)))))
                       ,@(unless (and (numberp pop) (numberp push) (= 0 pop push))
                                 `((adjust-stack ,pop ,push)))
                       ,@(unless (and (numberp pop-scope) (numberp push-scope)
@@ -293,7 +416,7 @@
                              (list ,opcode)
                              ,@(loop
                                   for (name type) in args
-                                  for encoder = (cdr (assoc type coders))
+                                  for encoder = (second (assoc type coders))
                                   when encoder
                                   collect `(,encoder ,name)))))))
            ;; fixme: gensyms
@@ -309,9 +432,12 @@
                                ;;(declare (ignore junk))
                                (list ',name
                                      ,@(loop for (name type) in args
-                                          for decoder = (cdr (assoc type decoders))
-                                          collect `(setf (values junk start)
-                                                         (,decoder sequence :start start))))))
+                                          for (nil decoder lookup) = (assoc type decoders)
+                                          collect`(progn
+                                                    (setf (values junk start)
+                                                          (,decoder sequence :start start))
+                                                    ,@(when lookup
+                                                            `((,lookup junk))))))))
                        start)))))
       `(progn
          ,@(loop for op in ops

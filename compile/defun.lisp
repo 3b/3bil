@@ -15,7 +15,7 @@
      ;;    list of assembly
      ;;    ?
      (list
-      (symbol-to-qname-list name)
+      (as3-asm::symbol-to-qname-list name)
       0 ;; name in method struct?
       (loop for i in args collect 0) ;; arg types, 0 = t/*/any
       0 0 ;; return type = any, flags = 0
@@ -37,12 +37,12 @@
      :test 'equal
      :key 'car)))
 
-(find-swf-function 'random)
+;;(format t "~{~s~%~}" (sixth (find-swf-function 'floor)))
+;;(format t "~{~s~%~}" (as3-asm::as3-disassemble (as3-asm:assemble (sixth (find-swf-function 'random)))))
 
 (defun old-%swf-defun (name args body &key method constructor)
-  (if (symbolp name)
-      (setf name (symbol-to-qname name))
-      (setf name (as3-asm::qname "" name)))
+  (when (symbolp name)
+    (setf name (as3-asm::symbol-to-qname name)))
   (let* ((*current-lambda* (make-lambda-context args))
          (mid
           (as3-asm::as3-method 0

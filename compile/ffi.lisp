@@ -71,46 +71,6 @@
 
 
 
-(defun symbol-to-qname-list (name &key init-cap)
-  ;; just a quick hack for now, doesn't actually try to determine if
-  ;; there is a valid property or not...
-  (let ((package (symbol-package name))
-        (sym (coerce
-              (loop
-                 for prev = (if init-cap #\- #\Space) then c
-                 for c across (symbol-name name)
-                 when (or (not (alpha-char-p prev)) (char/= c #\-))
-                 collect (if (char= prev #\-)
-                             (char-upcase c)
-                             (char-downcase c)))
-              'string)))
-    (if (eql package (find-package :keyword))
-        (setf package "")
-        (setf package (string-downcase (or (package-name package) ""))))
-    (values (list 'qname package sym) sym)))
-
-;; fixme: not sure we want this anymore, instead store a symbol->qname
-;; hash in compiler-context, and use that for lookups?
-;;; --- still used by defun stuff, so keeping for now... not calling automatically any more though, need to actually have a valid *symbol-table*
-(defun symbol-to-qname-old (name &key init-cap)
-  ;; just a quick hack for now, doesn't actually try to determine if
-  ;; there is a valid property or not...
-  (let ((package (symbol-package name))
-        (sym (coerce
-              (loop
-                 for prev = (if init-cap #\- #\Space) then c
-                 for c across (symbol-name name)
-                 when (or (not (alpha-char-p prev)) (char/= c #\-))
-                 collect (if (char= prev #\-)
-                             (char-upcase c)
-                             (char-downcase c)))
-              'string)))
-    (if (eql package (find-package :keyword))
-        (setf package "")
-        (setf package (string-downcase (or (package-name package) ""))))
-    (values (as3-asm::qname package sym) sym)))
-
-
 
 
 (define-special %call-property (object property &rest args)
@@ -129,7 +89,7 @@
       ;; fixme: look up properties for real?
       (:get-property ,property-name)))
 
-(define-special %call-property-without-object (property (&rest args))
+(define-special %call-property-without-object (property &rest args)
   ;; (%call-property-without-object property args) -> value
   ;;(format t "call property without object * . ~s ( ~s ) ~%" property args)
   `((:find-property-strict ,property) ;; find obj with prop
@@ -141,7 +101,6 @@
 
 ;;; not sure if these are needed or not, or if api is right, just
 ;;; copied from old code
-#+nil
 (define-special %set-property (object property value)
   ;; (%set-property object property value) -> value
   ;;(format t "set property ~s . ~s = ~s ~%" (first cdr) (second cdr) (third cdr))
@@ -156,7 +115,7 @@
   ;; fixme: better name for this?
   ;; (%call-lex-prop object-name property args) -> value
   ;;(format t "call proplex ~s . ~s ( ~s ) ~%" (first cdr) (second cdr) (third cdr))
-  `((:get-lex ,object-name :init-cap t) ;; find the object
+  `((:get-lex ,object-name) ;; find the object
     ,@(loop for i in args
          append (scompile i)) ;; calculate args
     (:call-property ,property ,(length args))))
@@ -173,3 +132,18 @@
            (:add-child arg canvas))
          ))
 
+(define-special %new (class arg-count)
+  (let ((name (typecase class
+                (symbol
+                 (let ((c (find-swf-class class)))
+                   (assert c) ;; fixme: better error reporting
+                   c))
+                (t class))))
+    `((:find-property-strict ,name)
+      (:construct-prop ,name ,arg-count)
+      (:coerce ,name))))
+
+;; (as3-asm:assemble (scompile '(%new flash.text:Text-Field 0)))
+;; (as3-asm:assemble (scompile '(%new "flash.text:TextField" 0)))
+;; (as3-asm:assemble (scompile '(%new "flash.text::TextField" 0)))
+;; (as3-asm:assemble (scompile '(%new (:qname "flash.text" "TextField") 0)))

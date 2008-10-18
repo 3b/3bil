@@ -51,6 +51,13 @@
          when (find-swf-function symbol i)
          return it)))
 
+
+(defun find-swf-class (symbol &optional (s *symbol-table*))
+  (or (gethash symbol (classes s))
+      (loop for i in (inherited-symbol-tables s)
+         when (find-swf-class symbol i)
+         return it)))
+
 ;;; handler for normal form evaluation, evaluate ARGS, and call
 ;;; function/member/whatever identified by OPERATOR
 (defmethod scompile-cons (operator args)
@@ -80,8 +87,11 @@
        (format t "--- (funcall ~s (~s) ~%)" operator args)
        (scompile `(%call-property-without-object ,(car tmp) ,@args)))
 
-      ;; default = error
+      ;; default = normal call?
+      ;; fixme: might be nicer if we could detect unknown functions
       (t
-       (error " unknown function call? ~s ~s ~% " operator args)))))
+       (format t "--- (funcall ~s (~s) ~%) operator" operator args)
+       (scompile `(%call-property-without-object ,operator ,@args))
+       #+nil(error " unknown function call? ~s ~s ~% " operator args)))))
 
 

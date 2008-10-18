@@ -123,10 +123,10 @@
 (defparameter +multiname-l+  #x1b)
 (defparameter +multiname-la+ #x1c)
 
-(defun qname (ns name)
+(defun intern-multiname (kind ns name)
   (let* ((ns (as3-ns-intern ns))
          (name (as3-string name))
-         (mn (list +qname+ ns name))
+         (mn (list kind ns name))
          (id (gethash mn (multiname-hash *assembler-context*))))
     (if id
         id
@@ -136,12 +136,15 @@
           (setf (gethash mn (multiname-hash *assembler-context*))
                 (1- (length (multinames *assembler-context*))))))))
 
-(defun parsed-qname (name)
-  (let ((p (position #\: name)))
-    (if p
-        (qname (subseq name 0 p) (subseq name (1+ p)))
-        (qname "" name))))
+(defun qname (ns name)
+  (intern-multiname +qname+ ns name))
 
+
+(defun parsed-qname (name)
+  (let ((p (position #\: name :test 'char=)))
+    (if p
+        (qname (subseq name 0 p) (subseq name (position #\: name :start p :test-not 'char=)))
+        (qname "" name))))
 
 ;;; instance_info.flags values
 
@@ -246,6 +249,3 @@
 
 
 
-
-(defmacro with-compilation-to-swf (file-name  ())
-)

@@ -44,7 +44,8 @@
 ;; locally
 
 
-(define-special progn (&rest cdr)
+(define-special* progn (cdr)
+  (format t "progn: ~{~s~%~}-----~%" cdr)
   (loop for rest on cdr
      for form = (car rest)
      for next = (cdr rest)
@@ -169,8 +170,8 @@
 
 (define-special when (cond &rest body)
   ;; (when cond body)
-    (let ((label (gensym))
-          (label2 (gensym)))
+    (let ((label (gensym "WHEN1-"))
+          (label2 (gensym "WHEN2-")))
       `(,@(scompile cond)
           (:if-false ,label)
           ,@(scompile `(progn ,@body))
@@ -186,9 +187,9 @@
 
 (define-special %inc-local-i (var)
   ;; (%inc-local-i var)
-  `((inc-local-i ,(get-lambda-local-index var))
+  `((:inc-local-i ,(get-lambda-local-index var))
     ;; hack since we always pop after each statement in a progn :/
-    (get-local ,(get-lambda-local-index var))))
+    (:get-local ,(get-lambda-local-index var))))
 
 (define-special dotimes ((var count &optional result) &rest body)
   ;; (dotimes (var count &optional result) body)
@@ -196,14 +197,14 @@
   ;; set local for counter
   ;; set local for limit
     ;;(format t "dotimes : var=~s count=~s result=~s~%body=~s~%" var count result body)
-    (let ((label (gensym))
-          (label2 (gensym))
-          (max (gensym)))
+    (let ((label (gensym "LABEL-"))
+          (label2 (gensym "LABEL2-"))
+          (max (gensym "MAX-")))
       (scompile                         ; format t "~s"
        `(let ((,max ,count)
               ;; var should not be valid while evaluating max
               (,var 0))
-          (go ,label2)
+          (%go ,label2)
           (%label ,label)
           ,@body
                                         ;(%set-local ,var (+ ,var 1))
@@ -213,8 +214,9 @@
           ;; fixme: make sure var is still valid, and = max while evaluating result
           ,@(if result
                 `(result)
-                '((%asm (push-null)
-                   (coerce-any))))))))
+                '((%asm
+                   (:push-null)
+                   (:coerce-any))))))))
 
 
 
@@ -233,10 +235,10 @@
            collect `(:dup)
            collect `(:if-false ,false-label))
         `((:jump ,true-label)
-          (%dlabel ,false-label)
+          (:%dlabel ,false-label)
           (:pop)
           (:push-false)
-          (%dlabel ,true-label)))))))
+          (:%dlabel ,true-label)))))))
 
 ;;(scompile '(and))
 ;;(scompile '(and 1))
