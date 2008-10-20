@@ -6,6 +6,8 @@
                         (:file "compiler")
                         (:file "special-forms")
                         (:file "defun")
+                        (:file "swfclass")
+                        (:file "low-level")
                         (:file "math-ops")
                         (:file "ffi")
                         )

@@ -182,6 +182,23 @@
           (:coerce-any)
           (:%dlabel ,label2))))
 
+(define-special %if (cond false-test true-branch false-branch)
+  (let (#+nil(true-label (gensym "%IF-TRUE-"))
+        (false-label (gensym "%IF-FALSE-"))
+        (end-label (gensym "%IF-END-")))
+    `(,@(scompile cond)
+        (,false-test ,false-label)
+        ,@(scompile true-branch)
+        (:coerce-any)
+        (:jump ,end-label)
+        (:%dlabel ,false-label)
+        ,@(scompile false-branch)
+        (:coerce-any)
+        (:%dlabel ,end-label))))
+
+(define-special if (cond true-branch false-branch)
+  `(,@(scompile `(%if ,cond :if-false ,true-branch ,false-branch))))
+
 ;; (as3-asm::with-assembler-context (as3-asm::code (as3-asm:assemble-method-body (scompile '(when :true 1)) )))
 
 
@@ -251,3 +268,21 @@
          append (scompile i)) ;; calculate args
       (:new-array ,(length args))))
 
+
+(define-special %error (value)
+  `(,@(scompile value)
+      (:throw)))
+
+#+nil(define-special %typep (object type)
+  `(,@(scompile object)
+      (:is-type ,type)))
+
+(define-special %typep (object type)
+  `(,@(scompile object)
+      (:get-lex ,type)
+      (:is-type-late )))
+
+(define-special %type-of (object)
+  `(,@(scompile object)
+      (:type-of))
+)

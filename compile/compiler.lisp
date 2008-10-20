@@ -74,7 +74,8 @@
   (:false :push-false)
   (:nan :push-nan)
   (:undefined :push-undefined)
-  (:null :push-null))
+  (:null :push-null)
+  (nil :push-null))
 
 ;;; interface for implementing special forms
 

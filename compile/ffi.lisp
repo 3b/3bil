@@ -13,7 +13,7 @@
      ;; ignoring it...
 
      ;; store class name
-     (setf (gethash ',class-name (classes *symbol-table*)) ,class-swf-name)
+     (setf (gethash ',class-name (classes *symbol-table*)) (list ,class-swf-name))
      ;; store constants
      ,@(loop for i in constants
           collect (destructuring-bind (name &key swf-name type) i
@@ -137,7 +137,7 @@
                 (symbol
                  (let ((c (find-swf-class class)))
                    (assert c) ;; fixme: better error reporting
-                   c))
+                   (car c)))
                 (t class))))
     `((:find-property-strict ,name)
       (:construct-prop ,name ,arg-count)

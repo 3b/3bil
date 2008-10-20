@@ -19,7 +19,7 @@ for that here and return count of extra args"
   ;; name   (args)    opcode    pop push   pop-scope push-scope  local  flags
   (:breakpoint ()                      #x01  0 0) ;
   (:nop        ()                      #x02  0 0) ;
-  (:op-throw   ()                      #x03  1 0) ;
+  (:throw      ()                      #x03  1 0) ;
   (:get-super  ((multiname multiname-q30)) #x04  (1+ (runtime-name-count multiname)) 1)
   (:set-super  ((multiname multiname-q30)) #x05  (+ 2 (runtime-name-count multiname)))
   (:dxns       ((string string-u30))    #x06  0 0 0 0 0 +set-dxns+)

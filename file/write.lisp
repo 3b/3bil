@@ -84,17 +84,27 @@
 
 
 (defmethod write-generic ((trait as3-asm::trait-info) &optional (*standard-output* *standard-output*))
+  (format *trace-output* "trait-data : ~s ~s~%"
+          (as3-asm::name trait)
+           (as3-asm::trait-data trait))
   (write-u30 (as3-asm::name trait))
   (write-generic (as3-asm::trait-data trait))
   (when (not (zerop (logand #x40 (as3-asm::kind (as3-asm::trait-data trait)))))
     (write-counted-sequence 'write-u30 (as3-asm::metadata trait))))
 
 (defmethod write-generic ((td as3-asm::trait-data-slot/const) &optional (*standard-output* *standard-output*))
+  (format *trace-output* "trait-data-slot/const :~s ~s ~s ~s ~s~%"
+          (as3-asm::kind td)
+          ( as3-asm::slot-id td)
+          ( as3-asm::type-name td)
+          (as3-asm::vindex td)
+          (as3-asm::vkind td))
   (write-u8 (as3-asm::kind td))
   (write-u30 (as3-asm::slot-id td))
   (write-u30 (as3-asm::type-name td))
   (write-u30 (as3-asm::vindex td))
-  (write-u8 (as3-asm::vkind td)))
+  (unless (zerop (as3-asm::vindex td)) 
+    (write-u8 (as3-asm::vkind td))))
 
 (defmethod write-generic ((td as3-asm::trait-data-class) &optional (*standard-output* *standard-output*))
   (write-u8 (as3-asm::kind td))
@@ -376,7 +386,56 @@
                                     :body (as3-asm::assemble-method-body asm))))
       (push (list n mid) (function-names *compiler-context*)))))
 
+(defun assemble-class (name ns super properties constructor)
+  (let* ((constructor-mid (as3-asm::as3-method
+                           0 ;; name
+                           (loop for i in (first constructor)
+                              collect 0) ;; constructor arg types
+                           0 0
+                           :body
+                           (as3-asm::assemble-method-body
+                            (%compile-defun (first constructor)
+                                            (second constructor) t t))))
+         ;; fixme: probably should make this configurable at some point
+         (class-init (as3-asm::as3-method 0 nil 0 0 ;; meta-class init
+                                          :body
+                                          (as3-asm::assemble-method-body
+                                           `((:get-local-0)
+                                             (:push-scope)
+                                             (:return-void))
+                                           :init-scope 0)))
+         (junk (as3-asm::as3-ns-intern ns))
+         (bleh ())
+         (class (as3-asm::as3-class
+                 (as3-asm::asm-intern-multiname name)
+                 (as3-asm::asm-intern-multiname
+                  (or (car (find-swf-class super))
+                      super))
+                 ;; todo: add interfaces
+                 09 nil ;; flags, interfaces
+                 constructor-mid
+                 (loop for i in properties
+                    collect
+                      (make-instance
+                       'as3-asm::trait-info
+                       'as3-asm::name (as3-asm::asm-intern-multiname i)
+                       'as3-asm::trait-data
+                       (make-instance 'as3-asm::trait-data-slot/const
+                                                    'as3-asm::kind 0
+                                                    'as3-asm::slot-id 0 ;; auto-assign
+                                                    'as3-asm::type-name 0 ;; */t
+                                                    'as3-asm::vindex 0 ;; no value
+                                                    'as3-asm::vkind 0 ;; no value
+                                                    )))
+                 class-init
+                 :protected-ns junk
+                 ;; todo: class traits
+                 ;; :class-traits nil
+                 )))
+    (push (list name class) (class-names *compiler-context*))))
+
 (defparameter *break-compile* nil)
+;;(setf *break-compile* t)
 ;;; quick hack for testing, need to write a proper API at some point, which
 ;;;  compiles functions from a list of packages or whatever
 (defmacro with-compilation-to-stream (s (frame-name exports) &body body)
@@ -389,12 +448,29 @@
        ;; fixme: add these to assembler-context constructor or something
        (as3-asm::as3-intern "")
        (as3-asm::as3-ns-intern "")
+       (format t "==-== body~%")
+       ;; compile the body code
        ,@body
+       (format t "==-== classes~%")
+       ;; assemble classes
+       (loop for k being the hash-keys of (classes *cl-symbol-table*)
+          using (hash-value v)
+          for (swf-name ns super properties constructor) = v
+          when (or properties constructor)
+          do (assemble-class swf-name ns super properties constructor))
+       (loop for k being the hash-keys of (classes *symbol-table*)
+          using (hash-value v)
+          for (swf-name ns super properties constructor) = v
+          when (or properties constructor)
+          do (assemble-class swf-name ns super properties constructor))
+       (format t "==-== functions~%")
+       ;; assemble functions
        (loop for k being the hash-keys of (functions *cl-symbol-table*)
           do (assemble-function k))
        (loop for k being the hash-keys of (functions *symbol-table*)
           do (assemble-function k))
-
+       (format t "==-== boilerplate~%")
+       ;; script boilerplate
        (let ((,script-init
               (as3-asm::as3-method
                0 () 0 0
@@ -405,15 +481,20 @@
                   ,@(loop for ,i below (length (as3-asm::classes as3-asm::*assembler-context*))
                        append (new-class+scopes ,i))
                   (:return-void))))))
+       (format t "==-== boilerplate2~%")
          (vector-push-extend
           `(,,script-init
             ,@(loop for i in (class-names *compiler-context*)
-                 collect (make-instance 'as3-asm::trait-info 'as3-asm::name (as3-asm::qname "" (first i))
-                                        'as3-asm::trait-data (make-instance 'as3-asm::trait-data-class
-                                                                            'as3-asm::slot-id 0
-                                                                            'as3-asm::classi (second i))))
+                 do (format t "-=c-~s~%" i)
+                 collect (make-instance 'as3-asm::trait-info
+                                        'as3-asm::name
+                                        (as3-asm::asm-intern-multiname (first i))
+                                        'as3-asm::trait-data
+                                        (make-instance 'as3-asm::trait-data-class
+                                                       'as3-asm::slot-id 0
+                                                       'as3-asm::classi (second i))))
             ,@(loop for i in (function-names *compiler-context*)
-                 do (format t "-=-~s~%" i)
+                 do (format t "-=f-~s~%" i)
                  collect (make-instance 'as3-asm::trait-info
                                         'as3-asm::name
                                         (if (numberp (first i))
@@ -423,5 +504,8 @@
                                                                             'as3-asm::slot-id 0
                                                                             'as3-asm::method (second i)))))
           (as3-asm::scripts as3-asm::*assembler-context*)))
+
        (when *break-compile* (break))
+       (format t "==-== write~%")
+       ;; write out the .swf
        (write-swf ,s ,frame-name ,exports))))

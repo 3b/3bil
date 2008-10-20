@@ -2,40 +2,48 @@
 
 ;;;; defun and similar
 
-(defun %swf-defun (name args body &key method constructor)
+(defun %compile-defun (args body method constructor)
   (let* ((*current-lambda* (make-lambda-context args)))
-    (pushnew
-     ;; function data:
-     ;;  swf name in format suitable for passing to asm (string/'(qname...))
-     ;;  args to as3-method:
-     ;;    name id?
-     ;;    list of arg types (probably all T/* for now)
-     ;;    return type
-     ;;    flags
-     ;;    list of assembly
-     ;;    ?
-     (list
-      (as3-asm::symbol-to-qname-list name)
-      0 ;; name in method struct?
-      (loop for i in args collect 0) ;; arg types, 0 = t/*/any
-      0 0 ;; return type = any, flags = 0
-      (append ;; assembly
-       (if (or method constructor)
-           '((:get-local-0)
-             (:push-scope))
-           nil)
-       (if constructor
-           '((:get-local-0)
-             (:construct-super 0))
-           nil)
-       (if constructor
-           `(,@(scompile `(progn ,@body))
-               ;;(pop)
-               (:return-void))
-           (scompile `(return (progn ,@body))))))
-     (gethash name (functions *symbol-table*) (list))
-     :test 'equal
-     :key 'car)))
+    (append
+     (if (or method constructor)
+         '((:get-local-0)
+           (:push-scope))
+         nil)
+     (if constructor
+         '((:get-local-0)
+           (:construct-super 0))
+         nil)
+     (if constructor
+         `(,@(scompile `(progn ,@body))
+             ;;(pop)
+             (:return-void))
+         (scompile `(return (progn ,@body)))))))
+
+(defun %swf-defun (name args body &key method constructor)
+  ;; was pushnew, but that makes it hard to work on code (since can't
+  ;; redefine things) push isn't quite right either, should replace
+  ;; existing calue or something
+  ;; (or more likely, just not have a list at all?)
+  (push
+   ;; function data:
+   ;;  swf name in format suitable for passing to asm (string/'(qname...))
+   ;;  args to as3-method:
+   ;;    name id?
+   ;;    list of arg types (probably all T/* for now)
+   ;;    return type
+   ;;    flags
+   ;;    list of assembly
+   ;;    ?
+   (list
+    (as3-asm::symbol-to-qname-list name)
+    0                                ;; name in method struct?
+    (loop for i in args collect 0)   ;; arg types, 0 = t/*/any
+    0 0                              ;; return type = any, flags = 0
+    (%compile-defun args body method constructor))
+   (gethash name (functions *symbol-table*) (list))
+   ;;:test 'equal
+   ;;:key 'car
+   ))
 
 ;;(format t "~{~s~%~}" (sixth (find-swf-function 'floor)))
 ;;(format t "~{~s~%~}" (as3-asm::as3-disassemble (as3-asm:assemble (sixth (find-swf-function 'random)))))
