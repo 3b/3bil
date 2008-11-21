@@ -48,8 +48,13 @@
       (let* ((a (cons 2 3))
              (b (cons 1 a)))
         (%set-property (cdr b) %car 123)
-        (+ "(" (car a) " " (car b) ")"))
-      )
+        (+ "(" (car a) " " (car b) ")")))
+
+    (swf-defmemfun test-dolist ()
+      "not implemented"#+nil(let ((temp ""))
+        (dolist (a (cons "a" (cons "b" (cons "c" nil)))
+                 temp)
+          (%set-local temp (+ temp (:to-string a))))))
 
     (swf-defmemfun i255 (a)
       (flash::Math.max (flash::Math.min (floor (* a 256)) 255) 0))
@@ -63,7 +68,7 @@
     (swf-defmemfun main (arg)
       (let ((foo (%new flash.text::Text-Field 0))
             (canvas (%new flash.display::Sprite 0)))
-        (%set-property foo :width 200)
+        (%set-property foo :width 350)
         (%set-property foo :auto-size "left")
         (%set-property foo :text-color (rgb 0.2 0.9 0.2 ))
         (%set-property foo :word-wrap :true)
@@ -102,9 +107,55 @@
             (%set-local str (+ str " || %flet=" (flet-test1)))
             ;;(%set-local str (+ str " %flet=" (flet-test2 "a" "b" "c")))
             ;;(%set-local str (+ str " cdr(1)=" (cdr 1)))
-            (%set-local str (+ str " || <" (if (car :null) "t" "f") ">")))
+            (%set-local str (+ str " || <" (if (car :null) "t" "f") ">"))
+            (%set-local str (+ str " || typecase 123="
+                               (typecase 123
+                                 (cons-type "-cons-")
+                                 (:int "-:int-")
+                                 (otherwise "-t-"))))
+            (%set-local str (+ str " || typecase cons="
+                               (typecase cc
+                                 (cons-type "-cons-")
+                                 (otherwise "-t-"))))
+            (%set-local str (+ str " || when t ="
+                               (when t "-t-")))
+            (%set-local str (+ str " || when nil ="
+                               (when nil "-t-")))
+            (%set-local str (+ str " || unless t ="
+                               (unless t "-t-")))
+            (%set-local str (+ str " || unless nil ="
+                               (unless nil "-t-")))
+            (%set-local str (+ str " || and ="
+                               (and)))
+            (%set-local str (+ str " || and t ="
+                               (and "t")))
+            (%set-local str (+ str " || and t nil ="
+                               (and "t" nil)))
+            (%set-local str (+ str " || and nil t ="
+                               (and nil "t")))
+            (%set-local str (+ str " || and t t ="
+                               (and "t1" "t2")))
+            (%set-local str (+ str " || or ="
+                               (or)))
+            (%set-local str (+ str " || or t ="
+                               (or "t")))
+            (%set-local str (+ str " || or t nil ="
+                               (or "t" nil)))
+            (%set-local str (+ str " || or nil t ="
+                               (or nil "t")))
+            (%set-local str (+ str " || or t t ="
+                               (or "t1" "t2")))
+            (%set-local str (+ str " || cond="
+                               (cond
+                                 ((eq 1 cc) "-foo-")
+                                 ((> 3 2) "-3>2-")
+                                 (nil "-nil-")
+                                 (t "-t-"))))
 
-          (%set-property foo :text (+ str (%call-property (%array 1 2 3) :to-string))))
+            (%set-local str (+ str " || dolist=" (test-dolist)))
+)
+
+          (%set-property foo :text (+ str " || " (%call-property (%array 1 2 3) :to-string))))
         (:add-child arg canvas)
         (:add-child arg foo)
         (%set-property this :canvas canvas)

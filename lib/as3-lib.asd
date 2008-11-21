@@ -6,6 +6,7 @@
                         (:file "player-classes")
                         (:file "player-lib")
                         (:file "cl")
+                        (:file "sicl-conditionals")
                         (:file "cl-conses")
                         )
            :serial t)

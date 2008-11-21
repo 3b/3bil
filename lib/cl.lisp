@@ -56,60 +56,10 @@
              body)))
 
 
-;;; from sicl
-
-  (defun proper-list-p (object)
-    (if (null object)
-	t
-	(if (consp object)
-	    (proper-list-p (cdr object))
-	    nil)))
-
-  (defun eql-ify (keys variable)
-    (if (null keys)
-        '()
-        (cons `(eql ,variable ,(car keys))
-              (eql-ify (cdr keys) variable))))
-;;; This function turns a list of CASE clauses into nested IFs.  It
-;;; checks that the list of clauses is a proper list and that each
-;;; clause is also a proper list.  It also checks that, if there is an
-;;; otherwise clause, it is the last one.
-  (defun expand-case-clauses (clauses variable)
-  (if (null clauses)
-      'nil
-      (if (not (consp clauses))
-	  (error 'malformed-case-clauses
-		 :clauses clauses)
-	  (let ((clause (car clauses)))
-	    (unless (and (proper-list-p clause)
-			 (not (null clause)))
-	      (error 'malformed-case-clause
-		     :clause clause))
-	    (if (or (eq (car clause) 'otherwise)
-		    (eq (car clause) t))
-		(if (null (cdr clauses))
-		    `(progn ,@(cdr clause))
-		    (error 'otherwise-clause-not-last
-			   :clauses (cdr clauses)))
-		;; it is a normal clause
-		(let ((keys (car clause))
-		      (forms (cdr clause)))
-		  (if (and (atom keys)
-			   (not (null keys)))
-		      `(if (eql ,variable ,keys)
-			   (progn ,@forms)
-			   ,(expand-case-clauses (cdr clauses) variable))
-		      (if (not (proper-list-p keys))
-			  (error 'malformed-keys
-				 :keys keys)
-			  `(if (or ,@(eql-ify keys variable))
-			       (progn ,@forms)
-			       ,(expand-case-clauses (cdr clauses) variable))))))))))
-
-  (swf-defmacro case (keyform &rest clauses)
-    (let ((variable (gensym "CASE-VAR-")))
-      `(let ((,variable ,keyform))
-         ,(expand-case-clauses clauses variable))))
+;;; from sicl:
+;;; sicl-conditionals.lisp: OR AND WHEN UNLESS COND CASE TYPECASE
+;;; sicl-iteration.lisp: 
 
   )
+
 

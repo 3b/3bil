@@ -144,16 +144,18 @@
     (:push-null)))
 
 (define-special* tagbody (body)
-  (let ((tags (loop for (tag form) on body by #'cddr
-                 for label = (gensym (format nil "TAGBODY-~a-" tag))
-                 collect (cons tag label))))
+  (let ((tags (loop for tag-or-form in body
+                 when (atom tag-or-form)
+                 collect (cons tag-or-form
+                               (gensym (format nil "TAGBODY-~a-" tag-or-form))))))
     (with-nested-lambda-tags (tags)
       ;; fixme: use dlabel for forward jumps
-      `(,@(loop for (tag form) on body by #'cddr
-             for label = (get-lambda-tag tag)
-             collect `(:%label ,label)
-             append (scompile form)
-             collect `(:pop))
+      `(,@(loop for tag-or-form in body
+             if (atom tag-or-form)
+             collect `(:%label ,(get-lambda-tag tag-or-form))
+             else
+             append (scompile tag-or-form)
+             and collect `(:pop))
           (:push-null)))))
 
 (define-special go (tag)
@@ -161,13 +163,13 @@
 
 ;; (with-lambda-context () (scompile '(tagbody foo (go baz) bar 1 baz 2)))
 
-(define-special %when (cond label)
+#+nil(define-special %when (cond label)
   ;; (%when cond label)
   `(,@(scompile cond)
       (:if-true ,label)
       (:push-null)))
 
-(define-special when (cond &rest body)
+#+nil(define-special when (cond &rest body)
   ;; (when cond body)
     (let ((label (gensym "WHEN1-"))
           (label2 (gensym "WHEN2-")))
@@ -236,7 +238,7 @@
 
 
 
-(defmethod scompile-cons ((car (eql 'and)) cdr)
+#+nil(defmethod scompile-cons ((car (eql 'and)) cdr)
   (case (length cdr)
     (0 `((:push-true)))
     (1 (scompile (first cdr)))
@@ -462,14 +464,11 @@ call with %flet-call, which sets up hidden return label arg
  (as3-asm::code
   (as3-asm::with-assembler-context
     (as3-asm::assemble-method-body
-(format t "~{~s~%~} " (%compile-defun
-                      ()
-                      '((let ((s2 "<"))
+(dump-defun-asm () (let ((s2 "<"))
                           (block foo
                             (unwind-protect
                                  (progn
                                    (return-from foo "-ret-")
                                    "bleh")
                               "baz"))
-                          (+ s2 ">")))
-                      nil nil)) ) ) ))
+                          (+ s2 ">"))) ) ) ))

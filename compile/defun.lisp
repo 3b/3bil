@@ -113,3 +113,14 @@
      (destructuring-bind (,@args) cdr
        (scompile
         ,@body))))
+
+
+(defmacro dump-defun-asm (args &body body)
+  "debugging function to compile a defun to asm, and print results"
+  (let ((asm (gensym)))
+    `(let ((,asm (%compile-defun
+                  ',args
+                  ',body
+                  nil nil)))
+       (format t "~%~{~s~%~}" ,asm)
+       ,asm)))
