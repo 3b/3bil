@@ -45,7 +45,6 @@
   bytecode corresponding to forms, interns stuff as needed, or
   optionally uses constant pool indices (with no error checking
   currently) when operand is a list of the form (:id ###). "
-  (format t "assembling :~%---------~% ~s~%-------~%" forms)
   (let ((*code-offset* 0))
     (loop for i in (peephole forms)
        for opcode = (gethash (car i) *opcodes*)
@@ -150,7 +149,6 @@
      finally (return (values sum (1+ i)))))
 
 (defun decode-counted-s24 (sequence &key (start 0))
-  (format t "decode counted s23")
   (multiple-value-bind (count start)
       (decode-variable-length sequence :start start)
     (values
@@ -336,7 +334,6 @@
   (let ((dest (gensym "DEST-"))
         (here (gensym "HERE-"))
         (ofs (if (eq op :lookup-switch) 0 4)))
-    (format t "label-to-offset ofs=~s op=~s~%" ofs op)
     `(when (symbolp ,name)
        (let ((,dest (cdr (assoc ,name (label *current-method*))))
              (,here *code-offset*))

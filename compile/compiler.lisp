@@ -54,13 +54,11 @@
     ;; return in register too
     (push (cons (local-return-var lc) (length (locals lc)))
           (locals lc))
-    (format t "mlc-lambda context lc= ~s ~s ~%" (name lc) (locals lc))
     lc))
 
 (defun get-lambda-local-index (name)
   (let ((i (cdr (assoc name (locals *current-lambda*)))))
-    (format t "glli - ~s -> ~s~%" name i)
-    (or i (break))))
+    (or i (break "missing local index in g-l-l-i: ~a" name))))
 
 ;;; %flet needs to remove variable names form scope without removing
 ;;;  the index, so we hide the names here...

@@ -45,11 +45,9 @@
 
 
 (define-special* progn (cdr)
-  (format t "progn: ~{~s~%~}-----~%" cdr)
   (loop for rest on cdr
      for form = (car rest)
      for next = (cdr rest)
-     ;;do (format t "car=~s cdr=~s ~%form=~% ~s next=~s~%" car cdr form next)
      append (scompile form)
      ;; ignore return values from intermediate steps
      when (or next (and (consp form) (eql (car form) 'return)))
@@ -59,7 +57,6 @@
 ;; (scompile '(progn "foo" "bar" :true))
 
 (define-special return (value)
-  ;;(format t "ret car=~s cdr = ~s~%" car cdr)
   `(,@(scompile value)
       (:return-value)))
 
@@ -119,14 +116,13 @@
 
 (define-special %set-local (local value)
   ;; (%set-local var value) -> value
-  ;;(format t "set local ~s = ~s ~%" local value)
   `(,@(scompile value) ;; calculate value
       (:dup)                   ;; copy value so we can reurn it
       (:set-local ,(get-lambda-local-index local))))
 ;; (with-lambda-context (foo) (scompile '(%set-local foo 2.3)))
 
 (define-special %asm (&rest cdr)
-  ;; (%asm '((op1 args) (op2 ...) ... ))
+  ;; (%asm (op1 args) (op2 ...) ... )
   (copy-list cdr))
 
 
@@ -157,8 +153,7 @@
              for label = (get-lambda-tag tag)
              collect `(:%label ,label)
              append (scompile form)
-             collect `(:pop)            ;?
-             )
+             collect `(:pop))
           (:push-null)))))
 
 (define-special go (tag)
@@ -334,7 +329,6 @@
   (let ((end (gensym "BLOCK-END-")))
     (with-nested-lambda-block ((cons name (make-lambda-block name end nil end))
                                end)
-      (format t "block body = ~s~%" body)
       `(,@(scompile `(progn ,@body))
           (:coerce-any)
           (:set-local ,(get-lambda-local-index end))
@@ -393,8 +387,6 @@ call with %flet-call, which sets up hidden return label arg
   (let* ((continuation-label (gensym "CALL-%FLET-CONTINUATION-"))
          (continuation-index (add-lambda-local-continuation continuation-label))
          (arg-indices (cdr (assoc name (%flets *current-lambda*)))))
-    (format t "call %flet: ~s~%" (assoc name (%flets *current-lambda*)))
-    (format t " arg-indices = ~s~%" arg-indices)
     `((:push-int ,continuation-index)
       (:coerce-any)
       (:set-local ,(cdr (car arg-indices)))
@@ -409,13 +401,11 @@ call with %flet-call, which sets up hidden return label arg
       ;; from lookupswitch at end
       (:%label ,continuation-label)
       ;; get return value
-      (:get-local ,(get-lambda-local-index (local-return-var *current-lambda*)))
-)))
+      (:get-local ,(get-lambda-local-index (local-return-var *current-lambda*))))))
 
 (define-special return-from (name &optional value)
   (let ((block (get-lambda-block name))
         (cleanups (get-lambda-cleanups name)))
-    (format t "return-from block=~s~%" block)
     `(,@(scompile value)
         (:coerce-any)
         (:set-local ,(get-lambda-local-index (return-var block)))
@@ -435,7 +425,6 @@ call with %flet-call, which sets up hidden return label arg
                              ,temp)))))
 
 (define-special %with-cleanup ((name code) form)
-  (format t "---- %with-cleanup ~s : ~s~%---~s~%" name code form)
   (with-cleanup (name code)
     (scompile form)))
 
@@ -446,8 +435,7 @@ call with %flet-call, which sets up hidden return label arg
                (%with-cleanup (,cleanup-name (call-%flet ,cleanup-name))
                               (prog1
                                   ,protected
-                                (call-%flet ,cleanup-name)))))
-      ))
+                                (call-%flet ,cleanup-name)))))))
 
 
 

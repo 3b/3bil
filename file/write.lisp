@@ -85,7 +85,7 @@
 (defgeneric write-generic (data &optional *standard-output*))
 
 (defmethod write-generic ((trait as3-asm::trait-info) &optional (*standard-output* *standard-output*))
-  (format *trace-output* "trait-data : ~s ~s~%"
+  #+nil(format *trace-output* "trait-data : ~s ~s~%"
           (as3-asm::name trait)
            (as3-asm::trait-data trait))
   (write-u30 (as3-asm::name trait))
@@ -94,7 +94,7 @@
     (write-counted-sequence 'write-u30 (as3-asm::metadata trait))))
 
 (defmethod write-generic ((td as3-asm::trait-data-slot/const) &optional (*standard-output* *standard-output*))
-  (format *trace-output* "trait-data-slot/const :~s ~s ~s ~s ~s~%"
+  #+nil(format *trace-output* "trait-data-slot/const :~s ~s ~s ~s ~s~%"
           (as3-asm::kind td)
           ( as3-asm::slot-id td)
           ( as3-asm::type-name td)
@@ -175,7 +175,7 @@
   (destructuring-bind
         (name super-name flags interfaces iinit traits
               &optional protected-ns) instance
-    (format *trace-output* "write instance ~s~%  ~s ~s ~s ~s ~s ~s ~s~% ~s~%"
+    #+nil(format *trace-output* "write instance ~s~%  ~s ~s ~s ~s ~s ~s ~s~% ~s~%"
             instance
             name super-name flags interfaces iinit traits protected-ns
             (assoc iinit (function-names *compiler-context*) :test 'equal))
@@ -190,7 +190,7 @@
 
 (defun write-class (class &optional (*standard-output* *standard-output*))
   " class = (cinit trait1 trait2 ... traitN)"
-  (format *trace-output* "write class ~s~%  ~s~%  ~S~%"
+  #+nil(format *trace-output* "write class ~s~%  ~s~%  ~S~%"
           class
           (assoc (car class) (function-names *compiler-context*) :test 'equal)
           (cdr class))
@@ -355,15 +355,15 @@
 
 (defun new-class+scopes (class-id)
   ;; fixme: allow class lookup instead of using class-id directly?
-  (format t "cid = ~a classes=~s~%" class-id (as3-asm::classes as3-asm::*assembler-context*))
-  (format t " instances = ~s~%" (as3-asm::instances as3-asm::*assembler-context*))
+  #+nil(format t "cid = ~a classes=~s~%" class-id (as3-asm::classes as3-asm::*assembler-context*))
+  #+nil(format t " instances = ~s~%" (as3-asm::instances as3-asm::*assembler-context*))
   (let* ((class (aref (as3-asm::classes as3-asm::*assembler-context*) class-id))
          (inst (aref (as3-asm::instances as3-asm::*assembler-context*) class-id)))
     (declare (ignorable class))
     (destructuring-bind (name-mn super-mn flags interfaces instance-init traits protected-ns)
         inst
       (declare (ignorable name-mn super-mn flags interfaces instance-init traits protected-ns))
-      (format t "cid = ~a name-mn = ~a=~a  super-mn = ~a=~a ~%"
+      #+nil(format t "cid = ~a name-mn = ~a=~a  super-mn = ~a=~a ~%"
               class-id name-mn (as3-asm::qname-string name-mn)
               super-mn (as3-asm::qname-string super-mn))
       ;;(format t " supers = ~s~%" (reverse (super-names (as3-asm::qname-string super-mn))))
@@ -380,7 +380,7 @@
 
 
 (defun assemble-function (name)
-  (format t "--assemble-function ~s :~%" name)
+  #+nil(format t "--assemble-function ~s :~%" name)
   (destructuring-bind (n nid argtypes return-type flags asm)
       (find-swf-function name)
     (let ((mid (as3-asm::as3-method nid argtypes return-type flags
@@ -448,10 +448,10 @@
        ;; fixme: add these to assembler-context constructor or something
        (as3-asm::as3-intern "")
        (as3-asm::as3-ns-intern "")
-       (format t "==-== body~%")
+       #+nil(format t "==-== body~%")
        ;; compile the body code
        ,@body
-       (format t "==-== classes~%")
+       #+nil(format t "==-== classes~%")
        ;; assemble classes
        (loop for k being the hash-keys of (classes *cl-symbol-table*)
           using (hash-value v)
@@ -463,13 +463,13 @@
           for (swf-name ns super properties constructor) = v
           when (or properties constructor)
           do (assemble-class swf-name ns super properties constructor))
-       (format t "==-== functions~%")
+       #+nil(format t "==-== functions~%")
        ;; assemble functions
        (loop for k being the hash-keys of (functions *cl-symbol-table*)
           do (assemble-function k))
        (loop for k being the hash-keys of (functions *symbol-table*)
           do (assemble-function k))
-       (format t "==-== boilerplate~%")
+       #+nil(format t "==-== boilerplate~%")
        ;; script boilerplate
        (let ((,script-init
               (as3-asm::as3-method
@@ -481,11 +481,11 @@
                   ,@(loop for ,i below (length (as3-asm::classes as3-asm::*assembler-context*))
                        append (new-class+scopes ,i))
                   (:return-void))))))
-       (format t "==-== boilerplate2~%")
+         #+nil(format t "==-== boilerplate2~%")
          (vector-push-extend
           `(,,script-init
             ,@(loop for i in (class-names *compiler-context*)
-                 do (format t "-=c-~s~%" i)
+                 ;;do (format t "-=c-~s~%" i)
                  collect (make-instance 'as3-asm::trait-info
                                         'as3-asm::name
                                         (as3-asm::asm-intern-multiname (first i))
@@ -494,7 +494,7 @@
                                                        'as3-asm::slot-id 0
                                                        'as3-asm::classi (second i))))
             ,@(loop for i in (function-names *compiler-context*)
-                 do (format t "-=f-~s~%" i)
+                 ;;do (format t "-=f-~s~%" i)
                  collect (make-instance 'as3-asm::trait-info
                                         'as3-asm::name
                                         (if (numberp (first i))
@@ -506,6 +506,6 @@
           (as3-asm::scripts as3-asm::*assembler-context*)))
 
        (when *break-compile* (break))
-       (format t "==-== write~%")
+       #+nil(format t "==-== write~%")
        ;; write out the .swf
        (write-swf ,s ,frame-name ,exports))))

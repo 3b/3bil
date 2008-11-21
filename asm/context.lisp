@@ -100,13 +100,9 @@
 (defun as3-ns-intern (string-designator &key (kind +package-namespace+))
   (let ((sym (as3-intern string-designator)))
     (if (namespace-id sym)
-        (progn
-          ;;(format t " used interned ns ~a(~d) ~d ~%" string-designator (string-id sym) (namespace-id sym))
-          (namespace-id sym))
+        (namespace-id sym)
         (prog1
             (setf (namespace-id sym) (length (namespaces *assembler-context*)))
-          ;;(format t "interning ns ~a(~d) ~d ~%" string-designator
-          ;;        (string-id sym) (length (namespaces *assembler-context*)))
           (vector-push-extend (list kind (string-id sym))
                               (namespaces *assembler-context*))))))
 
@@ -131,7 +127,6 @@
     (if id
         id
         (progn
-          ;;(format t "qname: ~a : ~a = ~d~%" ns name (length (multinames *assembler-context*)))
           (vector-push-extend mn (multinames *assembler-context*))
           (setf (gethash mn (multiname-hash *assembler-context*))
                 (1- (length (multinames *assembler-context*))))))))
@@ -216,7 +211,6 @@
   (let* ((mn (aref (multinames *assembler-context*) mn-id))
          (ns (second mn))
          (name (third mn)))
-    ;;(format t "mn = ~a ~%" mn)
     (setf name (if name (aref (strings *assembler-context*) name) ""))
     (setf ns (if ns
                  (aref (strings *assembler-context*)

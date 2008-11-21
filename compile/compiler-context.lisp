@@ -67,30 +67,25 @@
       ;; if OPERATOR is a known method, call with %call-property
       ;;  (prop obj args...) === obj.prop(args)
       ((setf tmp (find-swf-method operator *symbol-table*))
-       (format t "--- (call-prop ~s.~s ( ~s ) ~%)" (first args) operator (rest args))
        (scompile `(%call-property ,(first args) ,tmp ,@(rest args))))
 
       ;; if OPERATOR is a known static method, call with %call-lex-prop
       ;;  (prop obj args...) === obj.prop(args)
       ((setf tmp (find-swf-static-method operator *symbol-table*))
-       (format t "--- (call-lex-prop ~s.~s ( ~s ) ~%)" (car tmp) operator (rest args))
        (scompile `(%call-lex-prop ,(car tmp) ,(second tmp) ,@args)))
 
       ;; if OPERATOR is a known property (member var), call %get-property
       ;;  (:prop obj)
       ((setf tmp (find-swf-property operator *symbol-table*))
-       (format t "--- (get-prop ~s . ~s (~s) ~%)" (first args) operator (rest args))
        (scompile `(%get-property ,(first args) ,tmp)))
 
       ;; normal function call, find-prop-strict + call-property
       ((setf tmp (find-swf-function operator *symbol-table*))
-       (format t "--- (funcall ~s (~s) ~%)" operator args)
        (scompile `(%call-property-without-object ,(car tmp) ,@args)))
 
       ;; default = normal call?
       ;; fixme: might be nicer if we could detect unknown functions
       (t
-       (format t "--- (funcall ~s (~s) ~%) operator" operator args)
        (scompile `(%call-property-without-object ,operator ,@args))
        #+nil(error " unknown function call? ~s ~s ~% " operator args)))))
 
