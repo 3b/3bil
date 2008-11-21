@@ -27,42 +27,6 @@
     (swf-defmemfun radians (a)
       (/ (* a #.pi) 180.0))
 
-    #+nil(swf-defmemfun flet-test1 ()
-      (%flet (foo (a b c) (+ a b c))
-             (call-%flet foo "a" "b" "c")
-             (call-%flet foo "1" "2" "3")))
-
-    (swf-defmemfun flet-test1 ()
-      (%flet (foo (a b c) (+ a b c))
-             (call-%flet foo (%flet (afoo (a b c) (+ a b c))
-                                    (call-%flet afoo "a" "b" "c"))
-                         "b" "c" )))
-
-    #+nil(swf-defmemfun uwp-test ()
-      (let ((s2 "<"))
-        (block foo
-          1
-          (unwind-protect
-               (if :true (return-from foo "-ret-") 4)
-            (%set-local s2 (+ s2 "uwp")))
-          2)
-        (+ s2 ">")))
-    (swf-defmemfun uwp-test ()
-      (let ((s2 "<"))
-        (block foo
-          (unwind-protect
-               (progn
-                 (return-from foo "-ret-")
-                 "bleh")
-            (%set-local s2 (+ s2 123))))
-        (+ s2 "<")))
-
-    (swf-defmemfun cons-test ()
-      (let* ((a (cons 2 3))
-             (b (cons 1 a)))
-        (%set-property (cdr b) %car 123)
-        (+ "(" (car a) " " (car b) ")"))
-      )
     (swf-defmemfun i255 (a)
       (flash::Math.max (flash::Math.min (floor (* a 256)) 255) 0))
 
@@ -82,41 +46,6 @@
         (%set-property foo :background :true)
         (%set-property foo :background-color (rgba 0.1 0.1 0.1 0.1))
         (let ((str "abc..."))
-          (%set-local str (+ str (flash::string.from-char-code 26085)))
-          (%set-local str (+ str (flash::string.from-char-code 26412)))
-          (%set-local str (+ str (flash::string.from-char-code 21566)))
-          (%set-local str (+ str (%get-property str :length )))
-          (let ((cc (cons 0 2)))
-            (%set-local str (+ str (cons 2 3)))
-            (%set-local str (+ str "=(" (car cc) " " (cdr cc) ")"))
-            (%set-local str (+ str " car(nil)=" (car nil)))
-            (%set-local str (+ str " %typeof=" (%type-of cc)))
-            (%set-local str (+ str " %typep...=" (%typep cc cons-type)))
-            (%set-local str (+ str " %typep.1.=" (%typep 1 cons-type)))
-            (%set-local str (+ str " case="
-                               (case (car cc)
-                                 (1 "-1-")
-                                 (0 "-0-")
-                                 (2 "-2-")
-                                 (otherwise "-t-")
-)))
-            (%set-local str (+ str " case2="
-                               (case (cdr cc)
-                                 (1 "-1-")
-                                 (0 "-0-")
-                                 (2 "-2-"))))
-            (%set-local str (+ str " block="
-                               (block foo
-                                 1
-                                 (if t (return-from foo "-ret-") 4)
-                                 2)))
-            #+nil(%set-local str (+ str " uwp=" (uwp-test)))
-            (%set-local str (+ str " cons=" (cons-test)))
-            (%set-local str (+ str " %flet=" (flet-test1)))
-            ;;(%set-local str (+ str " %flet=" (flet-test2 "a" "b" "c")))
-            ;;(%set-local str (+ str " cdr(1)=" (cdr 1)))
-            (%set-local str (+ str " <" (if (car :null) "t" "f") ">")))
-
           (%set-property foo :text (+ str (%call-property (%array 1 2 3) :to-string))))
         (:add-child arg canvas)
         (:add-child arg foo)
