@@ -151,7 +151,10 @@
                                  ((> 3 2) "-3>2-")
                                  (nil "-nil-")
                                  (t "-t-"))))
-
+            (let ((c2 (cons "a" (cons "b" nil))))
+              (%set-local str (+ str " || pop1 =" (pop c2)))
+              (%set-local str (+ str " || pop2 = (" (car c2) " . " (cdr c2) ")"))
+)
             (%set-local str (+ str " || dolist=" (test-dolist)))
 )
 
