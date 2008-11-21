@@ -41,7 +41,7 @@ for that here and return count of extra args"
   (:if-ge        ((offset ofs24)) #x18  2 0)
   (:if-strict-eq ((offset ofs24)) #x19  2 0)
   (:if-strict-ne ((offset ofs24)) #x1a  2 0)
-  (:lookup-switch ((default-offset s24) (offsets counted-s24))  1 0)
+  (:lookup-switch ((default-offset ofs24) (offsets counted-ofs24)) #x1b  1 0)
   (:push-with    ()             #x1c 1 0 0 1)
   (:pop-scope    ()             #x1d 0 0 1 0)
   (:next-name    ()             #x1e  2 1)

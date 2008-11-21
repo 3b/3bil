@@ -2,8 +2,8 @@
 
 ;;;; defun and similar
 
-(defun %compile-defun (args body method constructor)
-  (let* ((*current-lambda* (make-lambda-context args)))
+(defun %compile-defun (args body method constructor &key (nil-block t))
+  (with-lambda-context (:args args :blocks (when nil-block (list nil)))
     (append
      (if (or method constructor)
          '((:get-local-0)
@@ -17,7 +17,8 @@
          `(,@(scompile `(progn ,@body))
              ;;(pop)
              (:return-void))
-         (scompile `(return (progn ,@body)))))))
+         (scompile `(return (progn ,@body))))
+     (compile-lambda-context-cleanup))))
 
 (defun %swf-defun (name args body &key method constructor)
   ;; was pushnew, but that makes it hard to work on code (since can't
@@ -51,30 +52,30 @@
 (defun old-%swf-defun (name args body &key method constructor)
   (when (symbolp name)
     (setf name (as3-asm::symbol-to-qname name)))
-  (let* ((*current-lambda* (make-lambda-context args))
-         (mid
-          (as3-asm::as3-method 0
-                      (loop for i in args collect 0 ) ;; 0 = * (any type)
-                      0 0
-                      :body
-                      (assemble-method-body
-                       (append
-                        (if (or method constructor)
-                            '((:get-local-0)
-                              (:push-scope))
-                            nil)
-                        (if constructor
-                            '((:get-local-0)
-                              (:construct-super 0))
-                            nil)
-                        (if constructor
-                            `(,@(scompile `(progn ,@body))
-                                ;;(pop)
-                                (:return-void))
-                            (scompile `(return (progn ,@body)))))))))
-    (unless constructor
-      (push (list name mid) (function-names *compiler-context*)))
-    mid))
+  (with-lambda-context (:args args)
+    (let* ((mid
+            (as3-asm::as3-method 0
+                                 (loop for i in args collect 0 ) ;; 0 = * (any type)
+                                 0 0
+                                 :body
+                                 (assemble-method-body
+                                  (append
+                                   (if (or method constructor)
+                                       '((:get-local-0)
+                                         (:push-scope))
+                                       nil)
+                                   (if constructor
+                                       '((:get-local-0)
+                                         (:construct-super 0))
+                                       nil)
+                                   (if constructor
+                                       `(,@(scompile `(progn ,@body))
+                                           ;;(pop)
+                                           (:return-void))
+                                       (scompile `(return (progn ,@body)))))))))
+      (unless constructor
+        (push (list name mid) (function-names *compiler-context*)))
+      mid)))
 
 (defmacro swf-defun (name (&rest args) &body body)
   `(%swf-defun ',name ',args (list

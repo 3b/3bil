@@ -107,6 +107,11 @@
    (variable-length-encode (length seq))
    (mapcan 'u24-to-sequence seq)))
 
+(defun count+1-s24-to-sequence (seq)
+  (append
+   (variable-length-encode (1- (length seq)))
+   (mapcan 'u24-to-sequence seq)))
+
 (defun variable-length-encode (integer)
   (loop
    for i = integer then i2
@@ -145,10 +150,11 @@
      finally (return (values sum (1+ i)))))
 
 (defun decode-counted-s24 (sequence &key (start 0))
+  (format t "decode counted s23")
   (multiple-value-bind (count start)
       (decode-variable-length sequence :start start)
     (values
-     (loop repeat count
+     (loop repeat (1+ count)
         with value
         do (setf (values value start) (decode-u24 sequence :start start))
         collect value)
@@ -187,14 +193,15 @@
      with op = nil
      for byte = (elt sequence start)
      for dis = (gethash byte *disassemble-opcodes*)
-     ;;do (format t "op=~s byte=~s start=~s cur-seq=~{ ~2,'0x~}~%   dis=~s ~%"
-     ;;           op byte start (coerce
-     ;;                          (subseq sequence start (min length
-     ;;                                                      (+ start 8))) 'list) dis)
+     do (format t "op=~s byte=~s start=~s cur-seq=~{ ~2,'0x~}~%   dis=~s ~%"
+                op byte start (coerce
+                               (subseq sequence start (min length
+                                                           (+ start 8))) 'list) dis)
+       (finish-output)
      do (incf start)
      when dis
      do (setf (values op start) (funcall dis sequence :start start))
-     ;;and do (format t "op -> ~s start -> ~s~%" op start)
+     and do (format t "op -> ~s start -> ~s~%" op start)
      and collect op
      else do (error "invalid byte ~s at ~d " byte start)
      while (< start length)))
@@ -325,6 +332,38 @@
               (elt (strings *assembler-context*) name)))
       (list :id id)))
 
+(defun label-to-offset (name op)
+  (let ((dest (gensym "DEST-"))
+        (here (gensym "HERE-"))
+        (ofs (if (eq op :lookup-switch) 0 4)))
+    (format t "label-to-offset ofs=~s op=~s~%" ofs op)
+    `(when (symbolp ,name)
+       (let ((,dest (cdr (assoc ,name (label *current-method*))))
+             (,here *code-offset*))
+         (unless ,dest
+           (push (cons ,name ,here) (fixups *current-method*))
+           (setf ,dest (+ 4 ,here)))
+         (setf ,name (- ,dest ,here ,ofs))))))
+
+(defun labels-to-offsets (name)
+  (let ((dest (gensym "DEST-"))
+        (here (gensym "HERE-"))
+        (i (gensym "I-"))
+        (j (gensym "J-")))
+    `(setf ,name
+           (loop with ,here = *code-offset*
+              for ,i in ,name
+              for ,j from 4 by 4
+              when (symbolp ,i)
+              collect
+                (let ((,dest (cdr (assoc ,i (label *current-method*)))))
+                  (unless ,dest
+                    (push (cons ,i ,j) (fixups *current-method*))
+                    (setf ,dest ,i))
+                  (- ,dest ,here 0))
+              else collect ,i
+              ))))
+
 (defmacro define-ops (&body ops)
   (let ((coders
          ;; type tag , encoder , optional interner
@@ -339,6 +378,7 @@
            (s32  variable-length-encode)
            (double  double-to-sequence)
            (counted-s24  counted-s24-to-sequence)
+           (counted-ofs24  count+1-s24-to-sequence)
 
            (string-u30    variable-length-encode asm-intern-string)
            (int-u30       variable-length-encode asm-intern-int)
@@ -361,6 +401,7 @@
            (s32  decode-variable-length)
            (double  (lambda (s) (error "not done")))
            (counted-s24  decode-counted-s24)
+           (counted-ofs24  decode-counted-s24) ;; array of ofs24 in lookupswitch
 
            (string-u30    decode-variable-length lookup-string)
            (int-u30       decode-variable-length lookup-int)
@@ -373,10 +414,11 @@
     (flet ((defop (name args opcode
                         &optional (pop 0) (push 0) (pop-scope 0) (push-scope 0) (local 0) (flag 0))
              `(setf (gethash ',name *opcodes*)
-                    (lambda (,@(mapcar 'car args) &aux (#:debug-name ',name))
+                    (lambda (,@(mapcar 'car args) ;;&aux (#:debug-name ',name)
+                             )
                       ,@(when args `((declare (ignorable ,@(mapcar 'car args)))))
                       ;;(format t "assemble ~a ~%" ',name)
-                      ,@(loop
+                      ,@(loop with op-name = name
                            for (name type) in args
                            for interner = (third (assoc type coders))
                            when interner
@@ -386,17 +428,9 @@
                            ;;                    (eql 'qname (car ,name)))
                            ;;           (setf ,name (apply 'qname (rest ,name))))
                            when (eq 'ofs24 type)
-                           collect
-                           (let ((dest (gensym "DEST-"))
-                                 (here (gensym "HERE-")))
-                             `(when (symbolp ,name)
-                                (let ((,dest (cdr (assoc ,name (label *current-method*))))
-                                      (,here *code-offset*))
-                                  (unless ,dest
-                                    (push (cons ,name ,here) (fixups *current-method*))
-                                    (setf ,dest (+ 4 ,here)))
-                                  (setf ,name (- ,dest ,here 4))
-                                  #+ (or) (format t ">>>set ~s to ~s" ',name ,name)))))
+                           collect (label-to-offset name op-name)
+                           when (eq 'counted-ofs24 type)
+                           collect (labels-to-offsets name))
                       ,@(unless (and (numberp pop) (numberp push) (= 0 pop push))
                                 `((adjust-stack ,pop ,push)))
                       ,@(unless (and (numberp pop-scope) (numberp push-scope)
@@ -423,7 +457,8 @@
            (defop-disasm (name args opcode &rest ignore)
              (declare (ignore ignore))
              `(setf (gethash ,opcode *disassemble-opcodes*)
-                    (lambda (sequence &key (start 0))
+                    (lambda (sequence &key (start 0);; &aux (#:debug-name ',name)
+                             )
                       (declare (ignorable sequence start))
                       (values
                        ,(if (null args)

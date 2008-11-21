@@ -49,6 +49,11 @@
   #+nil  (swf-defmemfun typep (object type)
     (%typep object type))
 
+  (swf-defmacro let* (bindings &body body)
+    `(let (,(car bindings))
+       ,@(if (cdr bindings)
+             `((let* ,(cdr bindings) ,@body))
+             body)))
 
 
 ;;; from sicl
@@ -69,7 +74,7 @@
 ;;; checks that the list of clauses is a proper list and that each
 ;;; clause is also a proper list.  It also checks that, if there is an
 ;;; otherwise clause, it is the last one.
-(defun expand-case-clauses (clauses variable)
+  (defun expand-case-clauses (clauses variable)
   (if (null clauses)
       'nil
       (if (not (consp clauses))

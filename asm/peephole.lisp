@@ -139,6 +139,10 @@ optimized version"
      (cons `(:if-ne ,@(cdr next)) rest))
     (t :keep)))
 
+;; hack to allow comments in generated asm
+(def-peephole :comment 1 (nil &rest rest)
+  rest)
+
 ;; fixme: move interning into the assembler so we can peephole push-int
 ;; into push-byte or push-short if applicable
 

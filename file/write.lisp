@@ -82,6 +82,7 @@
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; writers for asm level data structures
 
+(defgeneric write-generic (data &optional *standard-output*))
 
 (defmethod write-generic ((trait as3-asm::trait-info) &optional (*standard-output* *standard-output*))
   (format *trace-output* "trait-data : ~s ~s~%"
@@ -405,7 +406,6 @@
                                              (:return-void))
                                            :init-scope 0)))
          (junk (as3-asm::as3-ns-intern ns))
-         (bleh ())
          (class (as3-asm::as3-class
                  (as3-asm::asm-intern-multiname name)
                  (as3-asm::asm-intern-multiname

@@ -6,5 +6,6 @@
                         (:file "player-classes")
                         (:file "player-lib")
                         (:file "cl")
+                        (:file "cl-conses")
                         )
            :serial t)
