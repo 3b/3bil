@@ -199,17 +199,21 @@
 (defgeneric  scompile (form))
 
 (defmethod scompile ((form string))
-  `((:push-string ,form)))
+  `((:push-string ,form)
+    (:coerce-any)))
 
 (defmethod scompile ((form integer))
   ;; possibly should have more control than just assuming anything < 2^31
   ;; is int (as well as range checking, etc)
   (if (> form (expt 2 31))
-      `((:push-uint ,form))
-      `((:push-int ,form))))
+      `((:push-uint ,form)
+        (:coerce-any))
+      `((:push-int ,form)
+        (:coerce-any))))
 
 (defmethod scompile ((form real))
-  `((:push-double ,form)))
+  `((:push-double ,form)
+    (:coerce-any)))
 
 (defmethod scompile ((form symbol))
   (let ((i (get-lambda-local-index form)))
@@ -221,7 +225,8 @@
   `(progn
      ,@(loop for i in constants
           collect `(defmethod scompile ((form (eql ,(car i))))
-                     '((,(second i)))))))
+                     '((,(second i))
+                       (:coerce-any))))))
 (define-constants
   (:true :push-true)
   (t :push-true)

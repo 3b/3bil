@@ -112,7 +112,7 @@
   `(defmethod scompile-cons ((car (eql ',name)) cdr)
      (destructuring-bind (,@args) cdr
        (scompile
-        ,@body))))
+        (progn ,@body)))))
 
 
 (defmacro dump-defun-asm (args &body body)

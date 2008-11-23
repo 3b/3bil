@@ -2,9 +2,6 @@
 
 ;;; pieces of sicl/iteration.lisp that work so far
 
-;; need setq/psetq/setf/incf and fixing type issues to use these
-(warn "nothing here does anything useful yet...")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Conditions
@@ -106,7 +103,7 @@
 ;;; compatible with the declarations.  For that reason, we choose to
 ;;; bind it.
 
-  #+nil(swf-defmacro dolist ((var list-form &optional result-form) &body body)
+  (swf-defmacro dolist ((var list-form &optional result-form) &body body)
     (progn;; do some syntax checking
       (unless (symbolp var)
         (error 'expected-symbol :found var))
@@ -137,7 +134,7 @@
 ;;; always 0, so we can bind the variable once for the entire loop
 ;;; body.
 
- #+nil (swf-defmacro dotimes ((var count-form &optional result-form) &body body)
+  (swf-defmacro dotimes ((var count-form &optional result-form) &body body)
     ;; do some syntax checking
     (unless (symbolp var)
       (error 'expected-symbol :found var))
@@ -150,7 +147,7 @@
             (count-var (gensym)))
         `(let ((,count-var ,count-form)
                (,var 0))
-           (declare (type integer ,var))
+           #+nil(declare (type integer ,var))
            ,@declarations
            (block nil
              (tagbody
@@ -162,7 +159,7 @@
                 (go ,start-tag)
                 ,end-tag)
              (let ((,var nil))
-               (declare (ignorable ,var))
+               #+nil(declare (ignorable ,var))
                ,result-form))))))
 
   (defun check-variable-clauses (variable-clauses)
@@ -242,13 +239,10 @@
                     (progn ,@(cdr end-test))))
                 ,@forms
                 (setq ,@(extract-updates variable-clauses))
-                (go ,start-tag)))))))
-
-      
-)
+                (go ,start-tag))))))))
 
 
-(dump-defun-asm ()
+#+nil(dump-defun-asm ()
   (let (temp)
     (dolist (a (cons "a" (cons "b" (cons "c" nil)))
              temp)

@@ -141,7 +141,8 @@
                 (t class))))
     `((:find-property-strict ,name)
       (:construct-prop ,name ,arg-count)
-      (:coerce ,name))))
+      #+nil(:coerce ,name)
+      (:coerce-any))))
 
 ;; (avm2-asm:assemble (scompile '(%new flash.text:Text-Field 0)))
 ;; (avm2-asm:assemble (scompile '(%new "flash.text:TextField" 0)))

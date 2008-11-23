@@ -58,8 +58,10 @@
 
 ;;; from sicl:
 ;;; sicl-conditionals.lisp: OR AND WHEN UNLESS COND CASE TYPECASE
-;;; sicl-iteration.lisp: 
+;;; sicl-iteration.lisp: DOLIST DOTIMES
 
-  )
+;; temporary hack until SETF is implemented
 
 
+  (swf-defmacro incf (place &optional (delta 1))
+    `(%set-local ,place (+ ,place ,delta))))

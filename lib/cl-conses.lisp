@@ -41,8 +41,7 @@
         :null
         (if (%typep a cons-type)
             (%asm (:get-local-1)
-                  (:get-property %cdr)
-                  (:coerce-any))
+                  (:get-property %cdr))
             (%error "type-error: unknown type cdr"))))
 
   (swf-defmemfun consp (a)

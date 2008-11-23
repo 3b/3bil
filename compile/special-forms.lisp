@@ -176,7 +176,6 @@
       `(,@(scompile cond)
           (:if-false ,label)
           ,@(scompile `(progn ,@body))
-          (:coerce-any)
           (:jump ,label2)
           (:%dlabel ,label)
           (:push-null)
@@ -190,11 +189,9 @@
     `(,@(scompile cond)
         (,false-test ,false-label)
         ,@(scompile true-branch)
-        (:coerce-any)
         (:jump ,end-label)
         (:%dlabel ,false-label)
         ,@(scompile false-branch)
-        (:coerce-any)
         (:%dlabel ,end-label))))
 
 (define-special if (cond true-branch false-branch)
@@ -209,7 +206,7 @@
     ;; hack since we always pop after each statement in a progn :/
     (:get-local ,(get-lambda-local-index var))))
 
-(define-special dotimes ((var count &optional result) &rest body)
+#+nil(define-special dotimes ((var count &optional result) &rest body)
   ;; (dotimes (var count &optional result) body)
 
   ;; set local for counter
@@ -332,7 +329,6 @@
     (with-nested-lambda-block ((cons name (make-lambda-block name end nil end))
                                end)
       `(,@(scompile `(progn ,@body))
-          (:coerce-any)
           (:set-local ,(get-lambda-local-index end))
           (:%dlabel ,end)
           (:get-local ,(get-lambda-local-index end))))))
@@ -367,7 +363,6 @@ call with %flet-call, which sets up hidden return label arg
              finally (return (nreverse temp)))
         ;; compile %flet body
         ,@(scompile `(progn ,@fn-body))
-        (:coerce-any)
         ;; store return value
         (:set-local ,(get-lambda-local-index (local-return-var *current-lambda*)))
         ;; push return address index
@@ -395,7 +390,6 @@ call with %flet-call, which sets up hidden return label arg
       ,@(loop for arg in args
            for (nil . i) in (cdr arg-indices)
            append (scompile arg)
-           collect '(:coerce-any)
            collect `(:set-local ,i))
       (:comment "call-%flet" ,name ,(%flets *current-lambda*) ,(unless name (break)))
       (:jump ,name)
@@ -409,7 +403,6 @@ call with %flet-call, which sets up hidden return label arg
   (let ((block (get-lambda-block name))
         (cleanups (get-lambda-cleanups name)))
     `(,@(scompile value)
-        (:coerce-any)
         (:set-local ,(get-lambda-local-index (return-var block)))
         ,@(loop for i in cleanups
              collect `(:comment "return-from cleanup" ,i ,cleanups ,(blocks *current-lambda*))

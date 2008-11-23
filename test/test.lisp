@@ -35,14 +35,14 @@
              (+ s2 ">")))
 
     (swf-defmemfun uwp-test ()
-      (let ((s2 "<"))
-        (block foo
-          (unwind-protect
-               (progn
-                 (return-from foo "-ret-")
-                 "bleh")
-            (%set-local s2 (+ s2 123))))
-        (+ s2 "<")))
+      (let* ((s2 "<")
+             (s3 (block foo
+                   (unwind-protect
+                        (progn
+                          (return-from foo "-ret-")
+                          "bleh")
+                     (%set-local s2 (+ s2 123))))))
+        (+ s2 s3 ">")))
 
     (swf-defmemfun cons-test ()
       (let* ((a (cons 2 3))
@@ -50,11 +50,17 @@
         (%set-property (cdr b) %car 123)
         (+ "(" (car a) " " (car b) ")")))
 
-    (swf-defmemfun test-dolist ()
-      "not implemented"#+nil(let ((temp ""))
+    (swf-defmemfun dolist-test ()
+      (let ((temp ""))
         (dolist (a (cons "a" (cons "b" (cons "c" nil)))
                  temp)
           (%set-local temp (+ temp (:to-string a))))))
+
+    (swf-defmemfun dotimes-test ()
+      (let ((temp "{"))
+        (%set-local temp (+ (dotimes (a 5 temp)
+                              (%set-local temp (+ temp a)))
+                            "}"))))
 
     (swf-defmemfun i255 (a)
       (flash::Math.max (flash::Math.min (floor (* a 256)) 255) 0))
@@ -102,7 +108,7 @@
                                  1
                                  (if t (return-from foo "-ret-") 4)
                                  2)))
-            #+nil(%set-local str (+ str " uwp=" (uwp-test)))
+            (%set-local str (+ str " uwp=" (uwp-test)))
             (%set-local str (+ str " || cons=" (cons-test)))
             (%set-local str (+ str " || %flet=" (flet-test1)))
             ;;(%set-local str (+ str " %flet=" (flet-test2 "a" "b" "c")))
@@ -155,7 +161,9 @@
               (%set-local str (+ str " || pop1 =" (pop c2)))
               (%set-local str (+ str " || pop2 = (" (car c2) " . " (cdr c2) ")"))
 )
-            (%set-local str (+ str " || dolist=" (test-dolist)))
+            (%set-local str (+ str " || dolist=" (dolist-test)))
+            (incf str (+ " || dotimes=" (dotimes-test)))
+            ;;(dotimes (a 5) (incf str a))
 )
 
           (%set-property foo :text (+ str " || " (%call-property (%array 1 2 3) :to-string))))

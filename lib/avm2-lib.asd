@@ -7,6 +7,7 @@
                         (:file "player-lib")
                         (:file "cl")
                         (:file "sicl-conditionals")
+                        (:file "sicl-iteration")
                         (:file "cl-conses")
                         )
            :serial t)
