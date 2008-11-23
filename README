@@ -1,0 +1,13 @@
+Proof of concept lisp->avm2 bytecode compiler
+
+installation:
+  tell ASDF about the .asd files in the subdirs, then load avm2-lib.asd
+  (which should load the asm and compiler .asd automatically)
+
+  compile and load file/write.lisp
+
+usage:
+  look at test/roots.lisp and test/test.lisp for examples
+  compiling either of those files should generate a working .swf file
+  in /tmp/ (change the path in the WITH-OPEN-FILE to change destination)
+
