@@ -1,4 +1,4 @@
-(in-package :as3-compiler)
+(in-package :avm2-compiler)
 ;;; random tests for various features, need to figure out how to
 ;;; automate these at some point
 

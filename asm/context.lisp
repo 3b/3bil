@@ -1,14 +1,14 @@
-(in-package :as3-asm)
+(in-package :avm2-asm)
 
 
-(defclass as3sym ()
+(defclass avm2sym ()
   ((string-id :initform nil :initarg string-id :accessor string-id)
    (namespace-id :initform nil :initarg namespace-id :accessor namespace-id)
    (method-id :initform nil :initarg method-id :accessor method-id)
    (class-id :initform nil :initarg class-id :accessor class-id)))
 
 (defclass assembler-context ()
-  ;; as3 constant pools are 1 based, so we start them at 1 here, and
+  ;; avm2 constant pools are 1 based, so we start them at 1 here, and
   ;; skip the first entry on write
   ((ints :initform (make-array 32 :fill-pointer 1 :adjustable t) :reader ints)
    (uints :initform (make-array 32 :fill-pointer 1 :adjustable t) :reader uints)
@@ -35,9 +35,9 @@
 
 
 (defparameter *assembler-context* (make-instance 'assembler-context))
-(defparameter *empty-sym* (make-instance 'as3sym 'string-id 1 'namespace-id 1
+(defparameter *empty-sym* (make-instance 'avm2sym 'string-id 1 'namespace-id 1
                                          'method-id 1 'class-id 1))
-(defun as3-intern (string-designator)
+(defun avm2-intern (string-designator)
   (let ((string (and string-designator (string string-designator))))
     (if (or (not string) #+()(string= string ""))
         *empty-sym*
@@ -51,11 +51,11 @@
                 ;;(format t "interning ~a = ~d ~%" string j)
                 (vector-push-extend string (strings *assembler-context*))
                 (setf (gethash string (string-intern-hash *assembler-context*))
-                      (make-instance 'as3sym 'string-id j))))))))
-(defun as3-string (s)
-  (string-id (as3-intern s)))
+                      (make-instance 'avm2sym 'string-id j))))))))
+(defun avm2-string (s)
+  (string-id (avm2-intern s)))
 
-(defun as3-intern-int (int)
+(defun avm2-intern-int (int)
   ;;fixme: write a real version of this
   ;;(format t "intern int ~a ~%" int)
   (loop with a = (ints *assembler-context*)
@@ -66,7 +66,7 @@
                          (length a)
                        (vector-push-extend int a)))))
 
-(defun as3-intern-uint (int)
+(defun avm2-intern-uint (int)
   ;;fixme: write a real version of this
   (loop with a = (uints *assembler-context*)
      for i from 1 below (length a)
@@ -76,7 +76,7 @@
                          (length a)
                        (vector-push-extend int a)))))
 
-(defun as3-intern-double (double)
+(defun avm2-intern-double (double)
   ;;fixme: write a real version of this
   (loop with a = (doubles *assembler-context*)
      with d = (float double 1d0)
@@ -97,8 +97,8 @@
 (defparameter +static-protected-ns+ #x1a)
 (defparameter +private-ns+          #x05)
 
-(defun as3-ns-intern (string-designator &key (kind +package-namespace+))
-  (let ((sym (as3-intern string-designator)))
+(defun avm2-ns-intern (string-designator &key (kind +package-namespace+))
+  (let ((sym (avm2-intern string-designator)))
     (if (namespace-id sym)
         (namespace-id sym)
         (prog1
@@ -120,8 +120,8 @@
 (defparameter +multiname-la+ #x1c)
 
 (defun intern-multiname (kind ns name)
-  (let* ((ns (as3-ns-intern ns))
-         (name (as3-string name))
+  (let* ((ns (avm2-ns-intern ns))
+         (name (avm2-string name))
          (mn (list kind ns name))
          (id (gethash mn (multiname-hash *assembler-context*))))
     (if id
@@ -150,7 +150,7 @@
 
 
 ;;; fixme: probably should make an effort to avoid duplicates or something?
-(defun as3-class (name-mn super-mn flags interfaces instance-init traits class-init &key protected-ns class-traits )
+(defun avm2-class (name-mn super-mn flags interfaces instance-init traits class-init &key protected-ns class-traits )
   (let ((class-id (length (classes *assembler-context*))))
     (vector-push-extend (list name-mn super-mn flags interfaces
                               instance-init traits protected-ns)
@@ -159,7 +159,7 @@
                         (classes *assembler-context*))
     class-id))
 
-(defun as3-method (name param-types return-type flags &key option-params pnames body)
+(defun avm2-method (name param-types return-type flags &key option-params pnames body)
   (let ((method-id (length (method-infos *assembler-context*))))
     (when body (setf flags (logior flags (flags body))))
     (vector-push-extend (list name param-types return-type flags option-params pnames)

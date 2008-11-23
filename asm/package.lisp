@@ -2,12 +2,12 @@
 
 (defpackage :3b-swf (:use :cl))
 
-(defpackage #:as3-asm
+(defpackage #:avm2-asm
   (:use #:cl)
   (:export #:assemble
            #:assemble-method-body))
 
-(defpackage #:as3-opcodes
+(defpackage #:avm2-opcodes
   (:use :cl)
   (:export
    #:breakpoint

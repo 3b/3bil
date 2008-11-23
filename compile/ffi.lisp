@@ -1,4 +1,4 @@
-(in-package :as3-compiler)
+(in-package :avm2-compiler)
 
 
 
@@ -143,7 +143,7 @@
       (:construct-prop ,name ,arg-count)
       (:coerce ,name))))
 
-;; (as3-asm:assemble (scompile '(%new flash.text:Text-Field 0)))
-;; (as3-asm:assemble (scompile '(%new "flash.text:TextField" 0)))
-;; (as3-asm:assemble (scompile '(%new "flash.text::TextField" 0)))
-;; (as3-asm:assemble (scompile '(%new (:qname "flash.text" "TextField") 0)))
+;; (avm2-asm:assemble (scompile '(%new flash.text:Text-Field 0)))
+;; (avm2-asm:assemble (scompile '(%new "flash.text:TextField" 0)))
+;; (avm2-asm:assemble (scompile '(%new "flash.text::TextField" 0)))
+;; (avm2-asm:assemble (scompile '(%new (:qname "flash.text" "TextField") 0)))

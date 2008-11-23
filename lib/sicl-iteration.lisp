@@ -1,4 +1,4 @@
-(in-package #:as3-compiler)
+(in-package #:avm2-compiler)
 
 ;;; pieces of sicl/iteration.lisp that work so far
 

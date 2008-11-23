@@ -1,5 +1,5 @@
 
-(defsystem :as3-asm
+(defsystem :avm2-asm
            :depends-on ("ieee-floats")
            :components ((:file "package")
                         (:file "peephole")

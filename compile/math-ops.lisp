@@ -1,4 +1,4 @@
-(in-package :as3-compiler)
+(in-package :avm2-compiler)
 
 ;;; expand multiple arg math/comparison ops into chained binary ops
 

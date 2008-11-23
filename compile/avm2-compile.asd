@@ -1,6 +1,6 @@
 
-(asdf:defsystem :as3-compile
-           :depends-on ("as3-asm")
+(asdf:defsystem :avm2-compile
+           :depends-on ("avm2-asm")
            :components ((:file "package")
                         (:file "compiler-context")
                         (:file "compiler")

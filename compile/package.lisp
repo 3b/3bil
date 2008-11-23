@@ -1,5 +1,5 @@
 
-(defpackage #:as3-compiler
+(defpackage #:avm2-compiler
   (:use #:cl)
   (:export
 ))

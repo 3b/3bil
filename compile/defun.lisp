@@ -1,4 +1,4 @@
-(in-package :as3-compiler)
+(in-package :avm2-compiler)
 
 ;;;; defun and similar
 
@@ -28,7 +28,7 @@
   (push
    ;; function data:
    ;;  swf name in format suitable for passing to asm (string/'(qname...))
-   ;;  args to as3-method:
+   ;;  args to avm2-method:
    ;;    name id?
    ;;    list of arg types (probably all T/* for now)
    ;;    return type
@@ -36,7 +36,7 @@
    ;;    list of assembly
    ;;    ?
    (list
-    (as3-asm::symbol-to-qname-list name)
+    (avm2-asm::symbol-to-qname-list name)
     0                                ;; name in method struct?
     (loop for i in args collect 0)   ;; arg types, 0 = t/*/any
     0 0                              ;; return type = any, flags = 0
@@ -47,14 +47,14 @@
    ))
 
 ;;(format t "~{~s~%~}" (sixth (find-swf-function 'floor)))
-;;(format t "~{~s~%~}" (as3-asm::as3-disassemble (as3-asm:assemble (sixth (find-swf-function 'random)))))
+;;(format t "~{~s~%~}" (avm2-asm::avm2-disassemble (avm2-asm:assemble (sixth (find-swf-function 'random)))))
 
 (defun old-%swf-defun (name args body &key method constructor)
   (when (symbolp name)
-    (setf name (as3-asm::symbol-to-qname name)))
+    (setf name (avm2-asm::symbol-to-qname name)))
   (with-lambda-context (:args args)
     (let* ((mid
-            (as3-asm::as3-method 0
+            (avm2-asm::avm2-method 0
                                  (loop for i in args collect 0 ) ;; 0 = * (any type)
                                  0 0
                                  :body

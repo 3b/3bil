@@ -1,4 +1,4 @@
-(in-package :as3-compiler)
+(in-package :avm2-compiler)
 
 ;;;; misc low level operators, mostly just renaming asm opcodes
 ;;; might not actually need most of these now, use %asm instead?

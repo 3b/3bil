@@ -1,6 +1,6 @@
-(in-package :as3-asm)
+(in-package :avm2-asm)
 
-;;;; simple peephole optimizer for as3 asm, to handle some obvious cases
+;;;; simple peephole optimizer for avm2 asm, to handle some obvious cases
 ;;;; of redundant code in the compiler
 ;;;; ex. (peephole '((:pushnull) (:pop))) -> ()
 
@@ -20,7 +20,7 @@
 
 
 (defun peephole (forms)
-  "as3 asm peephole optimizer, pass in list of asm forms, returns
+  "avm2 asm peephole optimizer, pass in list of asm forms, returns
 optimized version"
   ;; quick hack peephole optimizer, for simple stuff like pushnull+pop, etc
   ;;  get/setlocal 1

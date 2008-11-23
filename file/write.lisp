@@ -1,4 +1,4 @@
-(in-package :as3-compiler)
+(in-package :avm2-compiler)
 
 ;;; code to write out abc tag/hard coded simple .swf file to seekable
 ;;; stream or file
@@ -84,43 +84,43 @@
 
 (defgeneric write-generic (data &optional *standard-output*))
 
-(defmethod write-generic ((trait as3-asm::trait-info) &optional (*standard-output* *standard-output*))
+(defmethod write-generic ((trait avm2-asm::trait-info) &optional (*standard-output* *standard-output*))
   #+nil(format *trace-output* "trait-data : ~s ~s~%"
-          (as3-asm::name trait)
-           (as3-asm::trait-data trait))
-  (write-u30 (as3-asm::name trait))
-  (write-generic (as3-asm::trait-data trait))
-  (when (not (zerop (logand #x40 (as3-asm::kind (as3-asm::trait-data trait)))))
-    (write-counted-sequence 'write-u30 (as3-asm::metadata trait))))
+          (avm2-asm::name trait)
+           (avm2-asm::trait-data trait))
+  (write-u30 (avm2-asm::name trait))
+  (write-generic (avm2-asm::trait-data trait))
+  (when (not (zerop (logand #x40 (avm2-asm::kind (avm2-asm::trait-data trait)))))
+    (write-counted-sequence 'write-u30 (avm2-asm::metadata trait))))
 
-(defmethod write-generic ((td as3-asm::trait-data-slot/const) &optional (*standard-output* *standard-output*))
+(defmethod write-generic ((td avm2-asm::trait-data-slot/const) &optional (*standard-output* *standard-output*))
   #+nil(format *trace-output* "trait-data-slot/const :~s ~s ~s ~s ~s~%"
-          (as3-asm::kind td)
-          ( as3-asm::slot-id td)
-          ( as3-asm::type-name td)
-          (as3-asm::vindex td)
-          (as3-asm::vkind td))
-  (write-u8 (as3-asm::kind td))
-  (write-u30 (as3-asm::slot-id td))
-  (write-u30 (as3-asm::type-name td))
-  (write-u30 (as3-asm::vindex td))
-  (unless (zerop (as3-asm::vindex td)) 
-    (write-u8 (as3-asm::vkind td))))
+          (avm2-asm::kind td)
+          ( avm2-asm::slot-id td)
+          ( avm2-asm::type-name td)
+          (avm2-asm::vindex td)
+          (avm2-asm::vkind td))
+  (write-u8 (avm2-asm::kind td))
+  (write-u30 (avm2-asm::slot-id td))
+  (write-u30 (avm2-asm::type-name td))
+  (write-u30 (avm2-asm::vindex td))
+  (unless (zerop (avm2-asm::vindex td)) 
+    (write-u8 (avm2-asm::vkind td))))
 
-(defmethod write-generic ((td as3-asm::trait-data-class) &optional (*standard-output* *standard-output*))
-  (write-u8 (as3-asm::kind td))
-  (write-u30 (as3-asm::slot-id td))
-  (write-u30 (as3-asm::classi td)))
+(defmethod write-generic ((td avm2-asm::trait-data-class) &optional (*standard-output* *standard-output*))
+  (write-u8 (avm2-asm::kind td))
+  (write-u30 (avm2-asm::slot-id td))
+  (write-u30 (avm2-asm::classi td)))
 
-(defmethod write-generic ((td as3-asm::trait-data-function) &optional (*standard-output* *standard-output*))
-  (write-u8 (as3-asm::kind td))
-  (write-u30 (as3-asm::slot-id td))
-  (write-u30 (as3-asm::fn td)))
+(defmethod write-generic ((td avm2-asm::trait-data-function) &optional (*standard-output* *standard-output*))
+  (write-u8 (avm2-asm::kind td))
+  (write-u30 (avm2-asm::slot-id td))
+  (write-u30 (avm2-asm::fn td)))
 
-(defmethod write-generic ((td as3-asm::trait-data-method/get/set) &optional (*standard-output* *standard-output*))
-  (write-u8 (as3-asm::kind td))
-  (write-u30 (as3-asm::slot-id td))
-  (write-u30 (as3-asm::method-id td)))
+(defmethod write-generic ((td avm2-asm::trait-data-method/get/set) &optional (*standard-output* *standard-output*))
+  (write-u8 (avm2-asm::kind td))
+  (write-u30 (avm2-asm::slot-id td))
+  (write-u30 (avm2-asm::method-id td)))
 
 
 (defun write-namespace (namespace &optional (stream *standard-output*))
@@ -182,7 +182,7 @@
     (write-u30 name)
     (write-u30 super-name)
     (write-u8 flags)
-    (when (not (zerop (logand flags as3-asm::+class-protected-ns+)))
+    (when (not (zerop (logand flags avm2-asm::+class-protected-ns+)))
       (write-u30 protected-ns))
     (write-counted-sequence 'write-u30 interfaces)
     (write-u30 iinit)
@@ -205,32 +205,32 @@
   (write-counted-sequence 'write-generic (cdr script)))
 
 (defun write-method-body (method-body &optional (*standard-output* *standard-output*))
-  (write-u30 (as3-asm::method-id method-body))
-  (write-u30 (as3-asm::max-stack method-body))
-  (write-u30 (1+ (as3-asm::local-count method-body)))
-  (write-u30 (as3-asm::init-scope-depth method-body))
-  (write-u30 (as3-asm::max-scope-depth method-body))
-  (write-counted-sequence 'write-u8 (as3-asm::code method-body))
-  (write-counted-sequence 'write-generic (as3-asm::exceptions method-body))
-  (write-counted-sequence 'write-generic (as3-asm::traits method-body)))
+  (write-u30 (avm2-asm::method-id method-body))
+  (write-u30 (avm2-asm::max-stack method-body))
+  (write-u30 (1+ (avm2-asm::local-count method-body)))
+  (write-u30 (avm2-asm::init-scope-depth method-body))
+  (write-u30 (avm2-asm::max-scope-depth method-body))
+  (write-counted-sequence 'write-u8 (avm2-asm::code method-body))
+  (write-counted-sequence 'write-generic (avm2-asm::exceptions method-body))
+  (write-counted-sequence 'write-generic (avm2-asm::traits method-body)))
 
-(defmethod write-generic ((ei as3-asm::exception-info) &optional (*standard-output* *standard-output*))
-  (write-u30 (as3-asm::from ei))
-  (write-u30 (as3-asm::to ei))
-  (write-u30 (as3-asm::target ei))
-  (write-u30 (as3-asm::exc-type ei))
-  (write-u30 (as3-asm::var-name ei)))
+(defmethod write-generic ((ei avm2-asm::exception-info) &optional (*standard-output* *standard-output*))
+  (write-u30 (avm2-asm::from ei))
+  (write-u30 (avm2-asm::to ei))
+  (write-u30 (avm2-asm::target ei))
+  (write-u30 (avm2-asm::exc-type ei))
+  (write-u30 (avm2-asm::var-name ei)))
 
 
 
-(defun write-abc-file (&optional (data as3-asm::*assembler-context*) (*standard-output* *standard-output*))
+(defun write-abc-file (&optional (data avm2-asm::*assembler-context*) (*standard-output* *standard-output*))
   (with-accessors
-        ((ints as3-asm::ints) (uints as3-asm::uints) (doubles as3-asm::doubles)
-         (strings as3-asm::strings) (namespaces as3-asm::namespaces)
-         (ns-sets as3-asm::ns-sets) (multinames as3-asm::multinames)
-         (method-infos as3-asm::method-infos) (metadata as3-asm::metadata)
-         (classes as3-asm::classes) (instances as3-asm::instances)
-         (scripts as3-asm::scripts) (method-bodies as3-asm::method-bodies))
+        ((ints avm2-asm::ints) (uints avm2-asm::uints) (doubles avm2-asm::doubles)
+         (strings avm2-asm::strings) (namespaces avm2-asm::namespaces)
+         (ns-sets avm2-asm::ns-sets) (multinames avm2-asm::multinames)
+         (method-infos avm2-asm::method-infos) (metadata avm2-asm::metadata)
+         (classes avm2-asm::classes) (instances avm2-asm::instances)
+         (scripts avm2-asm::scripts) (method-bodies avm2-asm::method-bodies))
       data
 
     (write-u16 16) ;minor version
@@ -319,7 +319,7 @@
     (write-0-terminated-string frame-label stream))
 
   ;; AS3 tag
-  (write-as3-tag as3-asm::*assembler-context* "frame" stream)
+  (write-as3-tag avm2-asm::*assembler-context* "frame" stream)
   ;; SymbolClass tag, tag=76 length=8
   ;;(write-u16 #x1308 stream) ;;tag+length
   ;;   NumSymbols=#x0001 Tag[1] = #x0000 Name[1]="foo"#x0
@@ -355,19 +355,19 @@
 
 (defun new-class+scopes (class-id)
   ;; fixme: allow class lookup instead of using class-id directly?
-  #+nil(format t "cid = ~a classes=~s~%" class-id (as3-asm::classes as3-asm::*assembler-context*))
-  #+nil(format t " instances = ~s~%" (as3-asm::instances as3-asm::*assembler-context*))
-  (let* ((class (aref (as3-asm::classes as3-asm::*assembler-context*) class-id))
-         (inst (aref (as3-asm::instances as3-asm::*assembler-context*) class-id)))
+  #+nil(format t "cid = ~a classes=~s~%" class-id (avm2-asm::classes avm2-asm::*assembler-context*))
+  #+nil(format t " instances = ~s~%" (avm2-asm::instances avm2-asm::*assembler-context*))
+  (let* ((class (aref (avm2-asm::classes avm2-asm::*assembler-context*) class-id))
+         (inst (aref (avm2-asm::instances avm2-asm::*assembler-context*) class-id)))
     (declare (ignorable class))
     (destructuring-bind (name-mn super-mn flags interfaces instance-init traits protected-ns)
         inst
       (declare (ignorable name-mn super-mn flags interfaces instance-init traits protected-ns))
       #+nil(format t "cid = ~a name-mn = ~a=~a  super-mn = ~a=~a ~%"
-              class-id name-mn (as3-asm::qname-string name-mn)
-              super-mn (as3-asm::qname-string super-mn))
-      ;;(format t " supers = ~s~%" (reverse (super-names (as3-asm::qname-string super-mn))))
-      (let ((supers (reverse (super-names (as3-asm::qname-string super-mn)))))
+              class-id name-mn (avm2-asm::qname-string name-mn)
+              super-mn (avm2-asm::qname-string super-mn))
+      ;;(format t " supers = ~s~%" (reverse (super-names (avm2-asm::qname-string super-mn))))
+      (let ((supers (reverse (super-names (avm2-asm::qname-string super-mn)))))
         `((:get-scope-object 0)
           ,@(loop for i in supers
                append (push-lex-scope i))
@@ -383,32 +383,32 @@
   #+nil(format t "--assemble-function ~s :~%" name)
   (destructuring-bind (n nid argtypes return-type flags asm)
       (find-swf-function name)
-    (let ((mid (as3-asm::as3-method nid argtypes return-type flags
-                                    :body (as3-asm::assemble-method-body asm))))
+    (let ((mid (avm2-asm::avm2-method nid argtypes return-type flags
+                                    :body (avm2-asm::assemble-method-body asm))))
       (push (list n mid) (function-names *compiler-context*)))))
 
 (defun assemble-class (name ns super properties constructor)
-  (let* ((constructor-mid (as3-asm::as3-method
+  (let* ((constructor-mid (avm2-asm::avm2-method
                            0 ;; name
                            (loop for i in (first constructor)
                               collect 0) ;; constructor arg types
                            0 0
                            :body
-                           (as3-asm::assemble-method-body
+                           (avm2-asm::assemble-method-body
                             (%compile-defun (first constructor)
                                             (second constructor) t t))))
          ;; fixme: probably should make this configurable at some point
-         (class-init (as3-asm::as3-method 0 nil 0 0 ;; meta-class init
+         (class-init (avm2-asm::avm2-method 0 nil 0 0 ;; meta-class init
                                           :body
-                                          (as3-asm::assemble-method-body
+                                          (avm2-asm::assemble-method-body
                                            `((:get-local-0)
                                              (:push-scope)
                                              (:return-void))
                                            :init-scope 0)))
-         (junk (as3-asm::as3-ns-intern ns))
-         (class (as3-asm::as3-class
-                 (as3-asm::asm-intern-multiname name)
-                 (as3-asm::asm-intern-multiname
+         (junk (avm2-asm::avm2-ns-intern ns))
+         (class (avm2-asm::avm2-class
+                 (avm2-asm::asm-intern-multiname name)
+                 (avm2-asm::asm-intern-multiname
                   (or (car (find-swf-class super))
                       super))
                  ;; todo: add interfaces
@@ -417,15 +417,15 @@
                  (loop for i in properties
                     collect
                       (make-instance
-                       'as3-asm::trait-info
-                       'as3-asm::name (as3-asm::asm-intern-multiname i)
-                       'as3-asm::trait-data
-                       (make-instance 'as3-asm::trait-data-slot/const
-                                                    'as3-asm::kind 0
-                                                    'as3-asm::slot-id 0 ;; auto-assign
-                                                    'as3-asm::type-name 0 ;; */t
-                                                    'as3-asm::vindex 0 ;; no value
-                                                    'as3-asm::vkind 0 ;; no value
+                       'avm2-asm::trait-info
+                       'avm2-asm::name (avm2-asm::asm-intern-multiname i)
+                       'avm2-asm::trait-data
+                       (make-instance 'avm2-asm::trait-data-slot/const
+                                                    'avm2-asm::kind 0
+                                                    'avm2-asm::slot-id 0 ;; auto-assign
+                                                    'avm2-asm::type-name 0 ;; */t
+                                                    'avm2-asm::vindex 0 ;; no value
+                                                    'avm2-asm::vkind 0 ;; no value
                                                     )))
                  class-init
                  :protected-ns junk
@@ -442,12 +442,12 @@
   (let ((script-init (gensym))
         (i (gensym)))
 
-    `(let ((as3-asm::*assembler-context* (make-instance 'as3-asm::assembler-context))
+    `(let ((avm2-asm::*assembler-context* (make-instance 'avm2-asm::assembler-context))
            (*compiler-context* (make-instance 'compiler-context))
            (*symbol-table* (make-instance 'symbol-table :inherit (list *cl-symbol-table*))))
        ;; fixme: add these to assembler-context constructor or something
-       (as3-asm::as3-intern "")
-       (as3-asm::as3-ns-intern "")
+       (avm2-asm::avm2-intern "")
+       (avm2-asm::avm2-ns-intern "")
        #+nil(format t "==-== body~%")
        ;; compile the body code
        ,@body
@@ -472,13 +472,13 @@
        #+nil(format t "==-== boilerplate~%")
        ;; script boilerplate
        (let ((,script-init
-              (as3-asm::as3-method
+              (avm2-asm::avm2-method
                0 () 0 0
                :body
-               (as3-asm::assemble-method-body
+               (avm2-asm::assemble-method-body
                 `((:get-local-0)
                   (:push-scope)
-                  ,@(loop for ,i below (length (as3-asm::classes as3-asm::*assembler-context*))
+                  ,@(loop for ,i below (length (avm2-asm::classes avm2-asm::*assembler-context*))
                        append (new-class+scopes ,i))
                   (:return-void))))))
          #+nil(format t "==-== boilerplate2~%")
@@ -486,24 +486,24 @@
           `(,,script-init
             ,@(loop for i in (class-names *compiler-context*)
                  ;;do (format t "-=c-~s~%" i)
-                 collect (make-instance 'as3-asm::trait-info
-                                        'as3-asm::name
-                                        (as3-asm::asm-intern-multiname (first i))
-                                        'as3-asm::trait-data
-                                        (make-instance 'as3-asm::trait-data-class
-                                                       'as3-asm::slot-id 0
-                                                       'as3-asm::classi (second i))))
+                 collect (make-instance 'avm2-asm::trait-info
+                                        'avm2-asm::name
+                                        (avm2-asm::asm-intern-multiname (first i))
+                                        'avm2-asm::trait-data
+                                        (make-instance 'avm2-asm::trait-data-class
+                                                       'avm2-asm::slot-id 0
+                                                       'avm2-asm::classi (second i))))
             ,@(loop for i in (function-names *compiler-context*)
                  ;;do (format t "-=f-~s~%" i)
-                 collect (make-instance 'as3-asm::trait-info
-                                        'as3-asm::name
+                 collect (make-instance 'avm2-asm::trait-info
+                                        'avm2-asm::name
                                         (if (numberp (first i))
                                             (first i)
-                                            (as3-asm::asm-intern-multiname (first i)))
-                                        'as3-asm::trait-data (make-instance 'as3-asm::trait-data-method/get/set
-                                                                            'as3-asm::slot-id 0
-                                                                            'as3-asm::method (second i)))))
-          (as3-asm::scripts as3-asm::*assembler-context*)))
+                                            (avm2-asm::asm-intern-multiname (first i)))
+                                        'avm2-asm::trait-data (make-instance 'avm2-asm::trait-data-method/get/set
+                                                                            'avm2-asm::slot-id 0
+                                                                            'avm2-asm::method (second i)))))
+          (avm2-asm::scripts avm2-asm::*assembler-context*)))
 
        (when *break-compile* (break))
        #+nil(format t "==-== write~%")

@@ -1,4 +1,4 @@
-(in-package :as3-compiler)
+(in-package :avm2-compiler)
 
 ;;; top level globals/static/whatever functions that didn't get added by the
 ;;; automatic reflection stuff in player-class-decl.lisp

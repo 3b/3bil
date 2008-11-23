@@ -1,4 +1,4 @@
-(in-package :as3-compiler)
+(in-package :avm2-compiler)
 ;;; sample from old version. works but needs more refactoring
 
 (define-special %to-double (a)

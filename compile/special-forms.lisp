@@ -1,4 +1,4 @@
-(in-package :as3-compiler)
+(in-package :avm2-compiler)
 
 ;;;; special forms (and probably some things that are techically
 ;;;; macros/functions according to CL, but implemented directly here
@@ -163,7 +163,7 @@
 
 ;; (with-lambda-context () (scompile '(tagbody foo (go baz) bar 1 baz 2)))
 
-#+nil(define-special %when (cond label)
+(define-special %when (cond label)
   ;; (%when cond label)
   `(,@(scompile cond)
       (:if-true ,label)
@@ -200,7 +200,7 @@
 (define-special if (cond true-branch false-branch)
   `(,@(scompile `(%if ,cond :if-false ,true-branch ,false-branch))))
 
-;; (as3-asm::with-assembler-context (as3-asm::code (as3-asm:assemble-method-body (scompile '(when :true 1)) )))
+;; (avm2-asm::with-assembler-context (avm2-asm::code (avm2-asm:assemble-method-body (scompile '(when :true 1)) )))
 
 
 (define-special %inc-local-i (var)
@@ -446,10 +446,10 @@ call with %flet-call, which sets up hidden return label arg
 
 
 #+nil
-(as3-asm::as3-disassemble
- (as3-asm::code
-  (as3-asm::with-assembler-context
-    (as3-asm::assemble-method-body
+(avm2-asm::avm2-disassemble
+ (avm2-asm::code
+  (avm2-asm::with-assembler-context
+    (avm2-asm::assemble-method-body
      (with-simple-lambda-context ()
        (append
         '((:%label foo))
@@ -460,10 +460,10 @@ call with %flet-call, which sets up hidden return label arg
 
 
 #+nil
-(as3-asm::as3-disassemble
- (as3-asm::code
-  (as3-asm::with-assembler-context
-    (as3-asm::assemble-method-body
+(avm2-asm::avm2-disassemble
+ (avm2-asm::code
+  (avm2-asm::with-assembler-context
+    (avm2-asm::assemble-method-body
 (dump-defun-asm () (let ((s2 "<"))
                           (block foo
                             (unwind-protect

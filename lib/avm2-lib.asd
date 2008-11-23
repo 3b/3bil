@@ -1,6 +1,6 @@
 
-(asdf:defsystem :as3-lib
-           :depends-on ("as3-compile")
+(asdf:defsystem :avm2-lib
+           :depends-on ("avm2-compile")
            :components ((:file "library-packages")
                         (:file "player-class-decl")
                         (:file "player-classes")

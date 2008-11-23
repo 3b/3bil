@@ -1,4 +1,4 @@
-(in-package :as3-compiler)
+(in-package :avm2-compiler)
 
 ;; wrapping the whole file in a let makes it take too long to compile, so
 ;;; we save and restore *symbol-table* for now

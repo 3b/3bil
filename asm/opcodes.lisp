@@ -1,16 +1,16 @@
-(in-package :as3-asm)
+(in-package :avm2-asm)
 
 (defun runtime-name-count (index)
   "some opcodes need extra args when passed a runtime multiname, check
 for that here and return count of extra args"
-  (let* ((mn (aref (as3-asm::multinames as3-asm::*assembler-context*) index))
+  (let* ((mn (aref (avm2-asm::multinames avm2-asm::*assembler-context*) index))
          (kind (car mn)))
     (cond
-      ((or (= kind as3-asm::+rt-qname+)
-           (= kind as3-asm::+rt-qname-a+))
+      ((or (= kind avm2-asm::+rt-qname+)
+           (= kind avm2-asm::+rt-qname-a+))
        1)
-      ((or (= kind as3-asm::+rt-qname-l+)
-           (= kind as3-asm::+rt-qname-la+))
+      ((or (= kind avm2-asm::+rt-qname-l+)
+           (= kind avm2-asm::+rt-qname-la+))
        2)
       (t 0))))
 
@@ -174,7 +174,7 @@ for that here and return count of extra args"
 
 
 #+nil(format t "~{ ~x ~}~% "
-             (as3-asm:assemble '((get-local-0)
+             (avm2-asm:assemble '((get-local-0)
                                  (push-scope)
                                  (return-void))))
 ;; D0 30 47
@@ -183,8 +183,8 @@ for that here and return count of extra args"
 #+nil
 (let ((*assembler-context* (make-instance 'assembler-context)))
   ;; intern some names so the code compiles
-  (as3-intern "")
-  (as3-ns-intern "")
+  (avm2-intern "")
+  (avm2-ns-intern "")
   (qname "a" "b")
   (qname "b" "b")
   (qname "c" "b")
@@ -216,8 +216,8 @@ for that here and return count of extra args"
 #+nil
 (let ((*assembler-context* (make-instance 'assembler-context)))
    ;; intern some names so the code compiles
-   (as3-intern "")
-   (as3-ns-intern "")
+   (avm2-intern "")
+   (avm2-ns-intern "")
    (qname "a" "b")
    (qname "b" "b")
    (qname "c" "b")
@@ -247,15 +247,15 @@ for that here and return count of extra args"
 #+nil
 (let ((*assembler-context* (make-instance 'assembler-context)))
    ;; intern some names so the code compiles
-   (as3-intern "")
-   (as3-ns-intern "")
+   (avm2-intern "")
+   (avm2-ns-intern "")
    (qname "a" "b")
    (qname "b" "b")
    (qname "c" "b")
    (qname "d" "b")
    (qname "e" "b")
    (format t "~{ ~s~%~}~% "
-           (as3-disassemble
+           (avm2-disassemble
             (assemble '((:get-local-0)
                         (:push-scope)
                         (:get-local-0)
@@ -280,7 +280,7 @@ for that here and return count of extra args"
 
 #+nil
 (format t "~{ ~s~%~}"
-        (as3-disassemble #(#xD0 #x30 #xD0 #x49 #x00 #x5D #x03 #x4A #x03 #x00
+        (avm2-disassemble #(#xD0 #x30 #xD0 #x49 #x00 #x5D #x03 #x4A #x03 #x00
                            #x80 #x03 #xD5 #xD1 #x2C #x07 #x2C #x07 #xA0 #x61
                            #x04 #x5D #x05 #xD1 #x4F #x05 #x01 #x47)))
 
@@ -306,6 +306,6 @@ for that here and return count of extra args"
 
 #+nil
 (format t "~{ ~s~%~}"
-        (as3-disassemble
+        (avm2-disassemble
          #( #xD0 #x30 #xD0 #x49 #x00 #x5D #x03 #x4A #x03 #x00 #x80 #x03 #xD5 #xD1 #x2C #x07 #x2C #x07 #xA0 #x61 #x04 #x5D #x05 #xD1 #x4F #x05 #x01 #x47)
 ))

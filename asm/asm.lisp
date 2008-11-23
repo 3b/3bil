@@ -1,4 +1,4 @@
-(in-package :as3-asm)
+(in-package :avm2-asm)
 
 
 ;;; for now just using keywords as opcode names...
@@ -185,7 +185,7 @@
 (decode-variable-length '(#b1))          ; 1
 (decode-variable-length '(#b10010110 #b11))
 
-(defun as3-disassemble (sequence &key (start 0))
+(defun avm2-disassemble (sequence &key (start 0))
   (loop
      for length = (length sequence)
      with op = nil
@@ -241,12 +241,12 @@
                 (aref (,pool *assembler-context*) value)
                 (list :id value))))))
 
-  (make-interner asm-intern-string lookup-string as3-string strings)
-  ;; fixme: as3-intern-* can break if first thing interned is wrong type
-  (make-interner asm-intern-int lookup-int as3-intern-int ints)
-  (make-interner asm-intern-uint lookup-uint as3-intern-uint uints)
-  (make-interner asm-intern-double lookup-double as3-intern-double doubles)
-  (make-interner asm-intern-namespace lookup-namespace as3-ns-intern namespaces))
+  (make-interner asm-intern-string lookup-string avm2-string strings)
+  ;; fixme: avm2-intern-* can break if first thing interned is wrong type
+  (make-interner asm-intern-int lookup-int avm2-intern-int ints)
+  (make-interner asm-intern-uint lookup-uint avm2-intern-uint uints)
+  (make-interner asm-intern-double lookup-double avm2-intern-double doubles)
+  (make-interner asm-intern-namespace lookup-namespace avm2-ns-intern namespaces))
 ;; (asm-intern-string "foo")
 ;; (asm-intern-string '(:id 2))
 ;; (asm-intern-string :id)
@@ -292,7 +292,7 @@
     (if (eql package (find-package :keyword))
         (setf package "")
         (setf package (string-downcase (or (package-name package) ""))))
-    (values (as3-asm::qname package sym) sym)))
+    (values (avm2-asm::qname package sym) sym)))
 
 (defun asm-intern-multiname (mn)
   (typecase mn
