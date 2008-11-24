@@ -45,6 +45,11 @@
          when (find-swf-property symbol i)
          return it)))
 
+(defun add-swf-property (symbol swf-name &optional (s *symbol-table*))
+  (pushnew swf-name
+           (gethash symbol (properties s) (list))
+           :test 'string=))
+
 (defun find-swf-function (symbol &optional (s *symbol-table*))
   (or (car (gethash symbol (functions s)))
       (loop for i in (inherited-symbol-tables s)

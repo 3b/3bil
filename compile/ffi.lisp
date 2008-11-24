@@ -27,10 +27,7 @@
           append (destructuring-bind (pname &key swf-name type access declared-by) i
                      (declare (ignore access type))
                      (if (eql declared-by class-name)
-                         `((pushnew ,swf-name
-                                    (gethash ',pname (properties *symbol-table*)
-                                             (list))
-                                    :test 'string=))
+                         `(add-swf-property ,swf-name ',pname)
                          nil)))
      ;; store methods
      ,@(loop for i in methods
