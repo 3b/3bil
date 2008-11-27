@@ -6,6 +6,13 @@
 
 (let ((*symbol-table* *cl-symbol-table*))
 
+  ;; partial implementation of setf, only handles setting local vars,
+  ;;  so we can start using it while waiting on real implementation
+  (swf-defmacro setf (&rest args)
+    `(progn
+       ,@(loop for (var value) on args by #'cddr
+            collect `(%set-local ,var ,value))))
+
   (swf-defmemfun random (a)
     ;;todo: return int for int args
     ;;fixme: don't seem to be able to set seeds, so can't do random-state arg
@@ -72,7 +79,7 @@
 
 
   (swf-defmacro incf (place &optional (delta 1))
-    `(%set-local ,place (+ ,place ,delta)))
+    `(setf ,place (+ ,place ,delta)))
 
   (swf-defmemfun zerop (x)
     (eql x 0))

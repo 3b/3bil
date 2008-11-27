@@ -30,7 +30,7 @@
                1
                (unwind-protect
                     (if :true (return-from foo "-ret-") 4)
-                 (%set-local s2 (+ s2 "uwp")))
+                 (setf s2 (+ s2 "uwp")))
                2)
              (+ s2 ">")))
 
@@ -41,7 +41,7 @@
                         (progn
                           (return-from foo "-ret-")
                           "bleh")
-                     (%set-local s2 (+ s2 123))))))
+                     (setf s2 (+ s2 123))))))
         (+ s2 s3 ">")))
 
     (swf-defmemfun cons-test ()
@@ -54,12 +54,12 @@
       (let ((temp ""))
         (dolist (a (cons "a" (cons "b" (cons "c" nil)))
                  temp)
-          (%set-local temp (+ temp (:to-string a))))))
+          (setf temp (+ temp (:to-string a))))))
 
     (swf-defmemfun dotimes-test ()
       (let ((temp "{"))
-        (%set-local temp (+ (dotimes (a 5 temp)
-                              (%set-local temp (+ temp a)))
+        (setf temp (+ (dotimes (a 5 temp)
+                              (setf temp (+ temp a)))
                             "}"))))
 
     (swf-defmemfun rest-test (a b c &arest d)
@@ -118,87 +118,87 @@
         (%set-property foo :background :true)
         (%set-property foo :background-color (rgba 0.1 0.1 0.1 0.1))
         (let ((str "abc..."))
-          (%set-local str (+ str (flash::string.from-char-code 26085)))
-          (%set-local str (+ str (flash::string.from-char-code 26412)))
-          (%set-local str (+ str (flash::string.from-char-code #x8a9e)))
+          (setf str (+ str (flash::string.from-char-code 26085)))
+          (setf str (+ str (flash::string.from-char-code 26412)))
+          (setf str (+ str (flash::string.from-char-code #x8a9e)))
           (let ((cc (cons 0 2)))
-            (%set-local str (+ str (cons 2 3)))
-            (%set-local str (+ str "=(" (car cc) " " (cdr cc) ")"))
-            (%set-local str (+ str " || car(nil)=" (car nil)))
-            (%set-local str (+ str " || %typeof=" (%type-of cc)))
-            (%set-local str (+ str " || %typep...=" (%typep cc cons-type)))
-            (%set-local str (+ str " || %typep.1.=" (%typep 1 cons-type)))
-            (%set-local str (+ str " || case="
+            (setf str (+ str (cons 2 3)))
+            (setf str (+ str "=(" (car cc) " " (cdr cc) ")"))
+            (setf str (+ str " || car(nil)=" (car nil)))
+            (setf str (+ str " || %typeof=" (%type-of cc)))
+            (setf str (+ str " || %typep...=" (%typep cc cons-type)))
+            (setf str (+ str " || %typep.1.=" (%typep 1 cons-type)))
+            (setf str (+ str " || case="
                                (case (car cc)
                                  (1 "-1-")
                                  (0 "-0-")
                                  (2 "-2-")
                                  (otherwise "-t-")
                                  )))
-            (%set-local str (+ str " || case2="
+            (setf str (+ str " || case2="
                                (case (cdr cc)
                                  (1 "-1-")
                                  (0 "-0-")
                                  (2 "-2-"))))
-            (%set-local str (+ str " || block="
+            (setf str (+ str " || block="
                                (block foo
                                  1
                                  (if t (return-from foo "-ret-") 4)
                                  2)))
-            (%set-local str (+ str " uwp=" (uwp-test)))
-            (%set-local str (+ str " || cons=" (cons-test)))
-            (%set-local str (+ str " || %flet=" (flet-test1)))
-            ;;(%set-local str (+ str " %flet=" (flet-test2 "a" "b" "c")))
-            ;;(%set-local str (+ str " cdr(1)=" (cdr 1)))
-            (%set-local str (+ str " || <" (if (car :null) "t" "f") ">"))
-            (%set-local str (+ str " || typecase 123="
+            (setf str (+ str " uwp=" (uwp-test)))
+            (setf str (+ str " || cons=" (cons-test)))
+            (setf str (+ str " || %flet=" (flet-test1)))
+            ;;(setf str (+ str " %flet=" (flet-test2 "a" "b" "c")))
+            ;;(setf str (+ str " cdr(1)=" (cdr 1)))
+            (setf str (+ str " || <" (if (car :null) "t" "f") ">"))
+            (setf str (+ str " || typecase 123="
                                (typecase 123
                                  (cons-type "-cons-")
                                  (:int "-:int-")
                                  (otherwise "-t-"))))
-            (%set-local str (+ str " || typecase cons="
+            (setf str (+ str " || typecase cons="
                                (typecase cc
                                  (cons-type "-cons-")
                                  (otherwise "-t-"))))
-            (%set-local str (+ str " || when t ="
+            (setf str (+ str " || when t ="
                                (when t "-t-")))
-            (%set-local str (+ str " || when nil ="
+            (setf str (+ str " || when nil ="
                                (when nil "-t-")))
-            (%set-local str (+ str " || unless t ="
+            (setf str (+ str " || unless t ="
                                (unless t "-t-")))
-            (%set-local str (+ str " || unless nil ="
+            (setf str (+ str " || unless nil ="
                                (unless nil "-t-")))
-            (%set-local str (+ str " || and ="
+            (setf str (+ str " || and ="
                                (and)))
-            (%set-local str (+ str " || and t ="
+            (setf str (+ str " || and t ="
                                (and "t")))
-            (%set-local str (+ str " || and t nil ="
+            (setf str (+ str " || and t nil ="
                                (and "t" nil)))
-            (%set-local str (+ str " || and nil t ="
+            (setf str (+ str " || and nil t ="
                                (and nil "t")))
-            (%set-local str (+ str " || and t t ="
+            (setf str (+ str " || and t t ="
                                (and "t1" "t2")))
-            (%set-local str (+ str " || or ="
+            (setf str (+ str " || or ="
                                (or)))
-            (%set-local str (+ str " || or t ="
+            (setf str (+ str " || or t ="
                                (or "t")))
-            (%set-local str (+ str " || or t nil ="
+            (setf str (+ str " || or t nil ="
                                (or "t" nil)))
-            (%set-local str (+ str " || or nil t ="
+            (setf str (+ str " || or nil t ="
                                (or nil "t")))
-            (%set-local str (+ str " || or t t ="
+            (setf str (+ str " || or t t ="
                                (or "t1" "t2")))
-            (%set-local str (+ str " || cond="
+            (setf str (+ str " || cond="
                                (cond
                                  ((eq 1 cc) "-foo-")
                                  ((> 3 2) "-3>2-")
                                  (nil "-nil-")
                                  (t "-t-"))))
             (let ((c2 (cons "a" (cons "b" nil))))
-              (%set-local str (+ str " || pop1 =" (pop c2)))
-              (%set-local str (+ str " || pop2 = (" (car c2) " . " (cdr c2) ")"))
+              (setf str (+ str " || pop1 =" (pop c2)))
+              (setf str (+ str " || pop2 = (" (car c2) " . " (cdr c2) ")"))
 )
-            (%set-local str (+ str " || dolist=" (dolist-test)))
+            (setf str (+ str " || dolist=" (dolist-test)))
             (incf str (+ " || dotimes=" (dotimes-test)))
             ;;(dotimes (a 5) (incf str a))
             (incf str (+ " || nth (0 1 2 3 4) 3=" (nth 3 (list 0 1 2 3 4))))

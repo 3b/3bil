@@ -122,6 +122,7 @@
 ;; (with-lambda-context (foo) (scompile '(%set-local foo 2.3)))
 
 (define-special %asm (&rest cdr)
+  ;; todo: add a version (or option?) to compile args, so we don't need to guess local indices, or compile them by hand
   ;; (%asm (op1 args) (op2 ...) ... )
   (copy-list cdr))
 
@@ -454,10 +455,6 @@ call with %flet-call, which sets up hidden return label arg
     ,@(scompile index)
       (:get-property (:multiname-l "" ""))))
 
-;; partial implementation of setf, handles setting 1 local var
-;;  so we can start using it while waiting on real implementation
-(swf-defmacro setf (var value)
-  `(%set-local ,var ,value))
 
 ;;(scompile '(list* 1  2 3 4 5))
 ;;(scompile '(list* 1))

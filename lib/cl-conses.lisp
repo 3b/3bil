@@ -179,28 +179,6 @@
   (swf-defmemfun null (a)
     (eq a nil))
 
-  ;; fixme: add optional count arg
-  (swf-defmemfun last (a)
-      (if (endp a)
-          nil
-          (tagbody
-           :start
-             (unless (consp (cdr a))
-               (return a))
-             (setf a (cdr a))
-             (go :start))))
-
-  (swf-defmemfun nconc (&arest lists)
-    (let* ((a (if (zerop (:length lists))
-                 nil
-                 (aref lists 0)))
-          (end (last a)))
-      (dotimes (i (1- (:length lists)) a)
-        (let ((next (aref lists (1+ i))))
-          (rplacd (last end) next)
-          (setf end next)))))
-  
-  
 )
 
 #+nil

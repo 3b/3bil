@@ -218,7 +218,7 @@
                 (psetq ,@(extract-updates variable-clauses))
                 (go ,start-tag)))))))
 
-  #+nil(defmacro do* (variable-clauses end-test &body body)
+  (swf-defmacro do* (variable-clauses end-test &body body)
     ;; do some syntax checking
     (check-variable-clauses variable-clauses)
     (unless (proper-list-p body)
@@ -238,7 +238,7 @@
                   (return
                     (progn ,@(cdr end-test))))
                 ,@forms
-                (setq ,@(extract-updates variable-clauses))
+                (setf ,@(extract-updates variable-clauses))
                 (go ,start-tag))))))))
 
 

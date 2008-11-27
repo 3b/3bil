@@ -32,7 +32,7 @@
         (when (endp fast) (return  length))
         (when (endp (cdr fast)) (return  (+ length 1)))
         (when (and (eq fast slow) (> length 0)) (return nil))
-        (%set-local fast (cddr fast)))))
+        (setf fast (cddr fast)))))
 
   ;; LISTP in cl-conses
 
@@ -44,9 +44,18 @@
 
   (swf-defmemfun nth (n list)
     (car (dotimes (x n list)
-           (%set-local list (cdr list)))))
+           (setf list (cdr list)))))
 
-  ;; ENDP, NULL, NCONC in cl-conses
+  ;; ENDP, NULL in cl-conses
+  (swf-defmemfun nconc (&arest lists)
+    (let* ((a (if (zerop (:length lists))
+                 nil
+                 (aref lists 0)))
+          (end (last a)))
+      (dotimes (i (1- (:length lists)) a)
+        (let ((next (aref lists (1+ i))))
+          (rplacd (last end) next)
+          (setf end next)))))
 
   ;;Function APPEND
 
@@ -54,7 +63,16 @@
 
   ;;Function BUTLAST, NBUTLAST
 
-  ;; LAST in cl-conses
+  ;; fixme: add optional count arg
+  (swf-defmemfun last (a)
+      (if (endp a)
+          nil
+          (tagbody
+           :start
+             (unless (consp (cdr a))
+               (return a))
+             (setf a (cdr a))
+             (go :start))))
 
   ;;Function LDIFF, TAILP
 

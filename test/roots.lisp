@@ -85,9 +85,9 @@
         (root canvas 200 150 (random 360) 7 1.0 0.005 )))
 
     (swf-defmemfun root (canvas x y angle depth alpha decay)
-      (%set-local alpha (%to-double alpha))
-      (%set-local x (%to-double x))
-      (%set-local y (%to-double y))
+      (setf alpha (%to-double alpha))
+      (setf x (%to-double x))
+      (setf y (%to-double y))
       (let* ((s (* depth 0.5))
              (w (* s 6.0))
              (line-size (* s 0.5))
@@ -97,11 +97,11 @@
                  (color (rgb  (- 0.8 (* v 0.25))
                               0.8
                               (- 0.8 v))))
-            (%set-local alpha (max 0.0 (- alpha (* i decay))))
+            (setf alpha (max 0.0 (- alpha (* i decay))))
 
             ;; stop if alpha gets below 1/256 or so
             (when (> alpha 0.004)
-              (%set-local angle (+ angle (random-range -60 60)))
+              (setf angle (+ angle (random-range -60 60)))
               (let ((dx (+ x (* (cos (radians angle)) w)))
                     (dy (+ y (* (sin (radians angle)) w))))
 
@@ -124,8 +124,8 @@
                 (when (and (> depth 0) (> (random 1.0) 0.85))
                   (root canvas x y (+ angle (random-range -60 60))
                         (1- depth) alpha decay))
-                (%set-local x dx)
-                (%set-local y dy)))))
+                (setf x dx)
+                (setf y dy)))))
 
         (when (and (> depth 0) (> (random 1.0) 0.7))
           (root canvas x y angle (1- depth) alpha decay))))))
