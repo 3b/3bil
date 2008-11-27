@@ -79,6 +79,26 @@
           (incf sum a))
         (+ "[" (/ (- (%new date 0) now) 1000.0) "sec,sum=" sum "]")))
 
+
+    (swf-defmemfun list->str (l)
+      (if (atom l)
+          (:to-string l)
+          (let ((s "("))
+            (tagbody
+             :start
+               (incf s (car l))
+               (setf l (cdr l))
+               (cond
+                 ((null l) (go :end))
+                 ((consp l)
+                  (incf s " ")
+                  (go :start))
+                 (t
+                   (incf s (+ " . " l))
+                   (go :end)))
+             :end)
+            (+ s ")"))))
+
     (swf-defmemfun i255 (a)
       (flash::Math.max (flash::Math.min (floor (* a 256)) 255) 0))
 
@@ -182,13 +202,16 @@
             (incf str (+ " || dotimes=" (dotimes-test)))
             ;;(dotimes (a 5) (incf str a))
             (incf str (+ " || nth (0 1 2 3 4) 3=" (nth 3 (list 0 1 2 3 4))))
+            (incf str (+ " || nthcdr (0 1 2 3 4) 3=" (list->str (nthcdr 3 (list 0 1 2 3 4)))))
+            (incf str (+ " || last (0 1 2 3 4) 3=" (list->str (last (list 0 1 2 3 4)))))
+            (incf str (+ " || last (0 1 . 2) 3=" (list->str (last (cons 0 (cons 1 2))))))
             (incf str (+ " || arest test=" (rest-test 1 2 3 4 5 6 )))
             #+nil(incf str (+ " || space test=" (space-test arg 10000000)))
             #+nil(incf str (+ " || car speed =" (car-speed-test arg 10000000)))
             (let ((foo 4))
               (when (and (> foo 0) (> (random 1.0) 0.2))
                 (incf str "||rand")))
-            )
+            (incf str (+ " || nconc test="  (list->str (nconc (cons 1 2) (cons 3 4))))))
 
           (%set-property foo :text (+ str " || " (%call-property (%array 1 2 3) :to-string))))
         (:add-child arg canvas)
