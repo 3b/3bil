@@ -23,28 +23,54 @@
 (defun %swf-defun (name args body &key method constructor)
   ;; was pushnew, but that makes it hard to work on code (since can't
   ;; redefine things) push isn't quite right either, should replace
-  ;; existing calue or something
+  ;; existing value or something
   ;; (or more likely, just not have a list at all?)
-  (push
-   ;; function data:
-   ;;  swf name in format suitable for passing to asm (string/'(qname...))
-   ;;  args to avm2-method:
-   ;;    name id?
-   ;;    list of arg types (probably all T/* for now)
-   ;;    return type
-   ;;    flags
-   ;;    list of assembly
-   ;;    ?
-   (list
-    (avm2-asm::symbol-to-qname-list name)
-    0                                ;; name in method struct?
-    (loop for i in args collect 0)   ;; arg types, 0 = t/*/any
-    0 0                              ;; return type = any, flags = 0
-    (%compile-defun args body method constructor))
-   (gethash name (functions *symbol-table*) (list))
-   ;;:test 'equal
-   ;;:key 'car
-   ))
+  (flet ((parse-arglist (args)
+           ;; fixme: add error checking, better lambda list parsing
+           (loop with rest = nil
+              with optional = nil
+              for i in args
+              when (eq i '&rest)
+              do
+                (setf rest t)
+                (setf i nil)
+                (setf optional nil)
+              when (eq i '&optional)
+              do
+                (setf optional t)
+                (setf i nil)
+              when (and i (not rest))
+              count 1 into count
+              when i
+              collect i into arg-names
+              and when optional
+              collect i into optional-names
+              finally (return (values arg-names count rest optional-names)))))
+    (multiple-value-bind (names count rest-p optionals)
+        (parse-arglist args)
+      (declare (ignorable optionals))
+      (when optionals (error "&optional args not supported yet"))
+      (push
+       ;; function data:
+       ;;  swf name in format suitable for passing to asm (string/'(qname...))
+       ;;  args to avm2-method:
+       ;;    name id?
+       ;;    list of arg types (probably all T/* for now)
+       ;;    return type
+       ;;    flags
+       ;;    list of assembly
+       ;;    ?
+       (list
+        (avm2-asm::symbol-to-qname-list name)
+        0                              ;; name in method struct?
+        (loop repeat count collect 0)  ;; arg types, 0 = t/*/any
+        0                              ;; return type, 0 = any
+        (if rest-p #x04 0)             ;; flags, #x04 = &rest
+        (%compile-defun names body method constructor))
+       (gethash name (functions *symbol-table*) (list))
+       ;;:test 'equal
+       ;;:key 'car
+       ))))
 
 ;;(format t "~{~s~%~}" (sixth (find-swf-function 'floor)))
 ;;(format t "~{~s~%~}" (avm2-asm::avm2-disassemble (avm2-asm:assemble (sixth (find-swf-function 'random)))))
