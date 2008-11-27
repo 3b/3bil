@@ -33,7 +33,7 @@
     (flash::math.sin radians))
   (swf-defmemfun tan (radians)
     (flash::math.tan radians))
-  (swf-defmemfun max (&rest rest)
+  (swf-defmemfun max (&arest rest)
     (%asm (:get-lex "Math")
           (:get-property "max")
           (:push-null)

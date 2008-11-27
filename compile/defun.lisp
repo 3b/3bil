@@ -30,9 +30,9 @@
            (loop with rest = nil
               with optional = nil
               for i in args
-              when (eq i '&rest)
+              when (eq i'&arest)
               do
-                (setf rest t)
+                (setf rest i)
                 (setf i nil)
                 (setf optional nil)
               when (eq i '&optional)

@@ -62,7 +62,7 @@
                               (%set-local temp (+ temp a)))
                             "}"))))
 
-    (swf-defmemfun rest-test (a b c &rest d)
+    (swf-defmemfun rest-test (a b c &arest d)
       (+ "(" a " " b " " c " " d ")"))
 
     (swf-defmemfun space-test (obj count)
@@ -182,7 +182,7 @@
             (incf str (+ " || dotimes=" (dotimes-test)))
             ;;(dotimes (a 5) (incf str a))
             (incf str (+ " || nth (0 1 2 3 4) 3=" (nth 3 (list 0 1 2 3 4))))
-            (incf str (+ " || opt test=" (rest-test 1 2 3 4 5 6 )))
+            (incf str (+ " || arest test=" (rest-test 1 2 3 4 5 6 )))
             #+nil(incf str (+ " || space test=" (space-test arg 10000000)))
             #+nil(incf str (+ " || car speed =" (car-speed-test arg 10000000)))
             (let ((foo 4))
