@@ -73,6 +73,14 @@
     (flash::math.sin radians))
   (swf-defmemfun tan (radians)
     (flash::math.tan radians))
+
+  (swf-defmemfun min (&arest rest)
+    (%asm (:get-lex "Math")
+          (:get-property "min")
+          (:push-null)
+          (:get-local 1)
+          (:call-property "apply" 2)))
+
   (swf-defmemfun max (&arest rest)
     (%asm (:get-lex "Math")
           (:get-property "max")
@@ -114,4 +122,7 @@
 
   (swf-defmemfun zerop (x)
     (eql x 0))
+
+  (swf-defmemfun vector (&arest objects)
+    objects)
 )
