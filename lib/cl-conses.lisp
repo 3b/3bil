@@ -196,7 +196,7 @@
                  (aref lists 0)))
           (end (last a)))
       (dotimes (i (1- (:length lists)) a)
-        (let ((next (%aref lists (1+ i))))
+        (let ((next (aref lists (1+ i))))
           (rplacd (last end) next)
           (setf end next)))))
   
