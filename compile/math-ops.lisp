@@ -15,17 +15,19 @@
                          (2 (append
                              (scompile (first cdr))
                              (scompile (second cdr))
-                             `((,',opcode))))
+                             `((,',opcode)
+                               (:coerce-any))))
                          (t
                           (append
                            (scompile (first cdr))
                            (loop for ,i in (cdr cdr)
                               append (scompile ,i)
-                              collect `(,',opcode))))))))))
+                              collect `(,',opcode))
+                           '((:coerce-any))))))))))
 
 (define-transitive-binops
-    (+ :add 0)
-    (- :subtract nil %1-)
+  (+ :add 0)
+  (- :subtract nil %1-)
   (* :multiply 1)
   (/ :divide nil %1/)
   (logior :bit-or 0)
@@ -46,11 +48,13 @@
             collect `(defmethod scompile-cons ((car (eql ',op)) cdr)
                        (case (length cdr)
                          (0 (error "not enough arguments for ~a" ',op))
-                         (1 `((push-true)))
+                         (1 `((:push-true)
+                              (:coerce-any)))
                          (2 (append
                              (scompile (first cdr))
                              (scompile (second cdr))
-                             `((,',opcode))))
+                             `((,',opcode)
+                               (:coerce-any))))
                          (t
                           (append
                            (scompile (first cdr))
@@ -62,7 +66,8 @@
                               append (scompile ,j)
                               collect `(,',opcode)
                               collect `(:bit-and) ;; no logical and?
-                              )))))))))
+                                )
+                           '((:coerce-any))))))))))
 
 (define-compare-binops
     (< :less-than)
