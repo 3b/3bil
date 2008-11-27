@@ -3,11 +3,13 @@
 
 (define-special %to-double (a)
   `(,@(scompile a)
-    (:convert-double)))
+      (:convert-double)
+      (:coerce-any)))
 
 (define-special %to-integer (a)
   `(,@(scompile a)
-    (:convert-integer)))
+      (:convert-integer)
+      (:coerce-any)))
 
 (with-open-file (s "/tmp/roots.swf"
                    :direction :output
@@ -95,7 +97,7 @@
                  (color (rgb  (- 0.8 (* v 0.25))
                               0.8
                               (- 0.8 v))))
-            (%set-local alpha (flash::Math.max 0.0 (- alpha (* i decay))))
+            (%set-local alpha (max 0.0 (- alpha (* i decay))))
 
             ;; stop if alpha gets below 1/256 or so
             (when (> alpha 0.004)
@@ -122,8 +124,8 @@
                 (when (and (> depth 0) (> (random 1.0) 0.85))
                   (root canvas x y (+ angle (random-range -60 60))
                         (1- depth) alpha decay))
-                (%set-local x (%to-double dx))
-                (%set-local y (%to-double dy))))))
+                (%set-local x dx)
+                (%set-local y dy)))))
 
         (when (and (> depth 0) (> (random 1.0) 0.7))
           (root canvas x y angle (1- depth) alpha decay))))))

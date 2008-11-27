@@ -8,7 +8,7 @@
                               :if-exists :supersede)
   (with-compilation-to-stream s ("frame1" `((0 "testClass")))
 
-    (def-swf-class :test-class "test-class" flash.display::sprite ()
+    (def-swf-class :test-class "test-class" flash.display::sprite (blob)
                    (()
                     (main this)))
 
@@ -47,7 +47,7 @@
     (swf-defmemfun cons-test ()
       (let* ((a (cons 2 3))
              (b (cons 1 a)))
-        (%set-property (cdr b) %car 123)
+;        (%set-property (cdr b) %car 123)
         (+ "(" (car a) " " (car b) ")")))
 
     (swf-defmemfun dolist-test ()
@@ -61,6 +61,23 @@
         (%set-local temp (+ (dotimes (a 5 temp)
                               (%set-local temp (+ temp a)))
                             "}"))))
+
+    (swf-defmemfun rest-test (a b c &rest d)
+      (+ "(" a " " b " " c " " d ")"))
+
+    (swf-defmemfun space-test (obj count)
+      (let ((now (%new date 0))
+            (cons nil))
+        (%set-property obj blob (dotimes (a count cons)
+                              (push 1 cons)))
+        (+ "[" (/ (- (%new date 0) now) 1000.0) "sec]")))
+
+    (swf-defmemfun car-speed-test (obj count)
+      (let ((now (%new date 0))
+            (sum 0))
+        (dolist (a (blob obj))
+          (incf sum a))
+        (+ "[" (/ (- (%new date 0) now) 1000.0) "sec,sum=" sum "]")))
 
     (swf-defmemfun i255 (a)
       (flash::Math.max (flash::Math.min (floor (* a 256)) 255) 0))
@@ -164,7 +181,14 @@
             (%set-local str (+ str " || dolist=" (dolist-test)))
             (incf str (+ " || dotimes=" (dotimes-test)))
             ;;(dotimes (a 5) (incf str a))
-)
+            (incf str (+ " || nth (0 1 2 3 4) 3=" (nth 3 (list 0 1 2 3 4))))
+            (incf str (+ " || opt test=" (rest-test 1 2 3 4 5 6 )))
+            #+nil(incf str (+ " || space test=" (space-test arg 10000000)))
+            #+nil(incf str (+ " || car speed =" (car-speed-test arg 10000000)))
+            (let ((foo 4))
+              (when (and (> foo 0) (> (random 1.0) 0.2))
+                (incf str "||rand")))
+            )
 
           (%set-property foo :text (+ str " || " (%call-property (%array 1 2 3) :to-string))))
         (:add-child arg canvas)
