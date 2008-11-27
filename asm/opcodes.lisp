@@ -64,6 +64,19 @@ for that here and return count of extra args"
   (:push-scope     ()                                             #x30  1 0 0 1)
   (:push-namespace ((namespace namespace-q30))                        #x31  0 1)
   (:has-next-2     ((object-local-reg u30) (index-local-reg u30)) #x32  0 1 0 0 (max object-local-reg index-local-reg))
+  ;; #x35-#x3e: flash 10/alchemy instrs
+  ;; see http://ncannasse.fr/blog/adobe_alchemy
+  (:store-int-8     ()   #x35 2 0) ;; stack=value,addr -> .
+  (:store-int-16    ()   #x36 2 0) ;; stack=value,addr -> .
+  (:store-int-32    ()   #x37 2 0) ;; stack=value,addr -> .
+  (:store-float-32  ()   #x38 2 0) ;; stack=value,addr -> .
+  (:store-float-64  ()   #x39 2 0) ;; stack=value,addr -> .
+  (:load-int-8      ()   #x3a 1 1) ;; stack=addr -> value
+  (:load-int-16     ()   #x3b 1 1) ;; stack=addr -> value
+  (:load-int-32     ()   #x3c 1 1) ;; stack=addr -> value
+  (:load-float-32   ()   #x3d 1 1) ;; stack=addr -> value
+  (:load-float-64   ()   #x3e 1 1) ;; stack=addr -> value
+
   (:new-function    ((method-index u30))                    #x40  0 1)
   (:call            ((arg-count u30))                       #x41  (+ 2 arg-count) 1)
   (:construct       ((arg-count u30))                       #x42  (1+ arg-count) 1)
@@ -78,6 +91,12 @@ for that here and return count of extra args"
   (:call-prop-lex   ((multiname multiname-q30) (arg-count u30)) #x4c  (+ 1 arg-count (runtime-name-count multiname)) 1)
   (:call-super-void ((multiname multiname-q30) (arg-count u30)) #x4e  (+ 1 arg-count (runtime-name-count multiname)) 0)
   (:call-prop-void  ((multiname multiname-q30) (arg-count u30)) #x4f  (+ 1 arg-count (runtime-name-count multiname)) 0)
+  ;; #50-#x52: flash 10/alchemy instructions
+  (:sign-extend-1to32     ()   #x50 1 1) ;; stack=value,value
+  (:sign-extend-8to32     ()   #x51 1 1) ;; stack=value,value
+  (:sign-extend-16to32    ()   #x52 1 1) ;; stack=value,value
+
+
   (:new-object           ((arg-count u32))       #x55  (* 2 arg-count) 1)
   (:new-array            ((arg-count u30))       #x56  arg-count 1)
   (:new-activation       ()                      #x57  0 1 0 0 0 +need-activation+)
