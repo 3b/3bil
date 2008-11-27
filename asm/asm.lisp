@@ -297,6 +297,7 @@
 (defun asm-intern-multiname (mn)
   (typecase mn
     ((cons (eql :qname)) (apply 'qname (cdr mn)))
+    ((cons (eql :multiname-l)) (apply 'intern-multiname-l +multiname-l+ (cdr mn)))
     ;; todo: add other types of multinames
     ((cons (eql :id)) (second mn))
     (symbol (apply 'qname (cdr (symbol-to-qname-list mn)))) ;; not sure if this is good or not, needed for calling as-yet undefined functions though...
@@ -307,6 +308,8 @@
 ;; (asm-intern-multiname '(:qname "foo" "bax"))
 ;; (asm-intern-multiname '(:qname "foo" "bax"))
 ;; x(asm-intern-multiname 'cos) ;; not sure if we should support symbols or not
+;;(intern-multiname +multiname-l+ "" "") (elt (multinames *assembler-context*) 1)
+
 
 (defparameter *multiname-kinds* (make-hash-table))
 (setf (gethash +qname+ *multiname-kinds*) :qname)
@@ -500,3 +503,8 @@
 (defmacro with-assembler-context (&body body)
   `(let ((*assembler-context* (make-instance 'assembler-context)))
      ,@body))
+
+;;; not sure if this should be asm level or not...
+(define-asm-macro :%array-read (index)
+  (assemble `((:push-int ,index)
+              (:get-property (:multiname-l "" "")))))

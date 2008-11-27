@@ -31,7 +31,8 @@
 
    ;; probably should eventually do this for all constants
    (string-intern-hash :initform (make-hash-table :test 'equal) :reader string-intern-hash)
-   (multiname-hash :initform (make-hash-table :test 'equalp) :reader multiname-hash)))
+   (multiname-hash :initform (make-hash-table :test 'equalp) :reader multiname-hash)
+   (ns-set-hash :initform (make-hash-table :test 'equalp) :reader ns-set-hash)))
 
 
 (defparameter *assembler-context* (make-instance 'assembler-context))
@@ -106,6 +107,20 @@
           (vector-push-extend (list kind (string-id sym))
                               (namespaces *assembler-context*))))))
 
+(defun avm2-ns-set-intern (namespaces)
+  (let* ((ns-ids (loop for i in namespaces
+                     when (numberp i)
+                     collect i
+                     else
+                     collect (avm2-ns-intern i)))
+         (id (gethash ns-ids (ns-set-hash *assembler-context*))))
+    (if id
+        id
+        (prog1
+          (setf (gethash ns-ids (ns-set-hash *assembler-context*))
+                (length (ns-sets *assembler-context*)))
+          (vector-push-extend ns-ids (ns-sets *assembler-context*))))))
+
 
 ;;; multiname.kind values
 (defparameter +qname+        #x07)
@@ -123,6 +138,17 @@
   (let* ((ns (avm2-ns-intern ns))
          (name (avm2-string name))
          (mn (list kind ns name))
+         (id (gethash mn (multiname-hash *assembler-context*))))
+    (if id
+        id
+        (progn
+          (vector-push-extend mn (multinames *assembler-context*))
+          (setf (gethash mn (multiname-hash *assembler-context*))
+                (1- (length (multinames *assembler-context*))))))))
+
+(defun intern-multiname-l (kind &rest ns-list)
+  (let* ((ns-set (avm2-ns-set-intern ns-list))
+         (mn (list kind ns-set))
          (id (gethash mn (multiname-hash *assembler-context*))))
     (if id
         id
