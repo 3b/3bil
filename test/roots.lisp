@@ -1,16 +1,6 @@
 (in-package :avm2-compiler)
 ;;; sample from old version. works but needs more refactoring
 
-(define-special %to-double (a)
-  `(,@(scompile a)
-      (:convert-double)
-      (:coerce-any)))
-
-(define-special %to-integer (a)
-  `(,@(scompile a)
-      (:convert-integer)
-      (:coerce-any)))
-
 (with-open-file (s "/tmp/roots.swf"
                    :direction :output
                               :element-type '(unsigned-byte 8)
@@ -30,7 +20,7 @@
       (/ (* a #.pi) 180.0))
 
     (swf-defmemfun i255 (a)
-      (flash::Math.max (flash::Math.min (floor (* a 256)) 255) 0))
+      (max (min (floor (* a 256)) 255) 0))
 
     (swf-defmemfun rgb (r g b)
       (+ (* (i255 r) 65536) (* (i255 g) 256) (i255 b)))
@@ -48,7 +38,7 @@
         (%set-property foo :background :true)
         (%set-property foo :background-color (rgba 0.1 0.1 0.1 0.1))
         (let ((str "abc..."))
-          (%set-property foo :text (+ str (%call-property (%array 1 2 3) :to-string))))
+          (%set-property foo :text (+ str (:to-string (vector 1 2 3)))))
         (:add-child arg canvas)
         (:add-child arg foo)
         (%set-property this :canvas canvas)
@@ -76,23 +66,20 @@
         (:create-gradient-box matrix
                               400 300 0 0 0)
         (:begin-gradient-fill gfx "radial"
-                              (%array #x202600 #x0d0f00) ;; colors
-                              (%array 1 1)               ;; alpha
-                              (%array 0 255)             ;; ratios
+                              (vector #x202600 #x0d0f00) ;; colors
+                              (vector 1 1)               ;; alpha
+                              (vector 0 255)             ;; ratios
                               matrix)
         (:draw-rect gfx 0 0 400 300 )
         (:end-fill gfx)
         (root canvas 200 150 (random 360) 7 1.0 0.005 )))
 
     (swf-defmemfun root (canvas x y angle depth alpha decay)
-      (setf alpha (%to-double alpha))
-      (setf x (%to-double x))
-      (setf y (%to-double y))
       (let* ((s (* depth 0.5))
              (w (* s 6.0))
              (line-size (* s 0.5))
              (gfx (:graphics canvas )))
-        (dotimes (i (%to-integer (* depth (random-range 10 20))))
+        (dotimes (i (* depth (random-range 10 20)))
           (let* ((v (/ depth 5.0))
                  (color (rgb  (- 0.8 (* v 0.25))
                               0.8
