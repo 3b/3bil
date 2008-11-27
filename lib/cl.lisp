@@ -13,6 +13,8 @@
 
   (swf-defmemfun 1- (a)
     (- a 1))
+  (swf-defmemfun 1+ (a)
+    (+ a 1))
 
   (swf-defmemfun floor (number)
     ;; todo implement optional divisor arg (need multiple values)
@@ -72,6 +74,6 @@
   (swf-defmacro incf (place &optional (delta 1))
     `(%set-local ,place (+ ,place ,delta)))
 
-  (swf-defun zerop (x)
+  (swf-defmemfun zerop (x)
     (eql x 0))
 )

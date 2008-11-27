@@ -448,8 +448,17 @@ call with %flet-call, which sets up hidden return label arg
       (error "not enough arguments to LIST*"))
     (scompile (expand-rest rest))))
 
-(define-special* nconc (rest)
-)
+;;; partial implementation of aref, handles single dimensional flash::Array
+(define-special aref (array index)
+  `(,@(scompile array)
+    ,@(scompile index)
+      (:get-property (:multiname-l "" ""))))
+
+;; partial implementation of setf, handles setting 1 local var
+;;  so we can start using it while waiting on real implementation
+(swf-defmacro setf (var value)
+  `(%set-local ,var ,value))
+
 ;;(scompile '(list* 1  2 3 4 5))
 ;;(scompile '(list* 1))
 

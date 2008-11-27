@@ -47,6 +47,56 @@
            (%set-local list (cdr list)))))
 
   ;; ENDP, NULL, NCONC in cl-conses
- 
 
+  ;;Function APPEND
+
+  ;;Function REVAPPEND, NRECONC
+
+  ;;Function BUTLAST, NBUTLAST
+
+  ;; LAST in cl-conses
+
+  ;;Function LDIFF, TAILP
+
+  ;;Function NTHCDR
+  (swf-defmemfun nthcdr (n list)
+    (dotimes (a n list)
+      (setf list (cdr list))))
+
+  (swf-defmemfun rest (a)
+    (cdr a))
+
+  ;;Function MEMBER, MEMBER-IF, MEMBER-IF-NOT
+
+  ;;Function MAPC, MAPCAR, MAPCAN, MAPL, MAPLIST, MAPCON
+
+  ;;Function ACONS
+
+  ;;Function ASSOC, ASSOC-IF, ASSOC-IF-NOT
+
+  ;;Function COPY-ALIST
+
+  ;;Function PAIRLIS
+
+  ;;Function RASSOC, RASSOC-IF, RASSOC-IF-NOT
+
+  ;;Function GET-PROPERTIES
+
+  ;;Accessor GETF
+
+  ;;Macro REMF
+
+  ;;Function INTERSECTION, NINTERSECTION
+
+  ;;Function ADJOIN
+
+  ;;Macro PUSHNEW
+
+  ;;Function SET-DIFFERENCE, NSET-DIFFERENCE
+
+  ;;Function SET-EXCLUSIVE-OR, NSET-EXCLUSIVE-OR
+
+  ;;Function SUBSETP
+
+  ;;Function UNION, NUNION
 )

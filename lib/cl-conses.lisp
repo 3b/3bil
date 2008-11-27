@@ -48,10 +48,10 @@
   (swf-defmemfun consp (a)
     (%typep a cons-type))
 
-  (swf-defun atom (object)
+  (swf-defmemfun atom (object)
     (not (consp object)))
 
-  (swf-defun %type-error (fun arg)
+  (swf-defmemfun %type-error (fun arg)
     (%error (+ "type-error: unknown type in " fun ":" (%type-of arg))))
 
   #+nil(swf-defmemfun car (a)
@@ -101,50 +101,43 @@
            ,temp))))
 
 
-  (swf-defun caar (x) (car (car x)))
-  (swf-defun cadr (x) (car (cdr x)))
-  (swf-defun cdar (x) (cdr (car x)))
-  (swf-defun cddr (x) (cdr (cdr x)))
-  (swf-defun caaar (x) (car (car (car x))))
-  (swf-defun caadr (x) (car (car (cdr x))))
-  (swf-defun cadar (x) (car (cdr (car x))))
-  (swf-defun caddr (x) (car (cdr (cdr x))))
-  (swf-defun cdaar (x) (cdr (car (car x))))
-  (swf-defun cdadr (x) (cdr (car (cdr x))))
-  (swf-defun cddar (x) (cdr (cdr (car x))))
-  (swf-defun cdddr (x) (cdr (cdr (cdr x))))
-  (swf-defun caaaar (x) (car (car (car (car x)))))
-  (swf-defun caaadr (x) (car (car (car (cdr x)))))
-  (swf-defun caadar (x) (car (car (cdr (car x)))))
-  (swf-defun caaddr (x) (car (car (cdr (cdr x)))))
-  (swf-defun cadaar (x) (car (cdr (car (car x)))))
-  (swf-defun cadadr (x) (car (cdr (car (cdr x)))))
-  (swf-defun caddar (x) (car (cdr (cdr (car x)))))
-  (swf-defun cadddr (x) (car (cdr (cdr (cdr x)))))
-  (swf-defun cdaaar (x) (cdr (car (car (car x)))))
-  (swf-defun cdaadr (x) (cdr (car (car (cdr x)))))
-  (swf-defun cdadar (x) (cdr (car (cdr (car x)))))
-  (swf-defun cdaddr (x) (cdr (car (cdr (cdr x)))))
-  (swf-defun cddaar (x) (cdr (cdr (car (car x)))))
-  (swf-defun cddadr (x) (cdr (cdr (car (cdr x)))))
-  (swf-defun cdddar (x) (cdr (cdr (cdr (car x)))))
-  (swf-defun cddddr (x) (cdr (cdr (cdr (cdr x)))))
+  (swf-defmemfun caar (x) (car (car x)))
+  (swf-defmemfun cadr (x) (car (cdr x)))
+  (swf-defmemfun cdar (x) (cdr (car x)))
+  (swf-defmemfun cddr (x) (cdr (cdr x)))
+  (swf-defmemfun caaar (x) (car (car (car x))))
+  (swf-defmemfun caadr (x) (car (car (cdr x))))
+  (swf-defmemfun cadar (x) (car (cdr (car x))))
+  (swf-defmemfun caddr (x) (car (cdr (cdr x))))
+  (swf-defmemfun cdaar (x) (cdr (car (car x))))
+  (swf-defmemfun cdadr (x) (cdr (car (cdr x))))
+  (swf-defmemfun cddar (x) (cdr (cdr (car x))))
+  (swf-defmemfun cdddr (x) (cdr (cdr (cdr x))))
+  (swf-defmemfun caaaar (x) (car (car (car (car x)))))
+  (swf-defmemfun caaadr (x) (car (car (car (cdr x)))))
+  (swf-defmemfun caadar (x) (car (car (cdr (car x)))))
+  (swf-defmemfun caaddr (x) (car (car (cdr (cdr x)))))
+  (swf-defmemfun cadaar (x) (car (cdr (car (car x)))))
+  (swf-defmemfun cadadr (x) (car (cdr (car (cdr x)))))
+  (swf-defmemfun caddar (x) (car (cdr (cdr (car x)))))
+  (swf-defmemfun cadddr (x) (car (cdr (cdr (cdr x)))))
+  (swf-defmemfun cdaaar (x) (cdr (car (car (car x)))))
+  (swf-defmemfun cdaadr (x) (cdr (car (car (cdr x)))))
+  (swf-defmemfun cdadar (x) (cdr (car (cdr (car x)))))
+  (swf-defmemfun cdaddr (x) (cdr (car (cdr (cdr x)))))
+  (swf-defmemfun cddaar (x) (cdr (cdr (car (car x)))))
+  (swf-defmemfun cddadr (x) (cdr (cdr (car (cdr x)))))
+  (swf-defmemfun cdddar (x) (cdr (cdr (cdr (car x)))))
+  (swf-defmemfun cddddr (x) (cdr (cdr (cdr (cdr x)))))
 
 
-  (swf-defun copy-tree (tree)
+  (swf-defmemfun copy-tree (tree)
     (if (consp tree)
         (cons (copy-tree (car tree)) (copy-tree (cdr tree)))
         tree))
 
   (swf-defmemfun listp (a)
     (or (%typep a cons-type) (eq a nil)))
-
-  (swf-defmemfun endp (a)
-    (if (eq a nil)
-        t
-        (if (consp a)
-            nil
-            (%type-error "ENDP" a))))
 
   ;; fixme: implement pop according to spec
   (swf-defmacro pop (a)
@@ -154,25 +147,62 @@
          (let ((,temp ,a))
            (prog1
                (car ,temp)
-             (%set-local ,a (cdr ,temp)))))))
+             (setf ,a (cdr ,temp)))))))
 
   ;; fixme: implement PUSH according to spec
   (swf-defmacro push (item place)
     (let ((temp (gensym "PUSH-TEMP-")))
       `(progn
         (let ((,temp ,place))
-          (%set-local ,place (cons ,item ,temp))))))
+          (setf ,place (cons ,item ,temp))))))
 
 
-  (swf-defun first (list) (car list))
-  (swf-defun second (list) (car (cdr list)))
-  (swf-defun third (list) (car (cddr list)))
-  (swf-defun fourth (list) (car (cdddr list)))
-  (swf-defun fifth (list) (car (cddddr list)))
-  (swf-defun sixth (list) (car (cdr (cddddr list))))
-  (swf-defun seventh (list) (car (cddr (cddddr list))))
-  (swf-defun eighth (list) (car (cdddr (cddddr list))))
-  (swf-defun ninth (list) (car (cddddr (cddddr list))))
-  (swf-defun tenth (list) (car (cdr (cddddr (cddddr list)))))
+  (swf-defmemfun first (list) (car list))
+  (swf-defmemfun second (list) (car (cdr list)))
+  (swf-defmemfun third (list) (car (cddr list)))
+  (swf-defmemfun fourth (list) (car (cdddr list)))
+  (swf-defmemfun fifth (list) (car (cddddr list)))
+  (swf-defmemfun sixth (list) (car (cdr (cddddr list))))
+  (swf-defmemfun seventh (list) (car (cddr (cddddr list))))
+  (swf-defmemfun eighth (list) (car (cdddr (cddddr list))))
+  (swf-defmemfun ninth (list) (car (cddddr (cddddr list))))
+  (swf-defmemfun tenth (list) (car (cdr (cddddr (cddddr list)))))
+
+
+  (swf-defmemfun endp (a)
+    (if (eq a nil)
+        t
+        (if (consp a)
+            nil
+            (%type-error "ENDP" a))))
+
+  (swf-defmemfun null (a)
+    (eq a nil))
+
+  ;; fixme: add optional count arg
+  (swf-defmemfun last (a)
+      (if (endp a)
+          nil
+          (tagbody
+           :start
+             (unless (consp (cdr a))
+               (return a))
+             (setf a (cdr a))
+             (go :start))))
+
+  (swf-defmemfun nconc (&arest lists)
+    (let* ((a (if (zerop (:length lists))
+                 nil
+                 (aref lists 0)))
+          (end (last a)))
+      (dotimes (i (1- (:length lists)) a)
+        (let ((next (%aref lists (1+ i))))
+          (rplacd (last end) next)
+          (setf end next)))))
+  
   
 )
+
+#+nil
+(dump-defun-asm ()
+  (nconc (cons 1 2) (cons 3 4)))
