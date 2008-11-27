@@ -33,6 +33,12 @@
     (flash::math.sin radians))
   (swf-defmemfun tan (radians)
     (flash::math.tan radians))
+  (swf-defmemfun max (&rest rest)
+    (%asm (:get-lex "Math")
+          (:get-property "max")
+          (:push-null)
+          (:get-local 1)
+          (:call-property "apply" 2)))
 
   (swf-defmemfun eq (a b)
     (%asm (:get-local-1)
@@ -64,4 +70,8 @@
 
 
   (swf-defmacro incf (place &optional (delta 1))
-    `(%set-local ,place (+ ,place ,delta))))
+    `(%set-local ,place (+ ,place ,delta)))
+
+  (swf-defun zerop (x)
+    (eql x 0))
+)

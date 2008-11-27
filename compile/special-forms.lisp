@@ -432,7 +432,26 @@ call with %flet-call, which sets up hidden return label arg
                                   ,protected
                                 (call-%flet ,cleanup-name)))))))
 
+(define-special* list (rest)
+  (labels ((expand-rest (rest)
+             (if (consp rest)
+                 (list 'cons (car rest) (expand-rest (cdr rest)))
+                 rest)))
+    (scompile (expand-rest rest))))
 
+(define-special* list* (rest)
+  (labels ((expand-rest (rest)
+             (if (consp (cdr rest))
+                 (list 'cons (car rest) (expand-rest (cdr rest)))
+                 (car rest))))
+    (when (endp rest)
+      (error "not enough arguments to LIST*"))
+    (scompile (expand-rest rest))))
+
+(define-special* nconc (rest)
+)
+;;(scompile '(list* 1  2 3 4 5))
+;;(scompile '(list* 1))
 
 #+nil(with-lambda-context ()
   (scompile '(block foo 2 (if nil (return-from foo 4) 5) 3)))
