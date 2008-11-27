@@ -70,7 +70,7 @@
           (tagbody
            :start
              (unless (consp (cdr a))
-               (return a))
+               (return-from last a))
              (setf a (cdr a))
              (go :start))))
 

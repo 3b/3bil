@@ -62,6 +62,21 @@
                               (setf temp (+ temp a)))
                             "}"))))
 
+    (swf-defmemfun do/do*-tests ()
+      (+ ""
+         ;; examples from clhs
+         (do ((temp-one 1 (1+ temp-one))
+              (temp-two 0 (1- temp-two)))
+             ((> (- temp-one temp-two) 5) temp-one))
+         " "
+         (do ((temp-one 1 (1+ temp-one))
+              (temp-two 0 (1+ temp-one)))
+             ((= 3 temp-two) temp-one))
+         " "
+         (do* ((temp-one 1 (1+ temp-one))
+               (temp-two 0 (1+ temp-one)))
+              ((= 3 temp-two) temp-one))))
+
     (swf-defmemfun rest-test (a b c &arest d)
       (+ "(" a " " b " " c " " d ")"))
 
@@ -211,7 +226,8 @@
             (let ((foo 4))
               (when (and (> foo 0) (> (random 1.0) 0.2))
                 (incf str "||rand")))
-            (incf str (+ " || nconc test="  (list->str (nconc (cons 1 2) (cons 3 4))))))
+            (incf str (+ " || nconc test="  (list->str (nconc (cons 1 2) (cons 3 4)))))
+            (incf str (+ " || do test: 4,3,2=" (do/do*-tests))))
 
           (%set-property foo :text (+ str " || " (%call-property (%array 1 2 3) :to-string))))
         (:add-child arg canvas)

@@ -56,7 +56,7 @@
 
 ;; (scompile '(progn "foo" "bar" :true))
 
-(define-special return (value)
+#+nil(define-special return (value)
   `(,@(scompile value)
       (:return-value)))
 
@@ -76,8 +76,8 @@
     (with-cleanup ((gensym "LET-CLEANUP")
                      `(%asm (:comment "let-kill")
                            ,@(loop for (nil nil . index) in bindings-indices
-                                collect `(:kill ,index)
-                                collect `(:push-null))))
+                                collect `(:kill ,index))
+                           (:push-null)))
      (append
       ;; set up bindings
       (loop for (init nil . index) in bindings-indices

@@ -195,7 +195,7 @@
                      (extract-updates (cdr variable-clauses)))
               (extract-updates (cdr variable-clauses))))))
 
-  #+nil(swf-defmacro do (variable-clauses end-test &body body)
+  (swf-defmacro do (variable-clauses end-test &body body)
     ;; do some syntax checking
     (check-variable-clauses variable-clauses)
     (unless (proper-list-p body)
@@ -238,7 +238,7 @@
                   (return
                     (progn ,@(cdr end-test))))
                 ,@forms
-                (setf ,@(extract-updates variable-clauses))
+                (setq ,@(extract-updates variable-clauses))
                 (go ,start-tag))))))))
 
 
@@ -247,3 +247,4 @@
     (dolist (a (cons "a" (cons "b" (cons "c" nil)))
              temp)
       (%set-local temp (+ temp (:to-string  a))))))
+

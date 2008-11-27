@@ -395,7 +395,7 @@
                            0 0
                            :body
                            (avm2-asm::assemble-method-body
-                            (%compile-defun (first constructor)
+                            (%compile-defun name (first constructor)
                                             (second constructor) t t))))
          ;; fixme: probably should make this configurable at some point
          (class-init (avm2-asm::avm2-method 0 nil 0 0 ;; meta-class init

@@ -6,12 +6,43 @@
 
 (let ((*symbol-table* *cl-symbol-table*))
 
+  (swf-defmacro return (value)
+    `(return-from nil ,value))
+
+
   ;; partial implementation of setf, only handles setting local vars,
   ;;  so we can start using it while waiting on real implementation
   (swf-defmacro setf (&rest args)
     `(progn
        ,@(loop for (var value) on args by #'cddr
             collect `(%set-local ,var ,value))))
+
+  ;; partial implementation of psetf, only handles setting local vars,
+  ;;  so we can start using it while waiting on real implementation
+  (swf-defmacro psetf (&rest args)
+    (let ((temps (loop repeat (/ (length args) 2)
+                    collect (gensym))))
+      `(let (,@(loop
+                  for temp in temps
+                  for (nil value) on args by #'cddr
+                  collect `(,temp ,value)))
+         ,@(loop
+              for temp in temps
+              for (var nil) on args by #'cddr
+              collect `(setf ,var ,temp)))))
+
+  ;; setq and psetq just calling setf/psetf for now, after checking vars
+  (swf-defmacro setq (&rest args)
+    (loop for (var nil) on args by #'cddr
+       unless (atom var)
+       do (error "variable name is not a symbol in SETQ: ~s" var))
+    `(setf ,@args))
+
+  (swf-defmacro psetq (&rest args)
+    (loop for (var nil) on args by #'cddr
+       unless (atom var)
+       do (error "variable name is not a symbol in PSETQ: ~s" var))
+    `(psetf ,@args))
 
   (swf-defmemfun random (a)
     ;;todo: return int for int args

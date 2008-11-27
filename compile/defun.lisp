@@ -2,7 +2,8 @@
 
 ;;;; defun and similar
 
-(defun %compile-defun (args body method constructor &key (nil-block t))
+(defun %compile-defun (name args body method constructor &key (nil-block t))
+  ;; fixme: is the nil-block stuff still valid?
   (with-lambda-context (:args args :blocks (when nil-block (list nil)))
     (append
      (if (or method constructor)
@@ -14,10 +15,11 @@
            (:construct-super 0))
          nil)
      (if constructor
-         `(,@(scompile `(progn ,@body))
+         `(,@(scompile `(block ,name ,@body))
              ;;(pop)
              (:return-void))
-         (scompile `(return (progn ,@body))))
+         `(,@(scompile `(block ,name ,@body))
+             (:return-value)))
      (compile-lambda-context-cleanup))))
 
 (defun %swf-defun (name args body &key method constructor)
@@ -66,7 +68,7 @@
         (loop repeat count collect 0)  ;; arg types, 0 = t/*/any
         0                              ;; return type, 0 = any
         (if rest-p #x04 0)             ;; flags, #x04 = &rest
-        (%compile-defun names body method constructor))
+        (%compile-defun name names body method constructor))
        (gethash name (functions *symbol-table*) (list))
        ;;:test 'equal
        ;;:key 'car
@@ -144,7 +146,7 @@
 (defmacro dump-defun-asm (args &body body)
   "debugging function to compile a defun to asm, and print results"
   (let ((asm (gensym)))
-    `(let ((,asm (%compile-defun
+    `(let ((,asm (%compile-defun 'foo
                   ',args
                   ',body
                   nil nil)))
