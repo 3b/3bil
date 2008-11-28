@@ -47,7 +47,7 @@
     (swf-defmemfun cons-test ()
       (let* ((a (cons 2 3))
              (b (cons 1 a)))
-;        (%set-property (cdr b) %car 123)
+        (rplaca (cdr b) 123)
         (+ "(" (car a) " " (car b) ")")))
 
     (swf-defmemfun dolist-test ()
@@ -94,6 +94,7 @@
           (incf sum a))
         (+ "[" (/ (- (%new date 0) now) 1000.0) "sec,sum=" sum "]")))
 
+    (swf-defmemfun unused-args-test (a b c) "ok")
 
     (swf-defmemfun list->str (l)
       (if (atom l)
@@ -211,8 +212,8 @@
                                  (t "-t-"))))
             (let ((c2 (cons "a" (cons "b" nil))))
               (setf str (+ str " || pop1 =" (pop c2)))
-              (setf str (+ str " || pop2 = (" (car c2) " . " (cdr c2) ")"))
-)
+              (setf str (+ str " || pop2 = (" (car c2) " . " (cdr c2) ")")))
+
             (setf str (+ str " || dolist=" (dolist-test)))
             (incf str (+ " || dotimes=" (dotimes-test)))
             ;;(dotimes (a 5) (incf str a))
@@ -227,7 +228,9 @@
               (when (and (> foo 0) (> (random 1.0) 0.2))
                 (incf str "||rand")))
             (incf str (+ " || nconc test="  (list->str (nconc (cons 1 2) (cons 3 4)))))
-            (incf str (+ " || do test: 4,3,2=" (do/do*-tests))))
+            (incf str (+ " || do test: 4,3,2=" (do/do*-tests)))
+            (incf str (+ " || unused args: " (unused-args-test 1 2 3)))
+)
 
           (%set-property foo :text (+ str " || " (%call-property (%array 1 2 3) :to-string))))
         (:add-child arg canvas)

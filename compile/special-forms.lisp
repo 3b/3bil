@@ -19,18 +19,18 @@
 ;; quote
 ;;
 ;; function
-;; setq
+;;~ setq
 ;;
 ;; symbol-macrolet
 ;; flet
 ;; macrolet
 ;; labels
 ;;
-;; block
+;;~ block
 ;; catch
-;; return-from
+;;~ return-from
 ;; throw
-;; unwind-protect
+;;~ unwind-protect
 ;;
 ;; progv
 ;;
@@ -122,9 +122,14 @@
 ;; (with-lambda-context (foo) (scompile '(%set-local foo 2.3)))
 
 (define-special %asm (&rest cdr)
-  ;; todo: add a version (or option?) to compile args, so we don't need to guess local indices, or compile them by hand
   ;; (%asm (op1 args) (op2 ...) ... )
   (copy-list cdr))
+(define-special %asm* (args &rest cdr)
+  ;; (%asm* (arg list) (op1 args) (op2 ...) ... )
+  (append
+   (loop for arg in args
+      append (scompile arg))
+    (copy-list cdr)))
 
 
 (define-special %label (target)
@@ -169,19 +174,6 @@
   `(,@(scompile cond)
       (:if-true ,label)
       (:push-null)))
-
-#+nil(define-special when (cond &rest body)
-  ;; (when cond body)
-    (let ((label (gensym "WHEN1-"))
-          (label2 (gensym "WHEN2-")))
-      `(,@(scompile cond)
-          (:if-false ,label)
-          ,@(scompile `(progn ,@body))
-          (:jump ,label2)
-          (:%dlabel ,label)
-          (:push-null)
-          (:coerce-any)
-          (:%dlabel ,label2))))
 
 (define-special %if (cond false-test true-branch false-branch)
   (let (#+nil(true-label (gensym "%IF-TRUE-"))
@@ -454,6 +446,29 @@ call with %flet-call, which sets up hidden return label arg
   `(,@(scompile array)
     ,@(scompile index)
       (:get-property (:multiname-l "" ""))))
+
+;;; temporary hack to get inlined cons/car/cdr, speeds up tests noticeably
+;;;  types and better compilation should give a few orders of magnitude though
+(define-special cons (a b)
+  `((:find-property-strict cons-type)
+    ,@(scompile a)
+    ,@(scompile b)
+    (:construct-prop cons-type 2)
+    (:coerce-any)))
+(define-special car (a)
+  `(,@(scompile
+       `(if (eq ,a :null)
+            :null
+            (%asm* (,a)
+                   (:get-property %car))))))
+(define-special cdr (a)
+  `(,@(scompile
+       `(if (eq ,a :null)
+            :null
+            (%asm* (,a)
+                  (:get-property %cdr))))))
+
+
 
 
 ;;(scompile '(list* 1  2 3 4 5))
