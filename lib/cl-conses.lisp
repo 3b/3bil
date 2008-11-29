@@ -184,3 +184,15 @@
 #+nil
 (dump-defun-asm ()
   (nconc (cons 1 2) (cons 3 4)))
+
+#+nil
+(format t "~{~S~%~}"
+        (avm2-asm::avm2-disassemble
+         (avm2-asm::code
+          (avm2-asm::with-assembler-context
+            (avm2-asm::assemble-method-body
+(dump-defun-asm (obj)
+               (let ((sum 0))
+                 (dolist (a  obj)
+                   (incf sum a))))
+             ) ) )))

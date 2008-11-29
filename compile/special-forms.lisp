@@ -167,6 +167,9 @@
 (define-special go (tag)
   (scompile-cons '%go (list (get-lambda-tag tag))))
 
+(define-special %go-when (cond tag)
+  (scompile-cons '%when (list cond (get-lambda-tag tag))))
+
 ;; (with-lambda-context () (scompile '(tagbody foo (go baz) bar 1 baz 2)))
 
 (define-special %when (cond label)

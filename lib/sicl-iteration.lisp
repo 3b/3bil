@@ -103,6 +103,7 @@
 ;;; compatible with the declarations.  For that reason, we choose to
 ;;; bind it.
 
+
   (swf-defmacro dolist ((var list-form &optional result-form) &body body)
     (progn;; do some syntax checking
       (unless (symbolp var)
@@ -114,17 +115,20 @@
         (let ((start-tag (gensym "START"))
               (end-tag (gensym "END"))
               (list-var (gensym "LIST-VAR")))
-          `(let ((,list-var ,list-form))
+          `(let ((,list-var ,list-form)
+                 (,var nil))
+             ,@declarations
              (block nil
                (tagbody
-                  ,start-tag
-                  (when (endp ,list-var)
+                  #+nil(when (endp ,list-var)
                     (go ,end-tag))
-                  (let ((,var (car ,list-var)))
-                    ,@declarations
-                    (tagbody ,@forms))
-                  (pop ,list-var)
-                  (go ,start-tag)
+                  (%go-when (endp ,list-var) ,end-tag)
+                  ,start-tag
+                  (setq ,var (pop ,list-var))
+                  (tagbody ,@forms)
+                  #+nil(when ,list-var
+                    (go ,start-tag))
+                  (%go-when ,list-var ,start-tag)
                   ,end-tag)
                (let ((,var nil))
                  #+nil(declare (ignorable ,var))
@@ -151,12 +155,13 @@
            ,@declarations
            (block nil
              (tagbody
-                ,start-tag
                 (when (= ,var ,count-var)
                   (go ,end-tag))
+                ,start-tag
                 (tagbody ,@forms)
                 (incf ,var)
-                (go ,start-tag)
+                (unless (= ,var ,count-var)
+                  (go ,start-tag))
                 ,end-tag)
              (let ((,var nil))
                #+nil(declare (ignorable ,var))
