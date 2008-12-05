@@ -290,9 +290,9 @@
       (file-position ,stream ,end)))))
 
 
-(defun write-swf (stream frame-label symbol-classes)
+(defun write-swf (stream frame-label symbol-classes &optional (flash-version 9))
   ;;; write out a minimal .swf, based on the stuff hxasm writes
-  (write-sequence '(#x46 #x57 #x53 #x09) stream) ;;magic "FWS9"
+  (write-sequence `(#x46 #x57 #x53 ,flash-version) stream) ;;magic "FWS" + ver
   ;;  (write-u32-raw (+ #x17 6 (length as3) (if (>= (length as3) 63) 6 2)) stream)
   ;; file length (filled in later)
   (write-u32-raw 0 stream)
@@ -438,7 +438,7 @@
 ;;(setf *break-compile* t)
 ;;; quick hack for testing, need to write a proper API at some point, which
 ;;;  compiles functions from a list of packages or whatever
-(defmacro with-compilation-to-stream (s (frame-name exports) &body body)
+(defmacro with-compilation-to-stream (s (frame-name exports &key (swf-version 9)) &body body)
   (let ((script-init (gensym))
         (i (gensym)))
 
@@ -508,4 +508,4 @@
        (when *break-compile* (break))
        #+nil(format t "==-== write~%")
        ;; write out the .swf
-       (write-swf ,s ,frame-name ,exports))))
+       (write-swf ,s ,frame-name ,exports ,swf-version))))
