@@ -30,21 +30,6 @@
           (:get-local-2)
           (:construct-prop cons-type 2)))
 
-#||  (def-swf-class cons-type "cons" object (%car %cdr)
-                 (()
-                  ))
-
-  (swf-defmemfun cons (a b)
-    (%asm (:find-property-strict cons-type)
-          (:construct-prop cons-type 0)
-          (:dup)
-          (:get-local-1)
-          (:set-property %car)
-          (:dup)
-          (:get-local-2)
-          (:set-property %cdr)
-          ))
-||#
   (swf-defmemfun consp (a)
     (%typep a cons-type))
 
@@ -54,34 +39,25 @@
   (swf-defmemfun %type-error (fun arg)
     (%error (+ "type-error: unknown type in " fun ":" (%type-of arg))))
 
+  ;;; implementing CAR/CDR as special forms for performance, until
+  ;;; compiler macros are available
   #+nil(swf-defmemfun car (a)
-    (if (eq a :null)
-        :null
-        (if (consp a)
-            (%asm (:get-local-1)
-                  (:get-property %car))
-            (%type-error "CAR" a))))
+         (if (eq a :null)
+             :null
+             (if (consp a)
+                 (%asm* (a)
+                        (:coerce cons-type)
+                        (:get-property %car))
+                 (%type-error "CAR" a))))
 
   #+nil(swf-defmemfun cdr (a)
-    (if (eq a :null)
-        :null
-        (if (consp a)
-            (%asm (:get-local-1)
-                  (:get-property %cdr))
-            (%type-error "CDR" a))))
-
-
-  (swf-defmemfun car (a)
-    (if (eq a :null)
-        :null
-        (%asm (:get-local-1)
-              (:get-property %car))))
-
-  (swf-defmemfun cdr (a)
-    (if (eq a :null)
-        :null
-        (%asm (:get-local-1)
-              (:get-property %cdr))))
+         (if (eq a :null)
+             :null
+             (if (consp a)
+                 (%asm* (a)
+                        (:coerce cons-type)
+                        (:get-property %cdr))
+                 (%type-error "CDR" a))))
 
 
   (swf-defmacro rplaca (cons object)

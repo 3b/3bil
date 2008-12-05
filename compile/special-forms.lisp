@@ -458,20 +458,40 @@ call with %flet-call, which sets up hidden return label arg
     ,@(scompile b)
     (:construct-prop cons-type 2)
     (:coerce-any)))
-(define-special car (a)
-  `(,@(scompile
-       `(if (eq ,a :null)
-            :null
-            (%asm* (,a)
-                   (:get-property %car))))))
-(define-special cdr (a)
-  `(,@(scompile
-       `(if (eq ,a :null)
-            :null
-            (%asm* (,a)
-                  (:get-property %cdr))))))
 
+;;; coercing to cons-type before accessing slots is ~2x faster
+;;; using get-slot instead of get-property is maybe a few % faster
+(define-special car (a) ;;; FIXME: handle non-cons properly
+  (let ((temp (gensym "CAR-TEMP-")))
+    `(,@(scompile
+         `(let ((,temp ,a))
+            (if (eq ,temp :null)
+                :null
+                (%asm* (,temp)
+                       (:coerce cons-type)
+                       #+nil(:get-property %car)
+                       (:get-slot 1))))))))
 
+(define-special cdr (a) ;;; FIXME: handle non-cons properly
+  (let ((temp (gensym "CDR-TEMP-")))
+    `(,@(scompile
+         `(let ((,temp ,a))
+            (if (eq ,temp :null)
+                :null
+                (%asm* (,temp)
+                       (:coerce cons-type)
+                       #+nil(:get-property %cdr)
+                       (:get-slot 2))))))))
+
+;;(define-special cdr (a)
+;;  (format t "cdr - ~s~%" a)
+;;  `(,@(scompile
+;;       `(if (eq ,a :null)
+;;            :null
+;;            (%asm* (,a)
+;;                  (:get-property %cdr))))))
+;;
+;;
 
 
 ;;(scompile '(list* 1  2 3 4 5))
