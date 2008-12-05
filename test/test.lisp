@@ -140,6 +140,8 @@
           (let ((cc (cons 0 2)))
             (setf str (+ str (cons 2 3)))
             (setf str (+ str "=(" (car cc) " " (cdr cc) ")"))
+            (setf str (+ str "cons size=" (flash.sampler::get-size cc)))
+            (setf str (+ str "int size=" (flash.sampler::get-size 1)))
             (setf str (+ str " || car(nil)=" (car nil)))
             (setf str (+ str " || %typeof=" (%type-of cc)))
             (setf str (+ str " || %typep...=" (%typep cc cons-type)))
@@ -230,6 +232,7 @@
             (incf str (+ " || nconc test="  (list->str (nconc (cons 1 2) (cons 3 4)))))
             (incf str (+ " || do test: 4,3,2=" (do/do*-tests)))
             (incf str (+ " || unused args: " (unused-args-test 1 2 3)))
+            (:trace (+ " || unused args: " (unused-args-test 1 2 3)))
 )
 
           (%set-property foo :text (+ str " || " (%call-property (%array 1 2 3) :to-string))))
