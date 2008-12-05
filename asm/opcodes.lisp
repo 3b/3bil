@@ -14,6 +14,10 @@ for that here and return count of extra args"
        2)
       (t 0))))
 
+;;; opcode lists:
+;;; http://ncannasse.fr/blog/adobe_alchemy
+;;;-- missing some from this one:
+;;; http://www.libspark.org/svn/as3/ByteCodeDisassembler/org/libspark/disassemble/abc/AbcParser.as
 
 (define-ops
   ;; name   (args)    opcode    pop push   pop-scope push-scope  local  flags
@@ -48,6 +52,7 @@ for that here and return count of extra args"
   (:has-next     ()             #x1f  2 1)
   (:push-null      ()                     #x20  0 1)
   (:push-undefined ()                     #x21  0 1)
+  ;; (:push-constant ?                    #x22  ? ?)
   (:next-value     ()                     #x23  2 1)
   (:push-byte      ((byte u8))            #x24  0 1)
   (:push-short     ((value u30))          #x25  0 1)
@@ -88,7 +93,9 @@ for that here and return count of extra args"
   (:return-value    ()                                      #x48 1 0)
   (:construct-super ((arg-count u30))                       #x49  (1+ arg-count) 0)
   (:construct-prop  ((multiname multiname-q30) (arg-count u30)) #x4a  (+ 1 arg-count (runtime-name-count multiname)) 1)
+  ;;(:call-super-id ?                                           #x4b ? ?)
   (:call-prop-lex   ((multiname multiname-q30) (arg-count u30)) #x4c  (+ 1 arg-count (runtime-name-count multiname)) 1)
+  ;;(:call-interface ?                                          #x4d ? ?)
   (:call-super-void ((multiname multiname-q30) (arg-count u30)) #x4e  (+ 1 arg-count (runtime-name-count multiname)) 0)
   (:call-prop-void  ((multiname multiname-q30) (arg-count u30)) #x4f  (+ 1 arg-count (runtime-name-count multiname)) 0)
   ;; #50-#x52: flash 10/alchemy instructions
@@ -120,8 +127,8 @@ for that here and return count of extra args"
   (:get-global-slot  ((slot-index u30))      #x6e  0 1) ;; deprecated?
   (:set-global-slot  ((slot-index u30))      #x6f  1 0) ;; deprecated?
   (:convert-string   () #x70  1 1)
-  (:esc_xattr        () #x72  1 1)
   (:esc_xelem        () #x71  1 1)
+  (:esc_xattr        () #x72  1 1)
   (:convert-integer  () #x73  1 1)
   (:convert-unsigned () #x74  1 1)
   (:convert-double   () #x75  1 1)
@@ -146,7 +153,10 @@ for that here and return count of extra args"
   (:type-of    ()                 #x95  1 1)
   (:not       ()                  #x96  1 1)
   (:bit-not   ()                  #x97  1 1)
+  ;; (:concat ?                   #x9a ? ?)
+  ;; (:add_d  ?                   #x9b ? ?)
   (:add             () #xa0  2 1)
+  (:subtract        () #xa1  2 1)
   (:multiply        () #xa2  2 1)
   (:divide          () #xa3  2 1)
   (:modulo          () #xa4  2 1)
@@ -156,7 +166,6 @@ for that here and return count of extra args"
   (:bit-and         () #xa8  2 1)
   (:bit-or          () #xa9  2 1)
   (:bit-xor         () #xaa  2 1)
-  (:subtract        () #xa1  2 1)
   (:equals          () #xab  2 1)
   (:strict-equals   () #xac  2 1)
   (:less-than       () #xad  2 1)
@@ -187,7 +196,19 @@ for that here and return count of extra args"
   (:debug-line ((line-number u30))  #xf0  0 0)
   (:debug-file ((string string-u30)) #xf1  0 0)
   #+ (or) (:breakpoint-line ((line ?) #xf2))
-  (:timestamp () #xf3 0 0))
+  (:timestamp () #xf3 0 0)
+  ;;(:verify-pass ? #xf5 ? ?)
+  ;;(:alloc       ? #xf6 ? ?)
+  ;;(:mark        ? #xf7 ? ?)
+  ;;(:wb          ? #xf8 ? ?)
+  ;;(:prologue    ? #xf9 ? ?)
+  ;;(:send-enter  ? #xfa ? ?)
+  ;;(:double-to-atom ? #xfb ? ?)
+  ;;(:sweep       ? #xfc ? ?)
+  ;;(:codegen-op  ? #xfd ? ?)
+  ;;(:verify-op   ? #xfe ? ?)
+  ;;(:decode      ? #xff ? ?)
+)
 
 
 
