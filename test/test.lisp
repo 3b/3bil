@@ -6,7 +6,7 @@
                    :direction :output
                               :element-type '(unsigned-byte 8)
                               :if-exists :supersede)
-  (with-compilation-to-stream s ("frame1" `((0 "testClass")))
+  (with-compilation-to-stream s ("frame1" `((0 "testClass")) :swf-version 10)
 
     (def-swf-class :test-class "test-class" flash.display::sprite (blob)
                    (()
@@ -134,9 +134,7 @@
         (%set-property foo :background :true)
         (%set-property foo :background-color (rgba 0.1 0.1 0.1 0.1))
         (let ((str "abc..."))
-          (setf str (+ str (flash::string.from-char-code 26085)))
-          (setf str (+ str (flash::string.from-char-code 26412)))
-          (setf str (+ str (flash::string.from-char-code #x8a9e)))
+          (setf str (+ str (flash::string.from-char-code 26085 26412 #x8a9e)))
           (let ((cc (cons 0 2)))
             (setf str (+ str (cons 2 3)))
             (setf str (+ str "=(" (car cc) " " (cdr cc) ")"))
@@ -224,8 +222,10 @@
             (incf str (+ " || last (0 1 2 3 4) 3=" (list->str (last (list 0 1 2 3 4)))))
             (incf str (+ " || last (0 1 . 2) 3=" (list->str (last (cons 0 (cons 1 2))))))
             (incf str (+ " || arest test=" (rest-test 1 2 3 4 5 6 )))
-            #+nil(incf str (+ " || space test=" (space-test arg 10000000)))
-            #+nil(incf str (+ " || car speed =" (car-speed-test arg 10000000)))
+            #+nil(incf str (+ " || car 0=" (car 0)))
+            (when t
+              (incf str (+ " || space test=" (space-test arg 10000000)))
+              (incf str (+ " || car speed =" (car-speed-test arg 10000000))))
             (let ((foo 4))
               (when (and (> foo 0) (> (random 1.0) 0.2))
                 (incf str "||rand")))

@@ -123,7 +123,12 @@
 
 (define-special %asm (&rest cdr)
   ;; (%asm (op1 args) (op2 ...) ... )
-  (copy-list cdr))
+  (mapcar (lambda (x)
+            (case (first x)
+              (:@ `(:get-local ,(get-lambda-local-index (second x))))
+              (:@kill `(:kill ,(get-lambda-local-index (second x))))
+              (otherwise x)))
+          cdr))
 (define-special %asm* (args &rest cdr)
   ;; (%asm* (arg list) (op1 args) (op2 ...) ... )
   (append
@@ -461,6 +466,10 @@ call with %flet-call, which sets up hidden return label arg
 
 ;;; coercing to cons-type before accessing slots is ~2x faster
 ;;; using get-slot instead of get-property is maybe a few % faster
+;;; checking type explicitly is slow, so just using built-in check for now
+;;;   (which works, but doesn't throw the CL specified error type)
+;;; :get-lex might be the slow part, so putting cons-type in a global
+;;;  might help speed of proper type check
 (define-special car (a) ;;; FIXME: handle non-cons properly
   (let ((temp (gensym "CAR-TEMP-")))
     `(,@(scompile
@@ -478,20 +487,11 @@ call with %flet-call, which sets up hidden return label arg
          `(let ((,temp ,a))
             (if (eq ,temp :null)
                 :null
-                (%asm* (,temp)
-                       (:coerce cons-type)
-                       #+nil(:get-property %cdr)
-                       (:get-slot 2))))))))
+                (%asm (:@ ,temp)
+                      (:coerce cons-type)
+                      #+nil(:get-property %cdr)
+                      (:get-slot 2))))))))
 
-;;(define-special cdr (a)
-;;  (format t "cdr - ~s~%" a)
-;;  `(,@(scompile
-;;       `(if (eq ,a :null)
-;;            :null
-;;            (%asm* (,a)
-;;                  (:get-property %cdr))))))
-;;
-;;
 
 
 ;;(scompile '(list* 1  2 3 4 5))

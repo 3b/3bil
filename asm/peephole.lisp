@@ -139,6 +139,14 @@ optimized version"
      (cons `(:if-ne ,@(cdr next)) rest))
     (t :keep)))
 
+(def-peephole :strict-equals 2 (nil next &rest rest)
+  (cond
+    ((eql :if-true (car next))
+     (cons `(:if-strict-eq ,@(cdr next)) rest))
+    ((eql :if-false (car next))
+     (cons `(:if-strict-ne ,@(cdr next)) rest))
+    (t :keep)))
+
 ;; hack to allow comments in generated asm
 (def-peephole :comment 1 (nil &rest rest)
   rest)

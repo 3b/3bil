@@ -52,7 +52,7 @@ for that here and return count of extra args"
   (:has-next     ()             #x1f  2 1)
   (:push-null      ()                     #x20  0 1)
   (:push-undefined ()                     #x21  0 1)
-  ;; (:push-constant ?                    #x22  ? ?)
+  ;; (:push-constant ?                    #x22  ? ?) -- fp10 = illegal opcode
   (:next-value     ()                     #x23  2 1)
   (:push-byte      ((byte u8))            #x24  0 1)
   (:push-short     ((value u30))          #x25  0 1)
@@ -173,6 +173,8 @@ for that here and return count of extra args"
   (:greater-than    () #xaf  2 1)
   (:greater-equals ()                      #xb0  2 1)
   (:instance-of    ()                      #xb1  2 1)
+  ;; :is-type seems broken (in player 10), unpredictably changes type
+  ;;  of things on stack or scope stack causing verifier errors
   (:is-type        ((multiname multiname-q30)) #xb2  1 1)
   (:is-type-late   ()                      #xb3  2 1)
   (:in             ()                      #xb4  2 1)
