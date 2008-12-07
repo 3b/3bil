@@ -2,10 +2,10 @@
 
 
 
-(defmacro declare-swf-class (class-name super &body _ &key ((:swf-name class-swf-name)) constants properties methods)
+(defmacro declare-swf-class (class-name (&optional super) &body _ &key ((:swf-name class-swf-name)) constants properties methods)
   "declare an external class to be accessed through ffi"
 
-  (declare (ignore super _))
+  (declare (ignore _))
   ;(format t "props = ~a ~%" properties)
   ;(format t "name = ~s  ~s eql=~s ~%" name (car (last (car properties))) (eql name (car (last (car properties)))))
   `(progn
@@ -13,36 +13,49 @@
      ;; ignoring it...
 
      ;; store class name
-     (setf (gethash ',class-name (classes *symbol-table*)) (list ,class-swf-name))
+     (add-swf-class ',class-name ',class-swf-name :extends ',super)
+
      ;; store constants
      ,@(loop for i in constants
-          collect (destructuring-bind (name &key swf-name type) i
-                    (declare (ignore type))
+          collect (destructuring-bind (name &key swf-name type value static) i
+                    (declare (ignore type value))
                     `(pushnew (list ,class-swf-name ,swf-name)
                                 (gethash ',name (constants *symbol-table*)
                                          (list))
                                  :test 'equal)))
      ;; store properties
      ,@(loop for i in properties
-          append (destructuring-bind (pname &key swf-name type access declared-by) i
-                     (declare (ignore access type))
-                     (if (eql declared-by class-name)
-                         `(add-swf-property ,swf-name ',pname)
-                         nil)))
+          append (destructuring-bind (pname &key swf-name type access declared-by value static) i
+                     (declare (ignore access type value))
+                     `((add-swf-property ',pname  ,swf-name))))
      ;; store methods
      ,@(loop for i in methods
           append (destructuring-bind (mname &key swf-name return-type
-                                           declared-by args) i
+                                           declared-by args static) i
                      (declare (ignore args return-type))
-                     (if (eql declared-by class-name)
-                         `((pushnew ,swf-name
-                                    (gethash ',mname
-                                             (class-methods *symbol-table*)
-                                             (list))
-                                    :test 'string=))
-                         nil)))))
+                     `((pushnew ,swf-name
+                                (gethash ',mname
+                                         (class-methods *symbol-table*)
+                                         (list))
+                                :test 'string=))))))
 
-(defmacro swf-ffi-defun-lex (lisp-name class member (&rest args) return)
+(defmacro swf-ffi-defun-lex (lisp-name member (&rest args) return &key class)
+  "declare a static member function of a class, for example Math.random()"
+  (declare (ignore args return))
+  `(pushnew (list ',class ,member)
+            (gethash ',lisp-name
+                     (class-static-methods *symbol-table*) (list))
+            :test 'equal))
+
+(defmacro swf-ffi-defun-find-prop-strict (lisp-name member (&rest args) return)
+  "declare a function in a namespace?, for example flash.sampler:getMemberNames()"
+  (declare (ignore args return))
+  `(pushnew (list ,member)
+            (gethash ',lisp-name
+                     (functions *symbol-table*) (list))
+            :test 'equal))
+
+(defmacro old-swf-ffi-defun-lex (lisp-name class member (&rest args) return)
   "declare a static member function of a class, for example Math.random()"
   (declare (ignore args return))
   `(pushnew (list ,class ,member)
@@ -50,6 +63,13 @@
                      (class-static-methods *symbol-table*) (list))
             :test 'equal))
 
+(defmacro swf-ffi-defconstant (lisp-name member type)
+  "declare a top level constant, for example NaN"
+  (declare (ignore type))
+  `(pushnew (list "" ,member)
+            (gethash ',lisp-name
+                     (constants *symbol-table*) (list))
+            :test 'equal))
 (defmacro swf-ffi-defconstant-lex (lisp-name class member type)
   "declare a constant member of a class, for example Math.PI"
   (declare (ignore type))
@@ -58,7 +78,15 @@
                      (constants *symbol-table*) (list))
             :test 'equal))
 
-(defmacro swf-ffi-defmethod (lisp-name type member (&rest args) return)
+(defmacro swf-ffi-defmethod (lisp-name member (&rest args) return)
+  "declare a member function of a class, for example array.concat()"
+  (declare (ignore args return))
+  `(pushnew ',member
+            (gethash ',lisp-name
+                     (class-methods *symbol-table*) (list))
+            :test 'string=))
+
+(defmacro old-swf-ffi-defmethod (lisp-name type member (&rest args) return)
   "declare a member function of a class, for example array.concat()"
   (declare (ignore type args return))
   `(pushnew ',member
@@ -105,14 +133,16 @@
       (:dup) ;; leave a copy on stack so we can return it
       ,@(scompile object) ;; find the object
       (:swap)                   ;; stack => return-value object value
-      (:set-property ,property)))
+      (:set-property ,(or (find-swf-property property) property))))
 
 ;; used by stuff like Math.random(), etc
 (define-special %call-lex-prop (object-name property &rest args)
   ;; fixme: better name for this?
   ;; (%call-lex-prop object-name property args) -> value
   ;;(format t "call proplex ~s . ~s ( ~s ) ~%" (first cdr) (second cdr) (third cdr))
-  `((:get-lex ,object-name) ;; find the object
+  `((:get-lex ,(if (find-swf-class object-name)
+                   (swf-name (find-swf-class object-name))
+                   object-name)) ;; find the object
     ,@(loop for i in args
          append (scompile i)) ;; calculate args
     (:call-property ,property ,(length args))))
@@ -134,7 +164,7 @@
                 (symbol
                  (let ((c (find-swf-class class)))
                    (assert c) ;; fixme: better error reporting
-                   (car c)))
+                   (swf-name c)))
                 (t class))))
     `((:find-property-strict ,name)
       (:construct-prop ,name ,arg-count)

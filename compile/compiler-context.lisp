@@ -45,6 +45,12 @@
          when (find-swf-property symbol i)
          return it)))
 
+(defun find-swf-constant (symbol &optional (s *symbol-table*))
+  (or (car (gethash symbol (constants s)))
+      (loop for i in (inherited-symbol-tables s)
+         when (find-swf-constant symbol i)
+         return it)))
+
 (defun add-swf-property (symbol swf-name &optional (s *symbol-table*))
   (pushnew swf-name
            (gethash symbol (properties s) (list))
@@ -56,12 +62,32 @@
          when (find-swf-function symbol i)
          return it)))
 
+(defclass symbol-class-data ()
+  ((name :initarg :name :accessor name)
+   (ns :initarg :ns :accessor ns)
+   (swf-name :initarg :swf-name :accessor swf-name)
+   (extends :initform nil :initarg :extends :accessor extends)
+   (implements :initform nil :initarg :implements :accessor implements)
+   (properties :initform nil :initarg :properties :accessor properties)
+   (constructor :initform nil :initarg :constructor :accessor constructor)))
+
+(defun add-swf-class (name swf-name &key ns extends implements properties constructor)
+  (setf (gethash name (classes *symbol-table*))
+        (make-instance 'symbol-class-data :name name
+                       :swf-name swf-name
+                       :ns ns
+                       :extends extends
+                       :implements implements
+                       :properties properties
+                       :constructor constructor)))
 
 (defun find-swf-class (symbol &optional (s *symbol-table*))
-  (or (gethash symbol (classes s))
-      (loop for i in (inherited-symbol-tables s)
-         when (find-swf-class symbol i)
-         return it)))
+  (let ((c (or (gethash symbol (classes s))
+               (loop for i in (inherited-symbol-tables s)
+                  when (find-swf-class symbol i)
+                  return it))))
+    (unless c (format t "couldn't find class ~s~%" symbol) (break))
+    c))
 
 ;;; handler for normal form evaluation, evaluate ARGS, and call
 ;;; function/member/whatever identified by OPERATOR
@@ -95,3 +121,5 @@
        #+nil(error " unknown function call? ~s ~s ~% " operator args)))))
 
 
+#+nil(let ((*symbol-table* (make-instance 'symbol-table :inherit (list *cl-symbol-table* *player-symbol-table*))))
+  (find-swf-static-method 'flash:floor *symbol-table*))

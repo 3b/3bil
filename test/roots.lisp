@@ -7,17 +7,15 @@
                               :if-exists :supersede)
   (with-compilation-to-stream s ("frame1" `((0 "testClass")))
 
-    (def-swf-class :test-class "test-class" flash.display::sprite ()
+    (def-swf-class :test-class "test-class" %flash.display::sprite (text)
                    (()
                     (main this)))
 
     (swf-defmemfun random-range (a b)
       (+ a (floor (random (- b a)))))
 
-    #+nil(swf-defmemfun radians (a)
-           (/ (* a flash::math.PI) 180.0))
     (swf-defmemfun radians (a)
-      (/ (* a #.pi) 180.0))
+      (/ (* a %flash:+pi+) 180.0))
 
     (swf-defmemfun i255 (a)
       (max (min (floor (* a 256)) 255) 0))
@@ -29,56 +27,61 @@
       (+ (* (i255 a) 65536 256) (rgb r g b)))
 
     (swf-defmemfun main (arg)
-      (let ((foo (%new flash.text::Text-Field 0))
-            (canvas (%new flash.display::Sprite 0)))
-        (%set-property foo :width 200)
-        (%set-property foo :auto-size "left")
-        (%set-property foo :text-color (rgb 0.2 0.9 0.2 ))
-        (%set-property foo :word-wrap :true)
-        (%set-property foo :background :true)
-        (%set-property foo :background-color (rgba 0.1 0.1 0.1 0.1))
+      (let ((foo (%new %flash.text:text-Field 0))
+            (canvas (%new %flash.display:sprite 0)))
+        (setf (%flash.display:width foo) 200)
+        (setf (%flash.text:auto-size foo) "left")
+        (setf (%flash.text:text-color foo) (rgb 0.2 0.9 0.2 ))
+        (setf (%flash.text:word-wrap foo) t)
+        (setf (%flash.text:background foo) t)
+        (setf (%flash.text:background-color foo) (rgba 0.1 0.1 0.1 0.1))
         (let ((str "abc..."))
-          (%set-property foo :text (+ str (:to-string (vector 1 2 3)))))
-        (:add-child arg canvas)
-        (:add-child arg foo)
+          (setf (%flash.text:text foo) (+ str (%flash:to-string (vector 1 2 3)))))
+        (%flash.display:add-child arg canvas)
+        (%flash.display:add-child arg foo)
+        (%set-property this :tc arg)
         (%set-property this :canvas canvas)
-        (frame :null)
-        #+nil(:add-event-listener arg "enterFrame" (%get-lex :frame))
-        (:add-event-listener canvas "click" (%asm (:get-lex frame)))))
+        (setf (text arg) foo)
+        (frame nil)
+        #+nil(%flash.display:add-event-listener arg "enterFrame" (%asm (:get-lex frame)))
+        (%flash.display:add-event-listener canvas "click" (%asm (:get-lex frame)))))
 
     (swf-defmacro with-fill (gfx (color alpha &key line-style) &body body)
       `(progn
          ,@(when line-style
-                 `((:line-style ,gfx ,@line-style)))
-         (:begin-fill ,gfx ,color ,alpha)
+                 `((%flash.display:line-style ,gfx ,@line-style)))
+         (%flash.display:begin-fill ,gfx ,color ,alpha)
          ,@body
-         (:end-fill ,gfx)))
+         (%flash.display:end-fill ,gfx)))
 
     (swf-defmemfun frame (evt)
       (let* ((canvas (%get-property this :canvas))
-             (gfx (:graphics canvas))
-             (matrix (%new flash.geom::Matrix 0)))
+             (gfx (slot-value canvas '%flash.display:graphics ))
+             (matrix (%new %flash.geom:Matrix 0)))
 
-        (%set-property canvas :opaque-background #x0d0f00)
-        (:clear gfx)
+        (setf (%flash.display:opaque-background canvas) #x0d0f00)
+        (%flash.display:clear gfx)
         (with-fill gfx (#x202600  0.5)
-                   (:draw-rect gfx 0 0 400 300 ))
-        (:create-gradient-box matrix
+                   (%flash.display:draw-rect gfx 0 0 400 300 ))
+        (%flash.geom:create-gradient-box matrix
                               400 300 0 0 0)
-        (:begin-gradient-fill gfx "radial"
+        (%flash.display:begin-gradient-fill gfx "radial"
                               (vector #x202600 #x0d0f00) ;; colors
                               (vector 1 1)               ;; alpha
                               (vector 0 255)             ;; ratios
                               matrix)
-        (:draw-rect gfx 0 0 400 300 )
-        (:end-fill gfx)
-        (root canvas 200 150 (random 360) 7 1.0 0.005 )))
+        (%flash.display:draw-rect gfx 0 0 400 300 )
+        (%flash.display:end-fill gfx)
+        (%flash:trace "click")
+        (setf (%flash.text:text (text (%get-property this :tc)))
+              (+ "==" (root canvas 200 150 (random 360) 7 1.0 0.005 0)))
+        (%flash:trace "frame done")))
 
-    (swf-defmemfun root (canvas x y angle depth alpha decay)
+    (swf-defmemfun root (canvas x y angle depth alpha decay count)
       (let* ((s (* depth 0.5))
              (w (* s 6.0))
              (line-size (* s 0.5))
-             (gfx (:graphics canvas )))
+             (gfx (slot-value canvas '%flash.display:graphics )))
         (dotimes (i (* depth (random-range 10 20)))
           (let* ((v (/ depth 5.0))
                  (color (rgb  (- 0.8 (* v 0.25))
@@ -93,26 +96,28 @@
                     (dy (+ y (* (sin (radians angle)) w))))
 
                 ;; drop shadow
-                (with-fill gfx (0 (* alpha 0.6) :line-style (:nan 0 alpha))
-                           (:draw-circle gfx (+ x s 1) (1- (+ y s)) (/ w 3)))
+                (with-fill gfx (0 (* alpha 0.6) :line-style (%flash:+nan+ 0 alpha))
+                           (%flash.display:draw-circle gfx (+ x s 1) (1- (+ y s)) (/ w 3)))
 
                 ;; line segment to next position:
                 (with-fill gfx (color (* alpha 0.6)
                                       :line-style (line-size color alpha))
-                           (:move-to gfx x y)
-                           (:line-to gfx dx dy))
+                           (%flash.display:move-to gfx x y)
+                           (%flash.display:line-to gfx dx dy))
 
                 ;; filled circle
                 (with-fill gfx (color (* alpha 0.5)
                                       :line-style ((* 0.5 line-size)
                                                    color alpha))
-                           (:draw-circle gfx x y (/ w 4)))
-
+                           (%flash.display:draw-circle gfx x y (/ w 4)))
+                (incf count)
                 (when (and (> depth 0) (> (random 1.0) 0.85))
-                  (root canvas x y (+ angle (random-range -60 60))
-                        (1- depth) alpha decay))
+                  (setf count
+                        (root canvas x y (+ angle (random-range -60 60))
+                              (1- depth) alpha decay (1+ count))))
                 (setf x dx)
                 (setf y dy)))))
 
         (when (and (> depth 0) (> (random 1.0) 0.7))
-          (root canvas x y angle (1- depth) alpha decay))))))
+          (setf count (root canvas x y angle (1- depth) alpha decay (1+ count)))))
+      count)))

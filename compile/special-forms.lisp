@@ -118,7 +118,7 @@
   ;; (%set-local var value) -> value
   `(,@(scompile value) ;; calculate value
       (:dup)                   ;; copy value so we can reurn it
-      (:set-local ,(get-lambda-local-index local))))
+      (:set-local ,(or (get-lambda-local-index local) (break)))))
 ;; (with-lambda-context (foo) (scompile '(%set-local foo 2.3)))
 
 (define-special %asm (&rest cdr)

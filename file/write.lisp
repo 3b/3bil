@@ -344,39 +344,26 @@
 ;;; fixme: deal with package stuff, possibly reorganize stuff between asm/compiler...
 
 (defun super-names (name)
-  (let ((s (assoc name *flash-player-classes* :test 'string=)))
-    (if s
-        (cons (second s) (super-names (second s)))
-        s)))
+  (let ((c (when name (find-swf-class name))))
+    (when c
+      (format t "cccc=~S~%"c)
+      (cons (swf-name c) (super-names (extends c))))))
 
 (defun push-lex-scope (mn-index)
   `((:get-lex ,(if (integerp mn-index) `(:id ,mn-index)mn-index))
     (:push-scope)))
 
-(defun new-class+scopes (class-id)
+(defun new-class+scopes (class)
   ;; fixme: allow class lookup instead of using class-id directly?
-  #+nil(format t "cid = ~a classes=~s~%" class-id (avm2-asm::classes avm2-asm::*assembler-context*))
-  #+nil(format t " instances = ~s~%" (avm2-asm::instances avm2-asm::*assembler-context*))
-  (let* ((class (aref (avm2-asm::classes avm2-asm::*assembler-context*) class-id))
-         (inst (aref (avm2-asm::instances avm2-asm::*assembler-context*) class-id)))
-    (declare (ignorable class))
-    (destructuring-bind (name-mn super-mn flags interfaces instance-init traits protected-ns)
-        inst
-      (declare (ignorable name-mn super-mn flags interfaces instance-init traits protected-ns))
-      #+nil(format t "cid = ~a name-mn = ~a=~a  super-mn = ~a=~a ~%"
-              class-id name-mn (avm2-asm::qname-string name-mn)
-              super-mn (avm2-asm::qname-string super-mn))
-      ;;(format t " supers = ~s~%" (reverse (super-names (avm2-asm::qname-string super-mn))))
-      (let ((supers (reverse (super-names (avm2-asm::qname-string super-mn)))))
-        `((:get-scope-object 0)
-          ,@(loop for i in supers
-               append (push-lex-scope i))
-          ,@(push-lex-scope super-mn)
-          (:get-lex (:id ,super-mn))
-          (:new-class ,class-id)
-          ,@(loop repeat (1+ (length supers))
-               collect `(:pop-scope))
-          (:init-property (:id ,name-mn)))))))
+  (let ((supers (reverse (super-names (extends class)))))
+    `((:get-scope-object 0)
+      ,@(loop for i in supers
+           append (push-lex-scope i))
+      (:get-lex ,(swf-name (find-swf-class (extends class))))
+      (:new-class ,(second (assoc (swf-name class) (class-names *compiler-context*))))
+      ,@(loop repeat  (length supers)
+           collect `(:pop-scope))
+      (:init-property  ,(swf-name class)))))
 
 
 (defun assemble-function (name)
@@ -409,7 +396,7 @@
          (class (avm2-asm::avm2-class
                  (avm2-asm::asm-intern-multiname name)
                  (avm2-asm::asm-intern-multiname
-                  (or (car (find-swf-class super))
+                  (or (swf-name (find-swf-class super))
                       super))
                  ;; todo: add interfaces
                  09 nil ;; flags, interfaces
@@ -440,11 +427,12 @@
 ;;;  compiles functions from a list of packages or whatever
 (defmacro with-compilation-to-stream (s (frame-name exports &key (swf-version 9)) &body body)
   (let ((script-init (gensym))
-        (i (gensym)))
+        (script-init-scope-setup (gensym)))
 
     `(let ((avm2-asm::*assembler-context* (make-instance 'avm2-asm::assembler-context))
            (*compiler-context* (make-instance 'compiler-context))
-           (*symbol-table* (make-instance 'symbol-table :inherit (list *cl-symbol-table*))))
+           (*symbol-table* (make-instance 'symbol-table :inherit (list *cl-symbol-table*)))
+           (,script-init-scope-setup nil))
        ;; fixme: add these to assembler-context constructor or something
        (avm2-asm::avm2-intern "")
        (avm2-asm::avm2-ns-intern "")
@@ -453,16 +441,23 @@
        ,@body
        #+nil(format t "==-== classes~%")
        ;; assemble classes
-       (loop for k being the hash-keys of (classes *cl-symbol-table*)
-          using (hash-value v)
-          for (swf-name ns super properties constructor) = v
-          when (or properties constructor)
-          do (assemble-class swf-name ns super properties constructor))
-       (loop for k being the hash-keys of (classes *symbol-table*)
-          using (hash-value v)
-          for (swf-name ns super properties constructor) = v
-          when (or properties constructor)
-          do (assemble-class swf-name ns super properties constructor))
+       (loop for symbol-table in (list *cl-symbol-table* *symbol-table*)
+          do (loop for k being the hash-keys of (classes symbol-table)
+                using (hash-value v)
+                do
+                  (with-accessors ((swf-name swf-name) (ns ns)
+                                   (extends extends) (properties properties)
+                                   (constructor constructor)) v
+                    (when (or properties constructor)
+                      (format t "name=~s extends = ~s, find=~s sn=~s~%" swf-name
+                              extends (find-swf-class extends)
+                              (swf-name (find-swf-class extends))
+                              )
+                      (assemble-class swf-name ns
+                                      extends
+                                      properties constructor)))
+                  (setf ,script-init-scope-setup
+                        (append ,script-init-scope-setup (new-class+scopes v)))))
        #+nil(format t "==-== functions~%")
        ;; assemble functions
        (loop for k being the hash-keys of (functions *cl-symbol-table*)
@@ -478,8 +473,7 @@
                (avm2-asm::assemble-method-body
                 `((:get-local-0)
                   (:push-scope)
-                  ,@(loop for ,i below (length (avm2-asm::classes avm2-asm::*assembler-context*))
-                       append (new-class+scopes ,i))
+                  ,@,script-init-scope-setup
                   (:return-void))))))
          #+nil(format t "==-== boilerplate2~%")
          (vector-push-extend

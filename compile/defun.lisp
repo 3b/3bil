@@ -131,11 +131,6 @@
                                  collect (list 'quote i)))
                :method t))
 
-(defmacro define-swf-class (name super (&rest options) &body members)
-
-)
-
-
 (defmacro swf-defmacro (name (&rest args) &body body)
   `(defmethod scompile-cons ((car (eql ',name)) cdr)
      (destructuring-bind (,@args) cdr

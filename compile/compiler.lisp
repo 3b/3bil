@@ -58,7 +58,8 @@
 
 (defun get-lambda-local-index (name)
   (let ((i (cdr (assoc name (locals *current-lambda*)))))
-    (or i (break "missing local index in g-l-l-i: ~a" name))))
+    #+nil(or i (break "missing local index in g-l-l-i: ~a" name))
+    i))
 
 ;;; %flet needs to remove variable names form scope without removing
 ;;;  the index, so we hide the names here...
@@ -216,10 +217,13 @@
     (:coerce-any)))
 
 (defmethod scompile ((form symbol))
-  (let ((i (get-lambda-local-index form)))
-    (if i
-        `((:get-local ,i))
-        (error "unknown local ~s?" form))))
+  (let* ((i (get-lambda-local-index form))
+        (constant (unless i (find-swf-constant form))))
+    (cond
+      (i `((:get-local ,i)))
+      (constant `((:get-lex ,(first constant))
+                  (:get-property ,(second constant))))
+      (t (error "unknown local ~s?" form)))))
 
 (defmacro define-constants (&body constants)
   `(progn

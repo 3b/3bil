@@ -8,7 +8,7 @@
                               :if-exists :supersede)
   (with-compilation-to-stream s ("frame1" `((0 "testClass")) :swf-version 10)
 
-    (def-swf-class :test-class "test-class" flash.display::sprite (blob)
+    (def-swf-class :test-class "test-class" %flash.display::sprite (blob)
                    (()
                     (main this)))
 
@@ -54,7 +54,7 @@
       (let ((temp ""))
         (dolist (a (cons "a" (cons "b" (cons "c" nil)))
                  temp)
-          (setf temp (+ temp (:to-string a))))))
+          (setf temp (+ temp (%flash:to-string a))))))
 
     (swf-defmemfun dotimes-test ()
       (let ((temp "{"))
@@ -81,24 +81,24 @@
       (+ "(" a " " b " " c " " d ")"))
 
     (swf-defmemfun space-test (obj count)
-      (let ((now (%new date 0))
+      (let ((now (%new %flash:date 0))
             (cons nil))
-        (%set-property obj blob (dotimes (a count cons)
-                              (push 1 cons)))
-        (+ "[" (/ (- (%new date 0) now) 1000.0) "sec]")))
+        (setf (blob obj) (dotimes (a count cons)
+                           (push 1 cons)))
+        (+ "[" (/ (- (%new %flash:date 0) now) 1000.0) "sec]")))
 
     (swf-defmemfun car-speed-test (obj count)
-      (let ((now (%new date 0))
+      (let ((now (%new %flash:date 0))
             (sum 0))
         (dolist (a (blob obj))
           (incf sum a))
-        (+ "[" (/ (- (%new date 0) now) 1000.0) "sec,sum=" sum "]")))
+        (+ "[" (/ (- (%new %flash:date 0) now) 1000.0) "sec,sum=" sum "]")))
 
     (swf-defmemfun unused-args-test (a b c) "ok")
 
     (swf-defmemfun list->str (l)
       (if (atom l)
-          (:to-string l)
+          (%flash:to-string l)
           (let ((s "("))
             (tagbody
              :start
@@ -116,7 +116,7 @@
             (+ s ")"))))
 
     (swf-defmemfun i255 (a)
-      (flash::Math.max (flash::Math.min (floor (* a 256)) 255) 0))
+      (max (min (floor (* a 256)) 255) 0))
 
     (swf-defmemfun rgb (r g b)
       (+ (* (i255 r) 65536) (* (i255 g) 256) (i255 b)))
@@ -125,21 +125,21 @@
       (+ (* (i255 a) 65536 256) (rgb r g b)))
 
     (swf-defmemfun main (arg)
-      (let ((foo (%new flash.text::Text-Field 0))
-            (canvas (%new flash.display::Sprite 0)))
-        (%set-property foo :width 350)
-        (%set-property foo :auto-size "left")
-        (%set-property foo :text-color (rgb 0.2 0.9 0.2 ))
-        (%set-property foo :word-wrap :true)
-        (%set-property foo :background :true)
-        (%set-property foo :background-color (rgba 0.1 0.1 0.1 0.1))
+      (let ((foo (%new %flash.text:Text-Field 0))
+            (canvas (%new %flash.display:Sprite 0)))
+        (setf (%flash.display:width foo) 350)
+        (setf (%flash.text:auto-size foo) "left")
+        (setf (%flash.text:text-color foo) (rgb 0.2 0.9 0.2 ))
+        (setf (%flash.text:word-wrap foo) t)
+        (setf (%flash.text:background foo) t)
+        (setf (%flash.text:background-color foo) (rgba 0.1 0.1 0.1 0.1))
         (let ((str "abc..."))
-          (setf str (+ str (flash::string.from-char-code 26085 26412 #x8a9e)))
+          (setf str (+ str (%flash:from-char-code 26085 26412 #x8a9e)))
           (let ((cc (cons 0 2)))
             (setf str (+ str (cons 2 3)))
             (setf str (+ str "=(" (car cc) " " (cdr cc) ")"))
-            (setf str (+ str "cons size=" (flash.sampler::get-size cc)))
-            (setf str (+ str "int size=" (flash.sampler::get-size 1)))
+            (setf str (+ str "cons size=" (%flash.sampler:get-size cc)))
+            (setf str (+ str "int size=" (%flash.sampler:get-size 1)))
             (setf str (+ str " || car(nil)=" (car nil)))
             (setf str (+ str " || %typeof=" (%type-of cc)))
             (setf str (+ str " || %typep...=" (%typep cc cons-type)))
@@ -166,7 +166,7 @@
             (setf str (+ str " || %flet=" (flet-test1)))
             ;;(setf str (+ str " %flet=" (flet-test2 "a" "b" "c")))
             ;;(setf str (+ str " cdr(1)=" (cdr 1)))
-            (setf str (+ str " || <" (if (car :null) "t" "f") ">"))
+            (setf str (+ str " || <" (if (car nil) "t" "f") ">"))
             (setf str (+ str " || typecase 123="
                                (typecase 123
                                  (cons-type "-cons-")
@@ -223,7 +223,7 @@
             (incf str (+ " || last (0 1 . 2) 3=" (list->str (last (cons 0 (cons 1 2))))))
             (incf str (+ " || arest test=" (rest-test 1 2 3 4 5 6 )))
             #+nil(incf str (+ " || car 0=" (car 0)))
-            (when t
+            (when nil
               (incf str (+ " || space test=" (space-test arg 10000000)))
               (incf str (+ " || car speed =" (car-speed-test arg 10000000))))
             (let ((foo 4))
@@ -232,40 +232,43 @@
             (incf str (+ " || nconc test="  (list->str (nconc (cons 1 2) (cons 3 4)))))
             (incf str (+ " || do test: 4,3,2=" (do/do*-tests)))
             (incf str (+ " || unused args: " (unused-args-test 1 2 3)))
-            (:trace (+ " || unused args: " (unused-args-test 1 2 3)))
+            (incf str (+ " || pi: " %flash:+pi+))
+            (%flash:trace (+ " || unused args: " (unused-args-test 1 2 3)))
 )
 
-          (%set-property foo :text (+ str " || " (%call-property (%array 1 2 3) :to-string))))
-        (:add-child arg canvas)
-        (:add-child arg foo)
+          (setf (%flash.text:text foo) (+ str " || " (%flash:to-string (%array 1 2 3)))))
+        (%flash.display:add-child arg canvas)
+        (%flash.display:add-child arg foo)
+        (%set-property this :tc arg)
         (%set-property this :canvas canvas)
-        (frame :null)
+        (frame nil)
         #+nil(:add-event-listener arg "enterFrame" (%get-lex :frame))
-        (:add-event-listener canvas "click" (%asm (:get-lex frame)))))
+        (%flash.display:add-event-listener canvas "click" (%asm (:get-lex frame)))))
 
     (swf-defmacro with-fill (gfx (color alpha &key line-style) &body body)
       `(progn
          ,@(when line-style
-                 `((:line-style ,gfx ,@line-style)))
-         (:begin-fill ,gfx ,color ,alpha)
+                 `((%flash.display:line-style ,gfx ,@line-style)))
+         (%flash.display:begin-fill ,gfx ,color ,alpha)
          ,@body
-         (:end-fill ,gfx)))
+         (%flash.display:end-fill ,gfx)))
 
     (swf-defmemfun frame (evt)
       (let* ((canvas (%get-property this :canvas))
-             (gfx (:graphics canvas))
-             (matrix (%new flash.geom::Matrix 0)))
+             (gfx (slot-value canvas '%flash.display:graphics))
+             (matrix (%new %flash.geom:Matrix 0)))
 
-        (%set-property canvas :opaque-background #x0d0f00)
-        (:clear gfx)
+        (setf (%flash.display:opaque-background canvas) #x0d0f00)
+        (%flash.display:clear gfx)
         (with-fill gfx (#x202600  0.5)
-                   (:draw-rect gfx 0 0 400 300 ))
-        (:create-gradient-box matrix
+                   (%flash.display:draw-rect gfx 0 0 400 300 ))
+        (%flash.geom:create-gradient-box matrix
                               400 300 0 0 0)
-        (:begin-gradient-fill gfx "radial"
-                              (%array #x202600 #x0d0f00) ;; colors
-                              (%array 1 1)               ;; alpha
-                              (%array 0 255)             ;; ratios
+        (%flash.display:begin-gradient-fill gfx "radial"
+                              (vector #x202600 #x0d0f00) ;; colors
+                              (vector 1 1)               ;; alpha
+                              (vector 0 255)             ;; ratios
                               matrix)
-        (:draw-rect gfx 0 0 400 300 )
-        (:end-fill gfx)))))
+        (%flash.display:draw-rect gfx 0 0 400 300 )
+        (%flash:trace "click")
+        (%flash.display:end-fill gfx)))))

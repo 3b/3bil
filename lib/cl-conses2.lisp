@@ -48,11 +48,11 @@
 
   ;; ENDP, NULL in cl-conses
   (swf-defmemfun nconc (&arest lists)
-    (let* ((a (if (zerop (:length lists))
+    (let* ((a (if (zerop (slot-value lists '%flash:length))
                  nil
                  (aref lists 0)))
           (end (last a)))
-      (dotimes (i (1- (:length lists)) a)
+      (dotimes (i (1- (slot-value lists '%flash:length)) a)
         (let ((next (aref lists (1+ i))))
           (rplacd (last end) next)
           (setf end next)))))

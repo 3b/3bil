@@ -12,10 +12,15 @@
 
   ;; partial implementation of setf, only handles setting local vars,
   ;;  so we can start using it while waiting on real implementation
+  (swf-defmacro %setf-1 (place value)
+    (print (if (and (consp place) (find-swf-property (car place)))
+               `(%set-property ,(second place) ,(first place) ,value)
+               `(%set-local ,place ,value))))
+
   (swf-defmacro setf (&rest args)
     `(progn
        ,@(loop for (var value) on args by #'cddr
-            collect `(%set-local ,var ,value))))
+            collect `(%setf-1 ,var ,value))))
 
   ;; partial implementation of psetf, only handles setting local vars,
   ;;  so we can start using it while waiting on real implementation
@@ -47,7 +52,7 @@
   (swf-defmemfun random (a)
     ;;todo: return int for int args
     ;;fixme: don't seem to be able to set seeds, so can't do random-state arg
-    (* (flash::math.random) a))
+    (* (%flash:random) a))
 
   (swf-defmemfun 1- (a)
     (- a 1))
@@ -56,23 +61,23 @@
 
   (swf-defmemfun floor (number)
     ;; todo implement optional divisor arg (need multiple values)
-    (flash::math.floor number))
+    (%flash:floor number))
 
   #+nil(swf-defmemfun max (&rest numbers)
     ;; fixme: need to figure out how to implement this...
-         (apply 'flash::math.max numbers))
+         (apply 'flash:max numbers))
 
   #+nil(swf-defmemfun min (&rest numbers)
     ;; fixme: need to figure out how to implement this...
-         (apply 'flash::math.min numbers))
+         (apply 'flash:min numbers))
 
 
   (swf-defmemfun cos (radians)
-    (flash::math.cos radians))
+    (%flash:cos radians))
   (swf-defmemfun sin (radians)
-    (flash::math.sin radians))
+    (%flash:sin radians))
   (swf-defmemfun tan (radians)
-    (flash::math.tan radians))
+    (%flash:tan radians))
 
   (swf-defmemfun min (&arest rest)
     (%asm (:get-lex "Math")
@@ -125,4 +130,12 @@
 
   (swf-defmemfun vector (&arest objects)
     objects)
+
+  ;; fixme: figure out symbol stuff so this can be a function
+  (swf-defmacro slot-value (object slot)
+    (let ((slot-name (if (and (consp slot) (eq 'quote (car slot)))
+                         (second slot)
+                         slot)))
+      `(%asm (:@ ,object)
+             (:get-property , (find-swf-property slot-name)))))
 )

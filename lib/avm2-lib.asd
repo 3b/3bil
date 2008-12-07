@@ -1,10 +1,8 @@
 
 (asdf:defsystem :avm2-lib
            :depends-on ("avm2-compile")
-           :components ((:file "library-packages")
-                        (:file "player-class-decl")
-                        (:file "player-classes")
-                        (:file "player-lib")
+           :components ((:file "player-ffi-packages")
+                        (:file "player-ffi-defs")
                         (:file "cl")
                         (:file "cl-conses")
                         (:file "sicl-conditionals")
