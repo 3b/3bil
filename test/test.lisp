@@ -6,7 +6,7 @@
                    :direction :output
                               :element-type '(unsigned-byte 8)
                               :if-exists :supersede)
-  (with-compilation-to-stream s ("frame1" `((0 "testClass")) :swf-version 10)
+  (with-compilation-to-stream s ("frame1" `((0 "testClass")) :swf-version 9)
 
     (def-swf-class :test-class "test-class" %flash.display::sprite (blob)
                    (()
@@ -94,6 +94,13 @@
           (incf sum a))
         (+ "[" (/ (- (%new %flash:date 0) now) 1000.0) "sec,sum=" sum "]")))
 
+    (swf-defmemfun space-test2 (obj count)
+      (let ((now (%new %flash:date 0))
+            (cons nil))
+        (setf (blob obj) (dotimes (a count cons)
+                           (push (+ "Hello World" a) cons)))
+        (+ "[" (/ (- (%new %flash:date 0) now) 1000.0) "sec]")))
+
     (swf-defmemfun unused-args-test (a b c) "ok")
 
     (swf-defmemfun list->str (l)
@@ -134,7 +141,7 @@
         (setf (%flash.text:background foo) t)
         (setf (%flash.text:background-color foo) (rgba 0.1 0.1 0.1 0.1))
         (let ((str "abc..."))
-          (setf str (+ str (%flash:from-char-code 26085 26412 #x8a9e)))
+          ;;(setf str (+ str (%flash:from-char-code 26085 26412 #x8a9e)))
           (let ((cc (cons 0 2)))
             (setf str (+ str (cons 2 3)))
             (setf str (+ str "=(" (car cc) " " (cdr cc) ")"))
@@ -226,6 +233,9 @@
             (when nil
               (incf str (+ " || space test=" (space-test arg 10000000)))
               (incf str (+ " || car speed =" (car-speed-test arg 10000000))))
+            #+nil(incf str (+ " || space test2=" (space-test2 arg 1000000)
+                         (nth 1000 (blob arg))))
+            
             (let ((foo 4))
               (when (and (> foo 0) (> (random 1.0) 0.2))
                 (incf str "||rand")))

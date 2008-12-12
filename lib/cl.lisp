@@ -6,6 +6,12 @@
 
 (let ((*symbol-table* *cl-symbol-table*))
 
+  (swf-defmacro %apply (function this-arg rest-array)
+    `(%flash:apply ,function ,this-arg ,rest-array))
+
+  (swf-defmacro %funcall (function this-arg &rest rest)
+    `(%flash:call ,function ,this-arg ,@rest))
+
   (swf-defmacro return (value)
     `(return-from nil ,value))
 
@@ -63,15 +69,6 @@
     ;; todo implement optional divisor arg (need multiple values)
     (%flash:floor number))
 
-  #+nil(swf-defmemfun max (&rest numbers)
-    ;; fixme: need to figure out how to implement this...
-         (apply 'flash:max numbers))
-
-  #+nil(swf-defmemfun min (&rest numbers)
-    ;; fixme: need to figure out how to implement this...
-         (apply 'flash:min numbers))
-
-
   (swf-defmemfun cos (radians)
     (%flash:cos radians))
   (swf-defmemfun sin (radians)
@@ -79,19 +76,11 @@
   (swf-defmemfun tan (radians)
     (%flash:tan radians))
 
-  (swf-defmemfun min (&arest rest)
-    (%asm (:get-lex "Math")
-          (:get-property "min")
-          (:push-null)
-          (:get-local 1)
-          (:call-property "apply" 2)))
+  (swf-defmemfun min (&arest numbers)
+    (%apply (function %flash:min) nil numbers))
 
-  (swf-defmemfun max (&arest rest)
-    (%asm (:get-lex "Math")
-          (:get-property "max")
-          (:push-null)
-          (:get-local 1)
-          (:call-property "apply" 2)))
+  (swf-defmemfun max (&arest numbers)
+    (%apply (function %flash:max) nil numbers))
 
   (swf-defmemfun eq (a b)
     (%asm (:get-local-1)
@@ -139,3 +128,7 @@
       `(%asm (:@ ,object)
              (:get-property , (find-swf-property slot-name)))))
 )
+
+(let ((*symbol-table* (make-instance 'symbol-table :inherit (list *cl-symbol-table* *player-symbol-table*))))
+   (dump-defun-asm (&arest rest)
+     (%apply (function %flash:max) nil rest)))

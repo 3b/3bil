@@ -497,6 +497,35 @@ call with %flet-call, which sets up hidden return label arg
 ;;(scompile '(list* 1  2 3 4 5))
 ;;(scompile '(list* 1))
 
+(define-special function (arg &optional object)
+  ;; fixme: not all branches tested yet...
+  (let ((tmp))
+    (cond
+      ;; if OPERATOR is a known method, call with %call-property
+      ;;  (prop obj args...) === obj.prop(args)
+      ((setf tmp (find-swf-method arg *symbol-table*))
+       (break "f-s-m ~s" tmp)
+       (scompile `(%get-property ,(swf-name tmp) ,object )))
+
+      ;; if OPERATOR is a known static method, call with %call-lex-prop
+      ;;  (prop obj args...) === obj.prop(args)
+      ((setf tmp (find-swf-static-method arg *symbol-table*))
+       (scompile `(%get-lex-prop ,(first tmp) ,(second tmp))))
+
+      ;; todo: decide if we should do something for the pretend accessors?
+
+      ;; normal function call, find-prop-strict + call-property
+      ((setf tmp (find-swf-function arg *symbol-table*))
+       (break "f-s-f ~s" tmp)
+       (scompile `(%get-property-without-object ,tmp)))
+
+      ;; default = normal call?
+      ;; fixme: might be nicer if we could detect unknown functions
+      (t
+       (scompile `(%get-property-without-object ,arg))))))
+
+
+
 #+nil(with-lambda-context ()
   (scompile '(block foo 2 (if nil (return-from foo 4) 5) 3)))
 

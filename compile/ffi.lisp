@@ -96,8 +96,6 @@
 
 
 
-
-
 (define-special %call-property (object property &rest args)
   ;; (%call-property object property args) -> value
   ;;(format t "call property ~s . ~s ( ~s ) ~%" (first cdr) (second cdr) (third cdr))
@@ -121,6 +119,10 @@
     ,@(loop for i in args
          append (scompile i)) ;; calculate args
     (:call-property ,property ,(length args)))) ;; call it
+
+(define-special %get-property-without-object (property)
+  `((:find-property-strict ,property)
+    (:get-property ,property)))
 
 
 
@@ -146,6 +148,17 @@
     ,@(loop for i in args
          append (scompile i)) ;; calculate args
     (:call-property ,property ,(length args))))
+
+;; used by stuff like Math.random(), etc
+(define-special %get-lex-prop (object-name property)
+  ;; fixme: better name for this?
+  `((:get-lex ,(if (find-swf-class object-name)
+                   (swf-name (find-swf-class object-name))
+                   object-name)) ;; find the object
+    (:get-property ,(if (find-swf-class property)
+                   (swf-name (find-swf-class property))
+                   property))))
+
 
 #+nil
 (define-special %get-lex (name)
