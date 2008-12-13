@@ -18,9 +18,13 @@
 
   ;; partial implementation of setf, only handles setting local vars,
   ;;  so we can start using it while waiting on real implementation
+  ;; adding hack for (setf foo) functions also (doesn't work yet though)
   (swf-defmacro %setf-1 (place value)
-    (print (if (and (consp place) (find-swf-property (car place)))
-               `(%set-property ,(second place) ,(first place) ,value)
+    (print (if (consp place)
+               (cond
+                 ((find-swf-property (first place))
+                  `(%set-property ,(second place) ,(first place) ,value))
+                 (t `((setf ,(first place)) ,(second place) ,(first place) ,value)))
                `(%set-local ,place ,value))))
 
   (swf-defmacro setf (&rest args)
@@ -90,6 +94,16 @@
   (swf-defmemfun eql (a b)
     (%asm (:get-local-1)
           (:get-local-2)
+          ;; not quite right, since it compares all numbers by value
+          ;; also compares strings, but since strings are immutable,
+          ;; that is arguably OK
+          (:strict-equals)))
+
+  (swf-defmemfun equal (a b)
+    (%asm (:get-local-1)
+          (:get-local-2)
+          ;;even less correct than EQL, since it converts
+          ;;string<->number<->Boolean, and a few other things
           (:equals)))
 
   #+nil  (swf-defmemfun error (datum &rest args) )
@@ -127,8 +141,55 @@
                          slot)))
       `(%asm (:@ ,object)
              (:get-property , (find-swf-property slot-name)))))
+
+  (swf-defmacro %reverse-list (list)
+    `(let ((reversed nil))
+      (dolist (value ,list reversed)
+        (push value reversed))))
+
+  ;; macro due to lack of &key in functions
+  (swf-defmacro %reduce-list (function sequence &key key from-end (start 0) end (initial-value nil initial-value-p))
+    `(let* ((list (if ,from-end
+                      (nthcdr ,start (%reverse-list ,sequence))
+                      (nthcdr ,start ,sequence)))
+            (count 0)
+            (result (cond
+                      ((,initial-value-p) ,initial-value)
+                      ((null list) (%funcall ,function nil))
+                      (t (prog1
+                             (car list)
+                           (incf count)
+                           (setf list (cdr list)))))))
+       (dolist (a list result)
+         (when (>= count ,end) (return result))
+         (setf result (if ,key
+                          (%funcall ,function nil result (%funcall ,key a))
+                          (%funcall ,function nil result a))))))
+
+  ;;; fixme: handle strings in sequence functions
+  ;; reverse string = (%flash:join (%flash:reverse (%flash:split str "")) "")?
+  (swf-defmemfun reverse (sequence)
+    (typecase sequence
+      (cons-type (%reverse-list sequence))
+      (%flash:string (%flash:join (%flash:reverse (%flash:split sequence "")) ""))
+      (%flash:array (%flash:reverse (%flash:concat sequence)))))
+
+  (swf-defmemfun nreverse (sequence)
+    (if (%typep sequence %flash:array)
+        (%flash:reverse sequence)
+        (reverse sequence))) ;; fixme: add in-place list reverse
+
+
+  (swf-defmemfun length (sequence)
+    (if (listp sequence)
+        (list-length sequence)
+        ;; fixme: should probably be %flash:length instead of :length
+        (%get-property sequence :length)))
+
+
+
 )
 
-(let ((*symbol-table* (make-instance 'symbol-table :inherit (list *cl-symbol-table* *player-symbol-table*))))
+#+nil(let ((*symbol-table* (make-instance 'symbol-table :inherit (list *cl-symbol-table* *player-symbol-table*))))
    (dump-defun-asm (&arest rest)
      (%apply (function %flash:max) nil rest)))

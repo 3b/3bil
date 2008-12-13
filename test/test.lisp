@@ -141,7 +141,7 @@
         (setf (%flash.text:background foo) t)
         (setf (%flash.text:background-color foo) (rgba 0.1 0.1 0.1 0.1))
         (let ((str "abc..."))
-          ;;(setf str (+ str (%flash:from-char-code 26085 26412 #x8a9e)))
+          (setf str (+ str (%flash:from-char-code 26085 26412 #x8a9e)))
           (let ((cc (cons 0 2)))
             (setf str (+ str (cons 2 3)))
             (setf str (+ str "=(" (car cc) " " (cdr cc) ")"))
@@ -235,7 +235,28 @@
               (incf str (+ " || car speed =" (car-speed-test arg 10000000))))
             #+nil(incf str (+ " || space test2=" (space-test2 arg 1000000)
                          (nth 1000 (blob arg))))
-            
+            (incf str (+ " || keyword =" :foo))
+            (incf str (+ " || eq :foo :foo =" (eq :foo :foo)))
+            (incf str (+ " || eql :foo :foo =" (eql :foo :foo)))
+            (incf str (+ " || equal \"2\" 2 =" (equal "2" 2)))
+            (incf str (+ " || '(1 a :b) =" (list->str '(1 a :b))))
+            (incf str (+ " || #(1 2 3) =" #(1 2 3 )))
+            (incf str (+ " || aref #(1 2 3) 1 =" (aref #(1 2 3) 1)))
+            (incf str (+ " || aref \"piyo\" 1 =" (aref "piyo" 1)))
+            (incf str (+ " || a-r-m-i ="
+                         (array-row-major-index (%new* not-simple-array-type
+                                                      #(2 3 4) nil nil
+                                                      #(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24)
+                                                      0)
+                                                0 2 1)))
+            (incf str (+ " || aref 0 2 1 ="
+                         (aref (%new* not-simple-array-type
+                                                      #(2 3 4) nil nil
+                                                      #(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24)
+                                                      0)
+                                                0 2 1)))
+            (incf str (+ " || reverse #(1 2 3) =" (reverse #(1 2 3))))
+            (incf str (+ " || reverse \"hoge\" =" (reverse "hoge")))
             (let ((foo 4))
               (when (and (> foo 0) (> (random 1.0) 0.2))
                 (incf str "||rand")))

@@ -15,7 +15,8 @@
    (class-methods :initform (make-hash-table) :accessor class-methods)
    (static-methods :initform (make-hash-table) :accessor class-static-methods)
    (classes :initform (make-hash-table) :accessor classes)
-   (inherited :initform nil :initarg :inherit :accessor inherited-symbol-tables)))
+   (inherited :initform nil :initarg :inherit :accessor inherited-symbol-tables)
+   (setf-functions :initform nil :initarg :setf :accessor setf-functions)))
 
 (defparameter *player-symbol-table* (make-instance 'symbol-table))
 
@@ -25,42 +26,29 @@
   (make-instance 'symbol-table :inherit (list *cl-symbol-table*)))
 
 ;; fixme: combine these?
-(defun find-swf-method (symbol &optional (s *symbol-table*))
-  (or (car (gethash symbol (class-methods s)))
-      (loop for i in (inherited-symbol-tables s)
-         when (find-swf-method symbol i)
-         return it)))
-
-(defun find-swf-static-method (symbol &optional (s *symbol-table*))
-  (or (car (gethash symbol (class-static-methods s)))
-      (loop for i in (inherited-symbol-tables s)
-         when (find-swf-static-method symbol i)
-         return it)))
+(defmacro define-swf-find-foo (name hash-accessors)
+  `(defun ,name (symbol &optional (s *symbol-table*))
+     (or (car (gethash symbol (,hash-accessors s)))
+         (loop for i in (inherited-symbol-tables s)
+            when (,name symbol i)
+            return it))))
+(define-swf-find-foo find-swf-method class-methods)
+(define-swf-find-foo find-swf-static-method class-static-methods)
+(define-swf-find-foo find-swf-property properties)
+(define-swf-find-foo find-swf-constant constants)
+(define-swf-find-foo find-swf-function functions)
+(define-swf-find-foo find-swf-setf-function setf-functions)
 ;;(inherited-symbol-tables *symbol-table*)
-;;(find-swf-static-method 'flash::math.random )
-
-(defun find-swf-property (symbol &optional (s *symbol-table*))
-  (or (car (gethash symbol (properties s)))
-      (loop for i in (inherited-symbol-tables s)
-         when (find-swf-property symbol i)
-         return it)))
-
-(defun find-swf-constant (symbol &optional (s *symbol-table*))
-  (or (car (gethash symbol (constants s)))
-      (loop for i in (inherited-symbol-tables s)
-         when (find-swf-constant symbol i)
-         return it)))
+;;(find-swf-static-method '%flash:random )
 
 (defun add-swf-property (symbol swf-name &optional (s *symbol-table*))
   (pushnew swf-name
            (gethash symbol (properties s) (list))
            :test 'string=))
 
-(defun find-swf-function (symbol &optional (s *symbol-table*))
-  (or (car (gethash symbol (functions s)))
-      (loop for i in (inherited-symbol-tables s)
-         when (find-swf-function symbol i)
-         return it)))
+
+(defmethod swf-name ((object (eql nil)))
+  nil)
 
 (defclass symbol-class-data ()
   ((name :initarg :name :accessor name)
@@ -94,6 +82,12 @@
 (defmethod scompile-cons (operator args)
   (let ((tmp))
     (cond
+      #+nil((and (consp operator) (setf tmp (find-swf-setf-function (first operator) *symbol-table*)))
+            ;;; not sure how to name setf-functions, probably keep a list of
+            ;;; unnamed lambdas, and compile in references to those?
+            ;;; or maybe add a top-level namespace for them?
+            )
+      ((consp operator) (error "cons in operator position not supported yet"))
 
       ;; if OPERATOR is a known method, call with %call-property
       ;;  (prop obj args...) === obj.prop(args)

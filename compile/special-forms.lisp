@@ -278,8 +278,9 @@
 
 (define-special %typep (object type)
   `(,@(scompile object)
-      (:get-lex ,type)
+      (:get-lex ,(or (swf-name (find-swf-class type)) type))
       (:is-type-late )))
+
 
 (define-special %type-of (object)
   `(,@(scompile object)
@@ -439,6 +440,10 @@ call with %flet-call, which sets up hidden return label arg
                  (list 'cons (car rest) (expand-rest (cdr rest)))
                  rest)))
     (scompile (expand-rest rest))))
+;;(scompile '(list (list 1) (list 2)))
+;;(scompile '(list 1))
+;;(scompile '(quote (1 2 3)))
+;;(scompile '(list '(list 1 2 3)))
 
 (define-special* list* (rest)
   (labels ((expand-rest (rest)
@@ -449,11 +454,28 @@ call with %flet-call, which sets up hidden return label arg
       (error "not enough arguments to LIST*"))
     (scompile (expand-rest rest))))
 
-;;; partial implementation of aref, handles single dimensional flash::Array
-(define-special aref (array index)
+;;; internal aref, handles single dimensional flash::Array
+(define-special %aref-1 (array index)
   `(,@(scompile array)
     ,@(scompile index)
       (:get-property (:multiname-l "" ""))))
+
+(swf-defmacro aref (array &rest subscripts)
+  (let ((a (gensym)))
+    (if (= 1 (length subscripts))
+        `(let ((,a ,array))
+           (if (%typep ,a %flash:array)
+              (%aref-1 ,a ,(first subscripts))
+              (if (%typep ,a %flash:string)
+                  (%flash:char-at ,a 1)
+                  (%aref-n ,array ,@subscripts))))
+        `(%aref-n ,array ,@subscripts))))
+
+(define-special %set-aref-1 (array index value)
+  `(,@(scompile array)
+    ,@(scompile index)
+    ,@(scompile value)
+      (:set-property (:multiname-l "" ""))))
 
 ;;; temporary hack to get inlined cons/car/cdr, speeds up tests noticeably
 ;;;  types and better compilation should give a few orders of magnitude though
@@ -524,6 +546,11 @@ call with %flet-call, which sets up hidden return label arg
       (t
        (scompile `(%get-property-without-object ,arg))))))
 
+(define-special quote (object)
+  (%quote object))
+
+#+nil(dump-defun-asm (&arest rest) 'a)
+#+nil(dump-defun-asm (&arest rest) '1)
 
 
 #+nil(with-lambda-context ()

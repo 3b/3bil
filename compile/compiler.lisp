@@ -216,6 +216,27 @@
   `((:push-double ,form)
     (:coerce-any)))
 
+
+(defmethod scompile ((form simple-vector))
+  `(,@(loop for i across form
+         append (scompile i))
+      (:new-array ,(length form))))
+
+
+(defmethod %quote (object)
+  ;; assuming anything without a special handler is self-evaluating for now
+  (scompile object))
+
+(defmethod %quote ((object symbol))
+  ;; fixme: need to intern symbols somewhere, this doesn't make symbols that are EQ (though they are EQL with current implementation, which probably means EQL should be EQUAL)
+  (scompile `(%new* %flash:q-name
+                   ,(package-name (symbol-package object))
+                   ,(symbol-name object))))
+
+(defmethod %quote ((object cons))
+  (scompile `(list ,@(loop for i in object
+                        collect `(quote ,i)))))
+
 (defmethod scompile ((form symbol))
   (let* ((i (get-lambda-local-index form))
         (constant (unless i (find-swf-constant form))))
@@ -223,6 +244,8 @@
       (i `((:get-local ,i)))
       (constant `((:get-lex ,(first constant))
                   (:get-property ,(second constant))))
+      ((keywordp form)
+       (%quote form))
       (t (error "unknown local ~s?" form)))))
 
 (defmacro define-constants (&body constants)

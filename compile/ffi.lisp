@@ -179,9 +179,24 @@
                    (assert c) ;; fixme: better error reporting
                    (swf-name c)))
                 (t class))))
+    ;;fixme: does this actually work with arguments?
     `((:find-property-strict ,name)
       (:construct-prop ,name ,arg-count)
       #+nil(:coerce ,name)
+      (:coerce-any))))
+
+;; fixme: replace %new with this
+(define-special %new* (class &rest args)
+  (let ((name (typecase class
+                (symbol
+                 (let ((c (find-swf-class class)))
+                   (assert c) ;; fixme: better error reporting
+                   (swf-name c)))
+                (t class))))
+    `((:find-property-strict ,name)
+      ,@(loop for i in args
+           append (scompile i))
+      (:construct-prop ,name ,(length args))
       (:coerce-any))))
 
 ;; (avm2-asm:assemble (scompile '(%new flash.text:Text-Field 0)))
