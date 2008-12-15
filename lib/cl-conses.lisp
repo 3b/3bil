@@ -112,9 +112,6 @@
         (cons (copy-tree (car tree)) (copy-tree (cdr tree)))
         tree))
 
-  (swf-defmemfun listp (a)
-    (or (%typep a cons-type) (eq a nil)))
-
   ;; fixme: implement pop according to spec
   (swf-defmacro pop (a)
     (let ((temp (gensym "POP-TEMP-")))

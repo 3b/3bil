@@ -227,12 +227,6 @@
   ;; assuming anything without a special handler is self-evaluating for now
   (scompile object))
 
-(defmethod %quote ((object symbol))
-  ;; fixme: need to intern symbols somewhere, this doesn't make symbols that are EQ (though they are EQL with current implementation, which probably means EQL should be EQUAL)
-  (scompile `(%new* %flash:q-name
-                   ,(package-name (symbol-package object))
-                   ,(symbol-name object))))
-
 (defmethod %quote ((object cons))
   (scompile `(list ,@(loop for i in object
                         collect `(quote ,i)))))

@@ -8,5 +8,7 @@
                         (:file "sicl-conditionals")
                         (:file "sicl-iteration")
                         (:file "cl-conses2")
+                        (:file "cl-arrays")
+                        (:file "cl-sequences")
                         )
            :serial t)

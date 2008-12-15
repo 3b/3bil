@@ -4,6 +4,15 @@
 ;;;
 ;;; most probably don't match CL semantics very closely yet...
 
+
+;;; define this here for now instead of special-forms.lisp, as it needs %flash
+(defmethod %quote ((object symbol))
+  ;; fixme: need to intern symbols somewhere, this doesn't make symbols that are EQ (though they are EQL with current implementation, which probably means EQL should be EQUAL)
+  (scompile `(%new* %flash:q-name
+                    ,(package-name (symbol-package object))
+                    ,(symbol-name object))))
+
+
 (let ((*symbol-table* *cl-symbol-table*))
 
   (swf-defmacro %apply (function this-arg rest-array)
@@ -141,51 +150,6 @@
                          slot)))
       `(%asm (:@ ,object)
              (:get-property , (find-swf-property slot-name)))))
-
-  (swf-defmacro %reverse-list (list)
-    `(let ((reversed nil))
-      (dolist (value ,list reversed)
-        (push value reversed))))
-
-  ;; macro due to lack of &key in functions
-  (swf-defmacro %reduce-list (function sequence &key key from-end (start 0) end (initial-value nil initial-value-p))
-    `(let* ((list (if ,from-end
-                      (nthcdr ,start (%reverse-list ,sequence))
-                      (nthcdr ,start ,sequence)))
-            (count 0)
-            (result (cond
-                      ((,initial-value-p) ,initial-value)
-                      ((null list) (%funcall ,function nil))
-                      (t (prog1
-                             (car list)
-                           (incf count)
-                           (setf list (cdr list)))))))
-       (dolist (a list result)
-         (when (>= count ,end) (return result))
-         (setf result (if ,key
-                          (%funcall ,function nil result (%funcall ,key a))
-                          (%funcall ,function nil result a))))))
-
-  ;;; fixme: handle strings in sequence functions
-  ;; reverse string = (%flash:join (%flash:reverse (%flash:split str "")) "")?
-  (swf-defmemfun reverse (sequence)
-    (typecase sequence
-      (cons-type (%reverse-list sequence))
-      (%flash:string (%flash:join (%flash:reverse (%flash:split sequence "")) ""))
-      (%flash:array (%flash:reverse (%flash:concat sequence)))))
-
-  (swf-defmemfun nreverse (sequence)
-    (if (%typep sequence %flash:array)
-        (%flash:reverse sequence)
-        (reverse sequence))) ;; fixme: add in-place list reverse
-
-
-  (swf-defmemfun length (sequence)
-    (if (listp sequence)
-        (list-length sequence)
-        ;; fixme: should probably be %flash:length instead of :length
-        (%get-property sequence :length)))
-
 
 
 )

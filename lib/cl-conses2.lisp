@@ -34,7 +34,10 @@
         (when (and (eq fast slow) (> length 0)) (return nil))
         (setf fast (cddr fast)))))
 
-  ;; LISTP in cl-conses
+  ;; LISTP
+  (swf-defmemfun listp (a)
+    (or (%typep a cons-type) (eq a nil)))
+
 
   ;; Function MAKE-LIST
 
@@ -50,10 +53,10 @@
   (swf-defmemfun nconc (&arest lists)
     (let* ((a (if (zerop (slot-value lists '%flash:length))
                  nil
-                 (aref lists 0)))
+                 (%aref-1 lists 0)))
           (end (last a)))
       (dotimes (i (1- (slot-value lists '%flash:length)) a)
-        (let ((next (aref lists (1+ i))))
+        (let ((next (%aref-1 lists (1+ i))))
           (rplacd (last end) next)
           (setf end next)))))
 
@@ -117,4 +120,32 @@
   ;;Function SUBSETP
 
   ;;Function UNION, NUNION
+
+  ;;misc
+
+  (swf-defmacro %reverse-list (list)
+    `(let ((reversed nil))
+      (dolist (value ,list reversed)
+        (push value reversed))))
+
+  ;; macro due to lack of &key in functions
+  (swf-defmacro %reduce-list (function sequence &key key from-end (start 0) end (initial-value nil initial-value-p))
+    `(let* ((list (if ,from-end
+                      (nthcdr ,start (%reverse-list ,sequence))
+                      (nthcdr ,start ,sequence)))
+            (count 0)
+            (result (cond
+                      ((,initial-value-p) ,initial-value)
+                      ((null list) (%funcall ,function nil))
+                      (t (prog1
+                             (car list)
+                           (incf count)
+                           (setf list (cdr list)))))))
+       (dolist (a list result)
+         (when (>= count ,end) (return result))
+         (setf result (if ,key
+                          (%funcall ,function nil result (%funcall ,key a))
+                          (%funcall ,function nil result a))))))
+
+
 )

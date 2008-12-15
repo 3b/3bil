@@ -8,6 +8,17 @@
 
 (let ((*symbol-table* *cl-symbol-table*))
 
+  (swf-defmacro aref (array &rest subscripts)
+                (let ((a (gensym)))
+                  (if (= 1 (length subscripts))
+                      `(let ((,a ,array))
+                         (if (%typep ,a %flash:array)
+                             (%aref-1 ,a ,(first subscripts))
+                             (if (%typep ,a %flash:string)
+                                 (%flash:char-at ,a 1)
+                                 (%aref-n ,array ,@subscripts))))
+                      `(%aref-n ,array ,@subscripts))))
+
   (def-swf-class not-simple-array-type "not-simple-array" %flash:object
                  (%dimensions-array
                   %adjustable-p
