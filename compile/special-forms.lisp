@@ -16,9 +16,9 @@
 ;;+ go
 ;;+ tagbody
 ;;
-;; quote
+;;~ quote
 ;;
-;; function
+;;~ function
 ;;~ setq
 ;;
 ;; symbol-macrolet
@@ -96,13 +96,6 @@
               (:@kill `(:kill ,(get-lambda-local-index (second x))))
               (otherwise x)))
           cdr))
-(define-special %asm* (args &rest cdr)
-  ;; (%asm* (arg list) (op1 args) (op2 ...) ... )
-  (append
-   (loop for arg in args
-      append (scompile arg))
-    (copy-list cdr)))
-
 
 (define-special %label (target)
   ;; (%label name) ;; for reverse jumps only
@@ -139,16 +132,7 @@
 (define-special go (tag)
   (scompile-cons '%go (list (get-lambda-tag tag))))
 
-(define-special %go-when (cond tag)
-  (scompile-cons '%when (list cond (get-lambda-tag tag))))
-
 ;; (with-lambda-context () (scompile '(tagbody foo (go baz) bar 1 baz 2)))
-
-(define-special %when (cond label)
-  ;; (%when cond label)
-  `(,@(scompile cond)
-      (:if-true ,label)
-      (:push-null)))
 
 (define-special %if (cond false-test true-branch false-branch)
   (let ((false-label (gensym "%IF-FALSE-"))
@@ -327,14 +311,6 @@ call with %flet-call, which sets up hidden return label arg
              collect '(:pop))
        (:jump ,(end-label block)))))
 
-(define-special prog1 (value-form &body body)
-  (let ((temp (gensym "PROG1-VALUE-")))
-        (scompile
-         `(let ((,temp ,value-form))
-                           (progn
-                             ,@body
-                             ,temp)))))
-
 (define-special %with-cleanup ((name code) form)
   (with-cleanup (name code)
     (scompile form)))
@@ -348,25 +324,10 @@ call with %flet-call, which sets up hidden return label arg
                                   ,protected
                                 (call-%flet ,cleanup-name)))))))
 
-(define-special* list (rest)
-  (labels ((expand-rest (rest)
-             (if (consp rest)
-                 (list 'cons (car rest) (expand-rest (cdr rest)))
-                 rest)))
-    (scompile (expand-rest rest))))
 ;;(scompile '(list (list 1) (list 2)))
 ;;(scompile '(list 1))
 ;;(scompile '(quote (1 2 3)))
 ;;(scompile '(list '(list 1 2 3)))
-
-(define-special* list* (rest)
-  (labels ((expand-rest (rest)
-             (if (consp (cdr rest))
-                 (list 'cons (car rest) (expand-rest (cdr rest)))
-                 (car rest))))
-    (when (endp rest)
-      (error "not enough arguments to LIST*"))
-    (scompile (expand-rest rest))))
 
 ;;; internal aref, handles single dimensional flash::Array
 (define-special %aref-1 (array index)
@@ -380,44 +341,6 @@ call with %flet-call, which sets up hidden return label arg
     ,@(scompile index)
     ,@(scompile value)
       (:set-property (:multiname-l "" ""))))
-
-;;; temporary hack to get inlined cons/car/cdr, speeds up tests noticeably
-;;;  types and better compilation should give a few orders of magnitude though
-(define-special cons (a b)
-  `((:find-property-strict cons-type)
-    ,@(scompile a)
-    ,@(scompile b)
-    (:construct-prop cons-type 2)
-    (:coerce-any)))
-
-;;; coercing to cons-type before accessing slots is ~2x faster
-;;; using get-slot instead of get-property is maybe a few % faster
-;;; checking type explicitly is slow, so just using built-in check for now
-;;;   (which works, but doesn't throw the CL specified error type)
-;;; :get-lex might be the slow part, so putting cons-type in a global
-;;;  might help speed of proper type check
-(define-special car (a) ;;; FIXME: handle non-cons properly
-  (let ((temp (gensym "CAR-TEMP-")))
-    `(,@(scompile
-         `(let ((,temp ,a))
-            (if (eq ,temp :null)
-                :null
-                (%asm* (,temp)
-                       (:coerce cons-type)
-                       #+nil(:get-property %car)
-                       (:get-slot 1))))))))
-
-(define-special cdr (a) ;;; FIXME: handle non-cons properly
-  (let ((temp (gensym "CDR-TEMP-")))
-    `(,@(scompile
-         `(let ((,temp ,a))
-            (if (eq ,temp :null)
-                :null
-                (%asm (:@ ,temp)
-                      (:coerce cons-type)
-                      #+nil(:get-property %cdr)
-                      (:get-slot 2))))))))
-
 
 
 ;;(scompile '(list* 1  2 3 4 5))

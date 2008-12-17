@@ -120,15 +120,15 @@
              ,@declarations
              (block nil
                (tagbody
-                  #+nil(when (endp ,list-var)
+                  (when (endp ,list-var)
                     (go ,end-tag))
-                  (%go-when (endp ,list-var) ,end-tag)
+                  #+nil(%go-when (endp ,list-var) ,end-tag)
                   ,start-tag
                   (setq ,var (pop ,list-var))
                   (tagbody ,@forms)
-                  #+nil(when ,list-var
+                 (when ,list-var
                     (go ,start-tag))
-                  (%go-when ,list-var ,start-tag)
+                  #+nil(%go-when ,list-var ,start-tag)
                   ,end-tag)
                (let ((,var nil))
                  #+nil(declare (ignorable ,var))

@@ -14,7 +14,7 @@
   ;; Function TREE-EQUAL
 
   ;; fixme: write iterative version of copy-list
-  (swf-defun copy-list (list)
+  (swf-defmemfun copy-list (list)
     (%flet (do-copy (list)
              (if (consp list)
                  (cons (car list) (do-copy (cdr list)))
@@ -23,7 +23,22 @@
           (%type-error "COPY-LIST" list)
           (call-%flet do-copy list))))
 
-  ;; LIST, LIST* implemented as a special form for now due to lack of &rest
+  (swf-defmemfun list (&arest rest)
+    (let ((list nil)
+          (length (%get-property rest :length)))
+      (dotimes (i length list)
+        (push (%aref-1 rest (- length i 1)) list))))
+
+  (swf-defmemfun list* (&arest rest)
+    (when (zerop (%get-property rest :length))
+      (%error "not enough arguments"))
+    (let* ((length (%get-property rest :length))
+           (list (%aref-1 rest (1- length))))
+      (dotimes (i (1- length) list)
+        (push (%aref-1 rest (- length i 2)) list))))
+
+
+
 
   (swf-defun list-length (list)
     (let ((fast list)

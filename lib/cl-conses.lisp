@@ -26,8 +26,8 @@
 
   (swf-defmemfun cons (a b)
     (%asm (:find-property-strict cons-type)
-          (:get-local-1)
-          (:get-local-2)
+          (:@ a)
+          (:@ b)
           (:construct-prop cons-type 2)))
 
   (swf-defmemfun consp (a)
@@ -41,22 +41,22 @@
 
   ;;; implementing CAR/CDR as special forms for performance, until
   ;;; compiler macros are available
-  #+nil(swf-defmemfun car (a)
+  (swf-defmemfun car (a)
          (if (eq a :null)
              :null
              (if (consp a)
-                 (%asm* (a)
+                 (%asm (:@ a)
                         (:coerce cons-type)
                         (:get-property %car))
                  (%type-error "CAR" a))))
 
-  #+nil(swf-defmemfun cdr (a)
+  (swf-defmemfun cdr (a)
          (if (eq a :null)
              :null
              (if (consp a)
-                 (%asm* (a)
-                        (:coerce cons-type)
-                        (:get-property %cdr))
+                 (%asm (:@ a)
+                       (:coerce cons-type)
+                       (:get-property %cdr))
                  (%type-error "CDR" a))))
 
 

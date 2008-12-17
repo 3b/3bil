@@ -152,6 +152,12 @@
              (:get-property , (find-swf-property slot-name)))))
 
 
+  (swf-defmacro prog1 (value-form &body body)
+    (let ((temp (gensym)))
+      `(let ((,temp ,value-form))
+         ,@body
+         ,temp)))
+
 )
 
 #+nil(let ((*symbol-table* (make-instance 'symbol-table :inherit (list *cl-symbol-table* *player-symbol-table*))))
