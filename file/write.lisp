@@ -346,7 +346,6 @@
 (defun super-names (name)
   (let ((c (when name (find-swf-class name))))
     (when c
-      (format t "cccc=~S~%"c)
       (cons (swf-name c) (super-names (extends c))))))
 
 (defun push-lex-scope (mn-index)
@@ -449,7 +448,7 @@
                                    (extends extends) (properties properties)
                                    (constructor constructor)) v
                     (when (or properties constructor)
-                      (format t "name=~s extends = ~s, find=~s sn=~s~%" swf-name
+                      #+nil(format t "name=~s extends = ~s, find=~s sn=~s~%" swf-name
                               extends (find-swf-class extends)
                               (swf-name (find-swf-class extends))
                               )

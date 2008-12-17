@@ -177,7 +177,7 @@
             (setf str (+ str " || typecase 123="
                                (typecase 123
                                  (cons-type "-cons-")
-                                 (:int "-:int-")
+                                 (%flash:int "-:int-")
                                  (otherwise "-t-"))))
             (setf str (+ str " || typecase cons="
                                (typecase cc
