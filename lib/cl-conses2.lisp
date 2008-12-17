@@ -40,14 +40,17 @@
 
 
 
-  (swf-defun list-length (list)
-    (let ((fast list)
-          (length 0))
-      (dolist (slow list)
-        (when (endp fast) (return  length))
-        (when (endp (cdr fast)) (return  (+ length 1)))
-        (when (and (eq fast slow) (> length 0)) (return nil))
-        (setf fast (cddr fast)))))
+  (swf-defmemfun list-length (list)
+    (if (endp list)
+        0
+        (let ((fast list)
+              (length 0))
+          (dolist (slow list)
+            (when (endp fast) (return length))
+            (when (endp (cdr fast)) (return  (+ length 1)))
+            (when (and (eq fast slow) (> length 0)) (return nil))
+            (incf length 2)
+            (setf fast (cddr fast))))))
 
   ;; LISTP
   (swf-defmemfun listp (a)

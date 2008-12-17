@@ -264,6 +264,7 @@
             (incf str (+ " || do test: 4,3,2=" (do/do*-tests)))
             (incf str (+ " || unused args: " (unused-args-test 1 2 3)))
             (incf str (+ " || pi: " %flash:+pi+))
+            (incf str (+ " || length '(1 2 3): " (list-length '(1 2 3))))
             (%flash:trace (+ " || unused args: " (unused-args-test 1 2 3)))
 )
 
