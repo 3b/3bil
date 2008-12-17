@@ -53,17 +53,7 @@
      when (or next (and (consp form) (eql (car form) 'return)))
      append '((:pop))))
 
-
 ;; (scompile '(progn "foo" "bar" :true))
-
-#+nil(define-special return (value)
-  `(,@(scompile value)
-      (:return-value)))
-
-;;; fixme: this adds a :pop after :return-value, is that correct?
-;; (scompile '(progn "foo" (return :false) :true))
-
-
 
 
 (define-special let (bindings &rest body)
@@ -90,29 +80,6 @@
             ,@(loop for (nil nil . index) in bindings-indices
                  collect `(:kill ,index))))))))
 ;; (with-lambda-context (:args '(foo)) (scompile '(let ((foo 1.23) (bar foo)) foo)))
-
-;;; let* is uglier to implement without modifying lambda context stuff
-;;; directly, so implementing in terms of let with a macro in cl lib
-;;; stuff
-;;(define-special let* (bindings &rest body)
-;;  (with-nested-lambda-context
-;;    (append
-;;     ;; set up bindings
-;;     (loop for binding in bindings
-;;        for j from (length (locals *current-lambda*))
-;;        if (consp binding)
-;;        append (scompile (second binding))
-;;        and collect `(:set-local ,j )
-;;        and do (push (cons (car binding) j) (locals *current-lambda*))
-;;        else
-;;        do (push (cons binding j) (locals *current-lambda*)))
-;;     ;; compile the body as a progn, and kill the locals on exit
-;;     `(,@(scompile `(progn ,@body))
-;;         ,@(loop for binding in bindings
-;;              for name = (if (consp binding) (car binding) binding)
-;;              collect `(:kill ,(get-lambda-local-index name)))))))
-;; (with-simple-lambda-context (foo) (scompile '(let* ((foo 1.23) (bar foo)) foo)))
-
 
 (define-special %set-local (local value)
   ;; (%set-local var value) -> value
@@ -184,8 +151,7 @@
       (:push-null)))
 
 (define-special %if (cond false-test true-branch false-branch)
-  (let (#+nil(true-label (gensym "%IF-TRUE-"))
-        (false-label (gensym "%IF-FALSE-"))
+  (let ((false-label (gensym "%IF-FALSE-"))
         (end-label (gensym "%IF-END-")))
     `(,@(scompile cond)
         (,false-test ,false-label)
@@ -207,54 +173,6 @@
     ;; hack since we always pop after each statement in a progn :/
     (:get-local ,(get-lambda-local-index var))))
 
-#+nil(define-special dotimes ((var count &optional result) &rest body)
-  ;; (dotimes (var count &optional result) body)
-
-  ;; set local for counter
-  ;; set local for limit
-    ;;(format t "dotimes : var=~s count=~s result=~s~%body=~s~%" var count result body)
-    (let ((label (gensym "LABEL-"))
-          (label2 (gensym "LABEL2-"))
-          (max (gensym "MAX-")))
-      (scompile                         ; format t "~s"
-       `(let ((,max ,count)
-              ;; var should not be valid while evaluating max
-              (,var 0))
-          (%go ,label2)
-          (%label ,label)
-          ,@body
-                                        ;(%set-local ,var (+ ,var 1))
-          (%inc-local-i ,var)
-          (%dlabel ,label2)
-          (%when (%2< ,var ,max) ,label)
-          ;; fixme: make sure var is still valid, and = max while evaluating result
-          ,@(if result
-                '(result)
-                '((%asm
-                   (:push-null)
-                   (:coerce-any))))))))
-
-
-
-#+nil(defmethod scompile-cons ((car (eql 'and)) cdr)
-  (case (length cdr)
-    (0 `((:push-true)))
-    (1 (scompile (first cdr)))
-    (t
-     (let ((true-label (gensym "true-"))
-           (false-label (gensym "false-")))
-       (append
-        (loop for first = t then nil
-           for i in cdr
-           unless first collect `(:pop)
-           append (scompile i)
-           collect `(:dup)
-           collect `(:if-false ,false-label))
-        `((:jump ,true-label)
-          (:%dlabel ,false-label)
-          (:pop)
-          (:push-false)
-          (:%dlabel ,true-label)))))))
 
 ;;(scompile '(and))
 ;;(scompile '(and 1))
@@ -271,10 +189,6 @@
 (define-special %error (value)
   `(,@(scompile value)
       (:throw)))
-
-#+nil(define-special %typep (object type)
-  `(,@(scompile object)
-      (:is-type ,type)))
 
 (define-special %typep (object type)
   `(,@(scompile object)
