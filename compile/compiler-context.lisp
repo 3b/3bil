@@ -16,7 +16,9 @@
    (static-methods :initform (make-hash-table) :accessor class-static-methods)
    (classes :initform (make-hash-table) :accessor classes)
    (inherited :initform nil :initarg :inherit :accessor inherited-symbol-tables)
-   (setf-functions :initform nil :initarg :setf :accessor setf-functions)))
+   (setf-functions :initform (make-hash-table) :initarg :setf :accessor setf-functions)
+   (macro-functions :initform (make-hash-table) :accessor macro-functions)
+   (cmacro-functions :initform (make-hash-table) :accessor cmacro-functions)))
 
 (defparameter *player-symbol-table* (make-instance 'symbol-table))
 
@@ -25,7 +27,6 @@
 (defparameter *symbol-table*
   (make-instance 'symbol-table :inherit (list *cl-symbol-table*)))
 
-;; fixme: combine these?
 (defmacro define-swf-find-foo (name hash-accessors)
   `(defun ,name (symbol &optional (s *symbol-table*))
      (or (car (gethash symbol (,hash-accessors s)))
@@ -38,9 +39,19 @@
 (define-swf-find-foo find-swf-constant constants)
 (define-swf-find-foo find-swf-function functions)
 (define-swf-find-foo find-swf-setf-function setf-functions)
+(define-swf-find-foo find-swf-macro-function macro-functions)
+(define-swf-find-foo find-swf-cmacro-function cmacro-functions)
 ;;(inherited-symbol-tables *symbol-table*)
 ;;(find-swf-static-method '%flash:random )
 
+(defmacro define-swf-add-foo (name hash-accessor)
+  `(defun ,name (symbol value &optional (s *symbol-table*))
+     (setf (gethash symbol (,hash-accessor s))
+           (list value))))
+
+#+nil(define-swf-add-foo add-swf-property properties)
+(define-swf-add-foo add-swf-macro-function macro-functions)
+(define-swf-add-foo add-swf-cmacro-functions cmacro-functions)
 (defun add-swf-property (symbol swf-name &optional (s *symbol-table*))
   (pushnew swf-name
            (gethash symbol (properties s) (list))

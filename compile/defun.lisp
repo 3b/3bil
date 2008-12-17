@@ -131,13 +131,6 @@
                                  collect (list 'quote i)))
                :method t))
 
-(defmacro swf-defmacro (name (&rest args) &body body)
-  `(defmethod scompile-cons ((car (eql ',name)) cdr)
-     (destructuring-bind (,@args) cdr
-       (scompile
-        (progn ,@body)))))
-
-
 (defmacro dump-defun-asm (args &body body)
   "debugging function to compile a defun to asm, and print results"
   (let ((asm (gensym)))

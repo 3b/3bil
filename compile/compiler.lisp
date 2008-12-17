@@ -262,7 +262,14 @@
 (defgeneric scompile-cons (car cdr))
 
 (defmethod scompile ((form cons))
-  (scompile-cons (car form) (cdr form)))
+  (let* ((cmacro (find-swf-cmacro-function (car form)))
+         (macro (find-swf-macro-function (car form)))
+         (new-form (if cmacro (funcall cmacro form nil) form)))
+    (if (eq form new-form)
+        (if macro
+            (scompile  (funcall macro form nil))
+            (scompile-cons (car form) (cdr form)))
+        (scompile new-form))))
 
 (defmacro define-special (name (&rest args) &body body)
   "define a special operator, destructuring form into ARGS"

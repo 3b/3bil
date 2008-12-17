@@ -5,6 +5,7 @@
                         (:file "compiler-context")
                         (:file "compiler")
                         (:file "special-forms")
+                        (:file "macro")
                         (:file "defun")
                         (:file "swfclass")
                         (:file "low-level")
