@@ -286,7 +286,7 @@
          (%flash.display:end-fill ,gfx)))
 
     (swf-defmemfun frame (evt)
-      (let* ((canvas (%get-property this :canvas))
+      (let* ((canvas (slot-value this :canvas))
              (gfx (slot-value canvas '%flash.display:graphics))
              (matrix (%new %flash.geom:Matrix 0)))
 

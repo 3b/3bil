@@ -149,7 +149,7 @@
                          (second slot)
                          slot)))
       `(%asm (:@ ,object)
-             (:get-property , (find-swf-property slot-name)))))
+             (:get-property , (or (find-swf-property slot-name) slot-name)))))
 
 
   (swf-defmacro prog1 (value-form &body body)
