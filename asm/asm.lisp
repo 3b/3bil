@@ -73,14 +73,14 @@
       (setf (max-scope-depth *current-method*) (+ init-scope max-scope)))
     (when (fixups *current-method*)
       ;; fix any fixups
-      (loop for (label . addr) in (fixups *current-method*)
+      (loop for (label addr base) in (fixups *current-method*)
          for dest = (cdr (assoc label (label *current-method*)))
          when  dest
          do (replace (code *current-method*)
-                     (u24-to-sequence (- dest addr 4))
+                     (u24-to-sequence (- dest base))
                      :start1 (+ 1 addr ))
          ;;and do (format t "fixup ~s ~%" label)
-         else do (format t "!!!!! unknown fixup ~s !!! ~%" label)))
+         else do (error "!!!!! unknown fixup ~s !!! ~%" label)))
     *current-method*))
 
 
@@ -341,7 +341,7 @@
        (let ((,dest (cdr (assoc ,name (label *current-method*))))
              (,here *code-offset*))
          (unless ,dest
-           (push (cons ,name ,here) (fixups *current-method*))
+           (push (list ,name ,here (+ ,here ,ofs)) (fixups *current-method*))
            (setf ,dest (+ 4 ,here)))
          (setf ,name (- ,dest ,here ,ofs))))))
 
@@ -358,8 +358,9 @@
               collect
                 (let ((,dest (cdr (assoc ,i (label *current-method*)))))
                   (unless ,dest
-                    (push (cons ,i ,j) (fixups *current-method*))
-                    (setf ,dest ,i))
+                    (push (list ,i (+ ,here ,j) ,here)
+			  (fixups *current-method*))
+                    (setf ,dest ,here))
                   (- ,dest ,here 0))
               else collect ,i
               ))))
