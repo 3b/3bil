@@ -6,7 +6,8 @@
                    :direction :output
                               :element-type '(unsigned-byte 8)
                               :if-exists :supersede)
-  (with-compilation-to-stream s ("frame1" `((0 "testClass")) :swf-version 9)
+  (with-compilation-to-stream s ("frame1" `((0 "testClass")) :swf-version 9
+                                          :x-twips 8000 :y-twips 6000)
 
     (def-swf-class :test-class "test-class" %flash.display::sprite (blob)
                    (()
@@ -265,6 +266,7 @@
             (incf str (+ " || unused args: " (unused-args-test 1 2 3)))
             (incf str (+ " || pi: " %flash:+pi+))
             (incf str (+ " || length '(1 2 3): " (list-length '(1 2 3))))
+            (incf str (+ " || numbers : " (list->str '(-1025 -512 -256 -255 -128 -127 -65 -64 -63 -1 0 1 63 64 65 127 128 255 256))))
             (%flash:trace (+ " || unused args: " (unused-args-test 1 2 3)))
 )
 

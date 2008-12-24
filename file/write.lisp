@@ -27,15 +27,25 @@
   (write-byte (ldb (byte 8 16) integer) stream)
   (write-byte (ldb (byte 8 24) integer) stream))
 
+;;; fixme: this is probably overly complicated, and encodes things inefficiently
+;;; - the spec says variable length encoded s32 are sign extended, so we
+;;; should need an extra byte if the high bit of the encoded value
+;;; doesn't match the sign. The actual vm seems to not sign extend though,
+;;; and negative s32 are always written with a full 32 bits, so we could
+;;; encode positive s32 without the extra byte.
+;;; we also use this for unsigned types, so those shouldn't have the extra byte
+;;; either way
 (defun write-variable-length-encoded (integer &optional (stream *standard-output*))
   (loop
      for i = integer then i2
      for i2 = (ash i -7)
      for b = (ldb (byte 7 0) i)
      for done = (or (= i2 0) (= i2 -1))
-     when (not done)
+     when (or (not (eql (logbitp 6 i2) (logbitp 6 i))) (not done))
      do (setf b (logior #x80 b))
      do (write-byte b stream)
+     when (and done (logbitp 7 b))
+     do (write-byte (if (minusp i2) #x7f 0) stream)
      until done))
 
 (defun write-u30 (integer &optional (stream *standard-output*))
@@ -49,7 +59,6 @@
 (defun write-s32 (integer &optional (stream *standard-output*))
   ;; flash 9/mxmlc seems to want negative #s stored as if they were
   ;; casted to uints first :/
-
   (assert (<= (abs integer) (expt 2 32)))
   (when (< integer 0) (setf integer (+ (expt 2 32) integer)))
   (write-variable-length-encoded integer stream))
@@ -289,15 +298,28 @@
       (write-u32-raw  (- ,end ,start 4) ,stream)
       (file-position ,stream ,end)))))
 
+(defun write-rect (stream x y)
+  ;;(write-sequence '(#x78 #x00 #x03 #xe8 #x00 #x00 #x0b #xb8 #x00) stream)
+  ;; we just always use fixed size for now...
+  (write-sequence
+   (loop with temp = 16
+         for val in (list 0 x 0 y) ;; min/max x,y
+         collect (logior (ash temp 3) (ldb (byte 3 13) val)) into l
+         collect (ldb (byte 8 5) val) into l
+         do (setf temp (ldb (byte 5 0) val))
+         finally (return (append l (list (ash temp 3)))))
+   stream))
 
-(defun write-swf (stream frame-label symbol-classes &optional (flash-version 9))
+
+(defun write-swf (stream frame-label symbol-classes &key (flash-version 9) (x-twips 8000) (y-twips 6000))
   ;;; write out a minimal .swf, based on the stuff hxasm writes
   (write-sequence `(#x46 #x57 #x53 ,flash-version) stream) ;;magic "FWS" + ver
   ;;  (write-u32-raw (+ #x17 6 (length as3) (if (>= (length as3) 63) 6 2)) stream)
   ;; file length (filled in later)
   (write-u32-raw 0 stream)
   ;; 8000x6000 twips = 400x300 pels
-  (write-sequence '(#x78 #x00 #x03 #xe8 #x00 #x00 #x0b #xb8 #x00) stream)
+  ;;(write-sequence '(#x78 #x00 #x03 #xe8 #x00 #x00 #x0b #xb8 #x00) stream)
+  (write-rect stream x-twips y-twips)
   (write-u16 #x1e00 stream) ;; 30fps
   (write-u16 #x0001 stream) ;; 1 frame
 
@@ -424,7 +446,7 @@
 ;;(setf *break-compile* t)
 ;;; quick hack for testing, need to write a proper API at some point, which
 ;;;  compiles functions from a list of packages or whatever
-(defmacro with-compilation-to-stream (s (frame-name exports &key (swf-version 9)) &body body)
+(defmacro with-compilation-to-stream (s (frame-name exports &key (swf-version 9) (x-twips 8000) (y-twips 6000)) &body body)
   (let ((script-init (gensym))
         (script-init-scope-setup (gensym)))
 
@@ -501,4 +523,4 @@
        (when *break-compile* (break))
        #+nil(format t "==-== write~%")
        ;; write out the .swf
-       (write-swf ,s ,frame-name ,exports ,swf-version))))
+       (write-swf ,s ,frame-name ,exports :flash-version ,swf-version :x-twips ,x-twips :y-twips ,y-twips))))

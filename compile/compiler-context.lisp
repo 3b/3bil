@@ -1,7 +1,5 @@
 (in-package :avm2-compiler)
 
-;;; copied from old code, not used yet...
-
 (defclass symbol-table ()
   ((functions :initform (make-hash-table) :accessor functions)
    ;; functions are really methods at the bytecode level, haven't
