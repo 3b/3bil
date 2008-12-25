@@ -79,7 +79,6 @@
          do (replace (code *current-method*)
                      (u24-to-sequence (- dest base))
                      :start1 (+ 1 addr ))
-         ;;and do (format t "fixup ~s ~%" label)
          else do (error "!!!!! unknown fixup ~s !!! ~%" label)))
     *current-method*))
 
@@ -141,9 +140,6 @@
      for i from start
      for offset from 0 by 7
      for j = (elt sequence i)
-     ;;do (format t "sum = ~s, j=~s b=~s ofs=~s s2=~s~%"
-     ;;           sum j (ldb (byte 7 0) j) offset
-     ;;           (dpb (ldb (byte 7 0) j) (byte 7 offset) sum))
      do (setf (ldb (byte 7 offset) sum) (ldb (byte 7 0) j))
      while (logbitp 7 j)
      finally (return (values sum (1+ i)))))
@@ -191,15 +187,15 @@
      with op = nil
      for byte = (elt sequence start)
      for dis = (gethash byte *disassemble-opcodes*)
-     do (format t "op=~s byte=~s start=~s cur-seq=~{ ~2,'0x~}~%   dis=~s ~%"
-                op byte start (coerce
-                               (subseq sequence start (min length
-                                                           (+ start 8))) 'list) dis)
-       (finish-output)
+     ;;do (format t "op=~s byte=~s start=~s cur-seq=~{ ~2,'0x~}~%   dis=~s ~%"
+     ;;           op byte start (coerce
+     ;;                          (subseq sequence start (min length
+     ;;                                                      (+ start 8))) 'list) dis)
+     ;;  (finish-output)
      do (incf start)
      when dis
      do (setf (values op start) (funcall dis sequence :start start))
-     and do (format t "op -> ~s start -> ~s~%" op start)
+     ;;and do (format t "op -> ~s start -> ~s~%" op start)
      and collect op
      else do (error "invalid byte ~s at ~d " byte start)
      while (< start length)))
@@ -415,19 +411,13 @@
     (flet ((defop (name args opcode
                         &optional (pop 0) (push 0) (pop-scope 0) (push-scope 0) (local 0) (flag 0))
              `(setf (gethash ',name *opcodes*)
-                    (flet ((,name (,@(mapcar 'car args) ;;&aux (#:debug-name ',name)
-				  )
+                    (flet ((,name (,@(mapcar 'car args))
 			     ,@(when args `((declare (ignorable ,@(mapcar 'car args)))))
-			     ;;(format t "assemble ~a ~%" ',name)
 			     ,@(loop with op-name = name
 				  for (name type) in args
 				  for interner = (third (assoc type coders))
 				  when interner
 				  collect `(setf ,name (,interner ,name))
-				  ;;when (eq 'q30 type)
-				  ;;collect `(when (and (consp ,name)
-				  ;;                    (eql 'qname (car ,name)))
-				  ;;           (setf ,name (apply 'qname (rest ,name))))
 				  when (eq 'ofs24 type)
 				  collect (label-to-offset name op-name)
 				  when (eq 'counted-ofs24 type)
@@ -459,23 +449,23 @@
            (defop-disasm (name args opcode &rest ignore)
              (declare (ignore ignore))
              `(setf (gethash ,opcode *disassemble-opcodes*)
-                    (lambda (sequence &key (start 0);; &aux (#:debug-name ',name)
-                             )
-                      (declare (ignorable sequence start))
-                      (values
-                       ,(if (null args)
-                            `(list ',name)
-                            `(let (junk)
-                               ;;(declare (ignore junk))
-                               (list ',name
-                                     ,@(loop for (name type) in args
-                                          for (nil decoder lookup) = (assoc type decoders)
-                                          collect`(progn
-                                                    (setf (values junk start)
-                                                          (,decoder sequence :start start))
-                                                    ,@(when lookup
-                                                            `((,lookup junk))))))))
-                       start)))))
+                    (flet ((,name (sequence &key (start 0))
+                             (declare (ignorable sequence start))
+                             (values
+                               ,(if (null args)
+                                    `(list ',name)
+                                    `(let (junk)
+                                       (list ',name
+                                             ,@(loop for (name type) in args
+                                                     for (nil decoder lookup) = (assoc type decoders)
+                                                     collect`(progn
+                                                               (setf (values junk start)
+                                                                     (,decoder sequence :start start))
+                                                               ,@(when lookup
+                                                                   `((,lookup junk))))))))
+                               start)))
+                      #',name
+))))
       `(progn
          ,@(loop for op in ops
               collect (apply #'defop op)
