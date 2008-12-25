@@ -73,14 +73,14 @@
       (setf (max-scope-depth *current-method*) (+ init-scope max-scope)))
     (when (fixups *current-method*)
       ;; fix any fixups
-      (loop for (label . addr) in (fixups *current-method*)
+      (loop for (label addr base) in (fixups *current-method*)
          for dest = (cdr (assoc label (label *current-method*)))
          when  dest
          do (replace (code *current-method*)
-                     (u24-to-sequence (- dest addr 4))
+                     (u24-to-sequence (- dest base))
                      :start1 (+ 1 addr ))
          ;;and do (format t "fixup ~s ~%" label)
-         else do (format t "!!!!! unknown fixup ~s !!! ~%" label)))
+         else do (error "!!!!! unknown fixup ~s !!! ~%" label)))
     *current-method*))
 
 
@@ -341,7 +341,7 @@
        (let ((,dest (cdr (assoc ,name (label *current-method*))))
              (,here *code-offset*))
          (unless ,dest
-           (push (cons ,name ,here) (fixups *current-method*))
+           (push (list ,name ,here (+ ,here ,ofs)) (fixups *current-method*))
            (setf ,dest (+ 4 ,here)))
          (setf ,name (- ,dest ,here ,ofs))))))
 
@@ -358,8 +358,9 @@
               collect
                 (let ((,dest (cdr (assoc ,i (label *current-method*)))))
                   (unless ,dest
-                    (push (cons ,i ,j) (fixups *current-method*))
-                    (setf ,dest ,i))
+                    (push (list ,i (+ ,here ,j) ,here)
+			  (fixups *current-method*))
+                    (setf ,dest ,here))
                   (- ,dest ,here 0))
               else collect ,i
               ))))
@@ -414,45 +415,46 @@
     (flet ((defop (name args opcode
                         &optional (pop 0) (push 0) (pop-scope 0) (push-scope 0) (local 0) (flag 0))
              `(setf (gethash ',name *opcodes*)
-                    (lambda (,@(mapcar 'car args) ;;&aux (#:debug-name ',name)
-                             )
-                      ,@(when args `((declare (ignorable ,@(mapcar 'car args)))))
-                      ;;(format t "assemble ~a ~%" ',name)
-                      ,@(loop with op-name = name
-                           for (name type) in args
-                           for interner = (third (assoc type coders))
-                           when interner
-                           collect `(setf ,name (,interner ,name))
-                           ;;when (eq 'q30 type)
-                           ;;collect `(when (and (consp ,name)
-                           ;;                    (eql 'qname (car ,name)))
-                           ;;           (setf ,name (apply 'qname (rest ,name))))
-                           when (eq 'ofs24 type)
-                           collect (label-to-offset name op-name)
-                           when (eq 'counted-ofs24 type)
-                           collect (labels-to-offsets name))
-                      ,@(unless (and (numberp pop) (numberp push) (= 0 pop push))
-                                `((adjust-stack ,pop ,push)))
-                      ,@(unless (and (numberp pop-scope) (numberp push-scope)
-                                     (= 0 pop-scope push-scope))
-                                `((adjust-scope ,pop-scope ,push-scope)))
-                      ,@(unless (and (numberp local) (zerop local))
-                                `((when (and *current-method*
-                                             (> ,local (local-count *current-method*)))
-                                    (setf (local-count *current-method*) ,local))))
-                      ,@(unless (and (numberp flag) (zerop flag))
-                                `((when *current-method*
-                                    (setf (flags *current-method*)
-                                          (logior ,local (flags *current-method*))))))
-                      ,(if (null args)
-                           `(list ,opcode)
-                           `(append
-                             (list ,opcode)
-                             ,@(loop
-                                  for (name type) in args
-                                  for encoder = (second (assoc type coders))
-                                  when encoder
-                                  collect `(,encoder ,name)))))))
+                    (flet ((,name (,@(mapcar 'car args) ;;&aux (#:debug-name ',name)
+				  )
+			     ,@(when args `((declare (ignorable ,@(mapcar 'car args)))))
+			     ;;(format t "assemble ~a ~%" ',name)
+			     ,@(loop with op-name = name
+				  for (name type) in args
+				  for interner = (third (assoc type coders))
+				  when interner
+				  collect `(setf ,name (,interner ,name))
+				  ;;when (eq 'q30 type)
+				  ;;collect `(when (and (consp ,name)
+				  ;;                    (eql 'qname (car ,name)))
+				  ;;           (setf ,name (apply 'qname (rest ,name))))
+				  when (eq 'ofs24 type)
+				  collect (label-to-offset name op-name)
+				  when (eq 'counted-ofs24 type)
+				  collect (labels-to-offsets name))
+			     ,@(unless (and (numberp pop) (numberp push) (= 0 pop push))
+				       `((adjust-stack ,pop ,push)))
+			     ,@(unless (and (numberp pop-scope) (numberp push-scope)
+					    (= 0 pop-scope push-scope))
+				       `((adjust-scope ,pop-scope ,push-scope)))
+			     ,@(unless (and (numberp local) (zerop local))
+				       `((when (and *current-method*
+						    (> ,local (local-count *current-method*)))
+					   (setf (local-count *current-method*) ,local))))
+			     ,@(unless (and (numberp flag) (zerop flag))
+				       `((when *current-method*
+					   (setf (flags *current-method*)
+						 (logior ,local (flags *current-method*))))))
+			     ,(if (null args)
+				  `(list ,opcode)
+				  `(append
+				    (list ,opcode)
+				    ,@(loop
+					 for (name type) in args
+					 for encoder = (second (assoc type coders))
+					 when encoder
+					 collect `(,encoder ,name))))))
+		      #',name)))
            ;; fixme: gensyms
            (defop-disasm (name args opcode &rest ignore)
              (declare (ignore ignore))
