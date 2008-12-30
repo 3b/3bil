@@ -399,6 +399,7 @@ call with %flet-call, which sets up hidden return label arg
 
 
 #+nil
+(format t "---~%~{~s~%~}---~%"
 (avm2-asm::avm2-disassemble
  (avm2-asm::code
   (avm2-asm::with-assembler-context
@@ -410,4 +411,4 @@ call with %flet-call, which sets up hidden return label arg
                                    (return-from foo "-ret-")
                                    "bleh")
                               "baz"))
-                          (+ s2 ">"))) ) ) ))
+                          (+ s2 ">"))) ) ) )))
