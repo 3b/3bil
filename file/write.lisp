@@ -391,13 +391,13 @@
   #+nil(format t "--assemble-function ~s :~%" name)
   (destructuring-bind (n nid argtypes return-type flags asm)
       (find-swf-function name)
-    (let ((mid (avm2-asm::avm2-method nid argtypes return-type flags
+    (let ((mid (avm2-asm::avm2-method name nid argtypes return-type flags
                                     :body (avm2-asm::assemble-method-body asm))))
       (push (list n mid) (function-names *compiler-context*)))))
 
 (defun assemble-class (name ns super properties constructor)
   (let* ((constructor-mid (avm2-asm::avm2-method
-                           0 ;; name
+                           nil 0 ;; id name
                            (loop for i in (first constructor)
                               collect 0) ;; constructor arg types
                            0 0
@@ -406,7 +406,7 @@
                             (%compile-defun name (first constructor)
                                             (second constructor) t t))))
          ;; fixme: probably should make this configurable at some point
-         (class-init (avm2-asm::avm2-method 0 nil 0 0 ;; meta-class init
+         (class-init (avm2-asm::avm2-method nil 0 nil 0 0 ;; meta-class init
                                           :body
                                           (avm2-asm::assemble-method-body
                                            `((:get-local-0)
@@ -489,7 +489,7 @@
        ;; script boilerplate
        (let ((,script-init
               (avm2-asm::avm2-method
-               0 () 0 0
+               nil 0 () 0 0
                :body
                (avm2-asm::assemble-method-body
                 `((:get-local-0)

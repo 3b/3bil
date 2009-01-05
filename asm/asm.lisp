@@ -242,7 +242,8 @@
   (make-interner asm-intern-int lookup-int avm2-intern-int ints)
   (make-interner asm-intern-uint lookup-uint avm2-intern-uint uints)
   (make-interner asm-intern-double lookup-double avm2-intern-double doubles)
-  (make-interner asm-intern-namespace lookup-namespace avm2-ns-intern namespaces))
+  (make-interner asm-intern-namespace lookup-namespace avm2-ns-intern namespaces)
+  (make-interner asm-intern-method lookup-method intern-method-id method-infos))
 ;; (asm-intern-string "foo")
 ;; (asm-intern-string '(:id 2))
 ;; (asm-intern-string :id)
@@ -384,6 +385,7 @@
            (namespace-q30 variable-length-encode asm-intern-namespace)
            (multiname-q30 variable-length-encode asm-intern-multiname)
            (class-u30     variable-length-encode asm-intern-class)
+           (method-u30    variable-length-encode asm-intern-method)
            ))
         (decoders
          ;; type tag, decoder, optional constant pool lookup function
@@ -407,6 +409,7 @@
            (namespace-q30 decode-variable-length lookup-namespace)
            (multiname-q30 decode-variable-length lookup-multiname)
            (class-u30     decode-variable-length lookup-class)
+           (method-u30     decode-variable-length lookup-method)
 )))
     (flet ((defop (name args opcode
                         &optional (pop 0) (push 0) (pop-scope 0) (push-scope 0) (local 0) (flag 0))

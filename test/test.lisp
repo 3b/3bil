@@ -104,6 +104,11 @@
 
     (swf-defmemfun unused-args-test (a b c) "ok")
 
+    (swf-defmemfun scall-test1 () "ok")
+    (swf-defmemfun scall-test ()
+      (%asm (:@ this)
+            (:call-static scall-test1 0)))
+
     (swf-defmemfun list->str (l)
       (if (atom l)
           (%flash:to-string l)
@@ -133,6 +138,7 @@
       (+ (* (i255 a) 65536 256) (rgb r g b)))
 
     (swf-defmemfun main (arg)
+      (%flash:trace "foo")
       (let ((foo (%new %flash.text:Text-Field 0))
             (canvas (%new %flash.display:Sprite 0)))
         (setf (%flash.display:width foo) 350)
@@ -267,6 +273,7 @@
             (incf str (+ " || pi: " %flash:+pi+))
             (incf str (+ " || length '(1 2 3): " (list-length '(1 2 3))))
             (incf str (+ " || numbers : " (list->str '(-1025 -512 -256 -255 -128 -127 -65 -64 -63 -1 0 1 63 64 65 127 128 255 256))))
+            (incf str (+ " || scall : " (scall-test)))
             (%flash:trace (+ " || unused args: " (unused-args-test 1 2 3)))
 )
 

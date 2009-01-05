@@ -32,7 +32,12 @@
    ;; probably should eventually do this for all constants
    (string-intern-hash :initform (make-hash-table :test 'equal) :reader string-intern-hash)
    (multiname-hash :initform (make-hash-table :test 'equalp) :reader multiname-hash)
-   (ns-set-hash :initform (make-hash-table :test 'equalp) :reader ns-set-hash)))
+   (ns-set-hash :initform (make-hash-table :test 'equalp) :reader ns-set-hash)
+   ;; we need to put method indices directly into code for
+   ;; closures/anonymous lambdas, and eventually for implementing load
+   ;; time part of defun, so store a symbol->index mapping here, and allocate
+   ;; a blank method_info on demand (for usage site or definition)
+   (method-id-hash :initform (make-hash-table) :reader method-id-hash)))
 
 
 (defparameter *assembler-context* (make-instance 'assembler-context))
@@ -185,11 +190,32 @@
                         (classes *assembler-context*))
     class-id))
 
-(defun avm2-method (name param-types return-type flags &key option-params pnames body)
-  (let ((method-id (length (method-infos *assembler-context*))))
+
+(defun intern-method-id (id)
+  ;; id might be function name, or gensym for anonymous lambdas
+  (let* ((index (gethash id (method-id-hash *assembler-context*))))
+    (if index
+        index
+        (progn
+          (vector-push-extend nil (method-infos *assembler-context*))
+          (setf (gethash id (method-id-hash *assembler-context*))
+                (1- (length (method-infos *assembler-context*))))))))
+
+(defun avm2-method (label name param-types return-type flags &key option-params pnames body)
+  ;; name is mn-pool-id for the name in the method_info struct
+  ;; label is a symbol identifying the method so its ID can be looked up
+  ;;   to compile into other functions, and isn't intended to appear in
+  ;;   the .swf anywhere
+  ;; (label can be NIL to generate a name automatically if no other
+  ;;  refs are needed aside from caller)
+  (let* ((label (or label (gensym)))
+         (method-id (intern-method-id label)))
     (when body (setf flags (logior flags (flags body))))
-    (vector-push-extend (list name param-types return-type flags option-params pnames)
-                        (method-infos *assembler-context*))
+    ;;; todo: handle multiple method definitions better (or decide if it needs handled at all)
+    (assert (null (aref (method-infos *assembler-context*) method-id))
+            () "duplicate method for ~s (~s)?" name label)
+    (setf (aref (method-infos *assembler-context*) method-id)
+          (list name param-types return-type flags option-params pnames))
     (setf (method-id body) method-id)
     (vector-push-extend body (method-bodies *assembler-context*))
     method-id))

@@ -82,11 +82,11 @@ for that here and return count of extra args"
   (:load-float-32   ()   #x3d 1 1) ;; stack=addr -> value
   (:load-float-64   ()   #x3e 1 1) ;; stack=addr -> value
 
-  (:new-function    ((method-index u30))                    #x40  0 1)
+  (:new-function    ((method-index method-u30))                    #x40  0 1)
   (:call            ((arg-count u30))                       #x41  (+ 2 arg-count) 1)
   (:construct       ((arg-count u30))                       #x42  (1+ arg-count) 1)
-  (:call-method     ((method-index u30) (arg-count u30))    #x43  (+ 1 arg-count) 1)
-  (:call-static     ((method-index u30) (arg-count u30))    #x44  (+ 1 arg-count) 1)
+  (:call-method     ((method-index method-u30) (arg-count u30))    #x43  (+ 1 arg-count) 1)
+  (:call-static     ((method-index method-u30) (arg-count u30))    #x44  (+ 1 arg-count) 1)
   (:call-super      ((multiname multiname-q30) (arg-count u30)) #x45  (+ 1 arg-count (runtime-name-count multiname)) 1)
   (:call-property   ((multiname multiname-q30) (arg-count u30)) #x46  (+ 1 arg-count (runtime-name-count multiname)) 1)
   (:return-void     ()                                      #x47 0 0)
