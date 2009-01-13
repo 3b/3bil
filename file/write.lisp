@@ -391,6 +391,7 @@
   #+nil(format t "--assemble-function ~s :~%" name)
   (destructuring-bind (n nid argtypes return-type flags asm)
       (find-swf-function name)
+    ;;(format t "--assemble-function ~s : ~s : ~s ~%" name n nid)
     (let ((mid (avm2-asm::avm2-method name nid argtypes return-type flags
                                     :body (avm2-asm::assemble-method-body asm))))
       (push (list n mid) (function-names *compiler-context*)))))
@@ -495,6 +496,7 @@
                 `((:get-local-0)
                   (:push-scope)
                   ,@,script-init-scope-setup
+                  ,@(load-top-level *compiler-context*)
                   (:return-void))))))
          #+nil(format t "==-== boilerplate2~%")
          (vector-push-extend

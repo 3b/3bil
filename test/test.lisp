@@ -9,7 +9,7 @@
   (with-compilation-to-stream s ("frame1" `((0 "testClass")) :swf-version 9
                                           :x-twips 8000 :y-twips 6000)
 
-    (def-swf-class :test-class "test-class" %flash.display::sprite (blob)
+    (def-swf-class :test-class "test-class" %flash.display::sprite (blob fun)
                    (()
                     (main this)))
 
@@ -106,8 +106,23 @@
 
     (swf-defmemfun scall-test1 () "ok")
     (swf-defmemfun scall-test ()
-      (%asm (:@ this)
+      (%asm (:get-global-scope)
             (:call-static scall-test1 0)))
+
+    (swf-defmemfun closure-test0 () "ok")
+    #+nil(swf-defmemfun closure-test1 (obj)
+      (let ((f (%asm (:new-function closure-test0))))
+        (setf (fun obj) f)))
+    (swf-defmemfun closure-test1 (obj)
+      (let ((f (function closure-test0)))
+        (setf (fun obj) f)))
+    #+nil(swf-defmemfun closure-test1 (obj)
+      (let ((f (%asm (:find-property-strict closure-test0)
+                     (:get-property closure-test0))))
+        (setf (fun obj) f)))
+
+    (swf-defmemfun closure-test2 (obj)
+      (%flash:call (fun obj) 0))
 
     (swf-defmemfun list->str (l)
       (if (atom l)
@@ -265,14 +280,17 @@
             (incf str (+ " || reverse #(1 2 3) =" (reverse #(1 2 3))))
             (incf str (+ " || reverse \"hoge\" =" (reverse "hoge")))
             (let ((foo 4))
-              (when (and (> foo 0) (> (random 1.0) 0.2))
-                (incf str "||rand")))
+              (if (and (> foo 0) (> (random 1.0) 0.5))
+                (incf str "||rand-")
+                (incf str "||rand+")))
             (incf str (+ " || nconc test="  (list->str (nconc (cons 1 2) (cons 3 4)))))
             (incf str (+ " || do test: 4,3,2=" (do/do*-tests)))
             (incf str (+ " || unused args: " (unused-args-test 1 2 3)))
             (incf str (+ " || pi: " %flash:+pi+))
             (incf str (+ " || length '(1 2 3): " (list-length '(1 2 3))))
             (incf str (+ " || numbers : " (list->str '(-1025 -512 -256 -255 -128 -127 -65 -64 -63 -1 0 1 63 64 65 127 128 255 256))))
+            (closure-test1 arg)
+            (incf str (+ "|| ccall :" (closure-test2 arg)))
             (incf str (+ " || scall : " (scall-test)))
             (%flash:trace (+ " || unused args: " (unused-args-test 1 2 3)))
 )

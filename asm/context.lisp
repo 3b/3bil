@@ -215,7 +215,10 @@
     (assert (null (aref (method-infos *assembler-context*) method-id))
             () "duplicate method for ~s (~s)?" name label)
     (setf (aref (method-infos *assembler-context*) method-id)
-          (list name param-types return-type flags option-params pnames))
+          (list name
+                (mapcar 'asm-intern-multiname param-types)
+                (asm-intern-multiname return-type)
+                flags option-params pnames))
     (setf (method-id body) method-id)
     (vector-push-extend body (method-bodies *assembler-context*))
     method-id))

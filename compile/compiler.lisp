@@ -3,7 +3,11 @@
 ;;;
 (defclass compiler-context ()
   ((class-names :initform () :accessor class-names)
-   (function-names :initform () :accessor function-names)))
+   (function-names :initform () :accessor function-names)
+   ;;; not sure if this is right place for this yet, store any code
+   ;;; that should be run at load time... (maybe should be a list of
+   ;;; functions to call instead of literal code to embed in the script init?)
+   (load-top-level :initform () :accessor load-top-level)))
 
 (defparameter *compiler-context* (make-instance 'compiler-context))
 

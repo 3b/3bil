@@ -2,7 +2,7 @@
 
 ;;;; defun and similar
 
-(defun %compile-defun (name args body method constructor &key (nil-block t))
+(defun %compile-defun (name args body method constructor &key (nil-block t) debug-filename debug-line-number)
   ;; fixme: is the nil-block stuff still valid?
   (with-lambda-context (:args args :blocks (when nil-block (list nil)))
     (append
@@ -14,6 +14,8 @@
          '((:get-local-0)
            (:construct-super 0))
          nil)
+     (when debug-filename `((:debug-file ,debug-filename)))
+     (when debug-line-number `((:debug-line ,debug-line-number)))
      (if constructor
          `(,@(scompile `(block ,name ,@body))
              ;;(pop)
@@ -22,7 +24,7 @@
              (:return-value)))
      (compile-lambda-context-cleanup))))
 
-(defun %swf-defun (name args body &key method constructor)
+(defun %swf-defun (name args body &key method constructor debug-filename debug-line-number)
   ;; was pushnew, but that makes it hard to work on code (since can't
   ;; redefine things) push isn't quite right either, should replace
   ;; existing value or something
@@ -52,27 +54,30 @@
         (parse-arglist args)
       (declare (ignorable optionals))
       (when optionals (error "&optional args not supported yet"))
-      (push
-       ;; function data:
-       ;;  swf name in format suitable for passing to asm (string/'(qname...))
-       ;;  args to avm2-method:
-       ;;    name id?
-       ;;    list of arg types (probably all T/* for now)
-       ;;    return type
-       ;;    flags
-       ;;    list of assembly
-       ;;    ?
-       (list
-        (avm2-asm::symbol-to-qname-list name)
-        0                              ;; name in method struct?
-        (loop repeat count collect 0)  ;; arg types, 0 = t/*/any
-        0                              ;; return type, 0 = any
-        (if rest-p #x04 0)             ;; flags, #x04 = &rest
-        (%compile-defun name names body method constructor))
-       (gethash name (functions *symbol-table*) (list))
-       ;;:test 'equal
-       ;;:key 'car
-       ))))
+      (let* ((asm (%compile-defun name names body method constructor :debug-filename debug-filename :debug-line-number debug-line-number))
+             (activation-p (find :new-activation asm :key 'car)))
+        (push
+         ;; function data:
+         ;;  swf name in format suitable for passing to asm (string/'(qname...))
+         ;;  args to avm2-method:
+         ;;    name id?
+         ;;    list of arg types (probably all T/* for now)
+         ;;    return type
+         ;;    flags
+         ;;    list of assembly
+         ;;    ?
+         (list
+          (if (symbolp name) (avm2-asm::symbol-to-qname-list name) name)
+          0                            ;; name in method struct?
+          (loop repeat count collect 0) ;; arg types, 0 = t/*/any
+          0                             ;; return type, 0 = any
+          (logior (if rest-p #x04 0)    ;; flags, #x04 = &rest
+                  (if activation-p #x02 0))
+          asm)
+         (gethash name (functions *symbol-table*) (list))
+         ;;:test 'equal
+         ;;:key 'car
+         )))))
 
 ;;(format t "~{~s~%~}" (sixth (find-swf-function 'floor)))
 ;;(format t "~{~s~%~}" (avm2-asm::avm2-disassemble (avm2-asm:assemble (sixth (find-swf-function 'random)))))
@@ -129,6 +134,9 @@
                                  collect (cadr i)
                                  else
                                  collect (list 'quote i)))
+               ;; *compile-file-pathname* tends to not be worth
+               ;; storing, so not wasting space on it for now...
+               ;;:filename ,(namestring *compile-file-pathname*)
                :method t))
 
 (defmacro dump-defun-asm (args &body body)

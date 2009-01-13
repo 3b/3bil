@@ -93,6 +93,9 @@
   (mapcar (lambda (x)
             (case (first x)
               (:@ `(:get-local ,(get-lambda-local-index (second x))))
+              (:@! `(:set-local ,(get-lambda-local-index (second x))))
+              (:@hn2 `(:has-next-2 ,(get-lambda-local-index (second x))
+                                   ,(get-lambda-local-index (third x))))
               (:@kill `(:kill ,(get-lambda-local-index (second x))))
               (otherwise x)))
           cdr))
@@ -365,8 +368,8 @@ call with %flet-call, which sets up hidden return label arg
 
       ;; normal function call, find-prop-strict + call-property
       ((setf tmp (find-swf-function arg *symbol-table*))
-       (break "f-s-f ~s" tmp)
-       (scompile `(%get-property-without-object ,tmp)))
+       ;(break "f-s-f ~s" tmp)
+       (scompile `(%get-property-without-object ,(first tmp))))
 
       ;; default = normal call?
       ;; fixme: might be nicer if we could detect unknown functions
@@ -412,3 +415,12 @@ call with %flet-call, which sets up hidden return label arg
                                    "bleh")
                               "baz"))
                           (+ s2 ">"))) ) ) )))
+
+#+nil
+(format t "---~%~{~s~%~}---~%"
+        (avm2-asm::avm2-disassemble
+         (avm2-asm::code
+          (avm2-asm::with-assembler-context
+            (avm2-asm::assemble-method-body
+             (dump-defun-asm () (let ((a 0)) (dotimes (x 10000000 a) (incf a 1)))))))))
+

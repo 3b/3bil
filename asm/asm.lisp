@@ -293,6 +293,7 @@
 
 (defun asm-intern-multiname (mn)
   (typecase mn
+    ((integer 0 0) 0) ;; shortcut for (:id 0)
     ((cons (eql :qname)) (apply 'qname (cdr mn)))
     ((cons (eql :multiname-l)) (apply 'intern-multiname-l +multiname-l+ (cdr mn)))
     ;; todo: add other types of multinames
