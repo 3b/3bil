@@ -27,7 +27,10 @@
    (init-scope-depth :initarg init-scope-depth :accessor init-scope-depth)
    (max-scope-depth :initarg max-scope-depth :accessor max-scope-depth)
    (code :initarg code :accessor code)
-   (exceptions :initform nil :initarg exceptions :accessor exceptions)
+   ;; stored in an array since we need to keep them in order
+   (exceptions :initform (make-array 4 :adjustable t :fill-pointer 0) :accessor exceptions)
+   ;; mapping of exception target label names to indices in exceptions array
+   (exception-names :initform () :accessor exception-names)
    (traits :initform nil :initarg traits :accessor traits)
    ;; temporaries for tracking values during assembly
    (current-stack :initform 0 :accessor current-stack)
@@ -80,6 +83,15 @@
                      (u24-to-sequence (- dest base))
                      :start1 (+ 1 addr ))
          else do (error "!!!!! unknown fixup ~s !!! ~%" label)))
+    ;; update exception table with addresses of labels
+    (flet ((ensure-label (name)
+             (or (cdr (assoc name (label *current-method*)))
+                 (error "unknown label ~s in avm2 exception handler" name))))
+      (loop for i below (length (exceptions *current-method*))
+            for ex = (aref (exceptions *current-method*) i)
+            do (setf (from ex)  (ensure-label (from ex))
+                     (to ex)    (ensure-label (to ex))
+                     (target ex)(ensure-label (target ex)))))
     *current-method*))
 
 
@@ -162,9 +174,7 @@
 ;;   and before calling arg count stuff?
 
 ;;; todo: figure out if these need handled:
-;;;     method-index arg for :new-function
 ;;;     slot-index for :get-slot/:set-slot/etc
-;;;     exception-index for new-catch
 
 ;(decode-u16 (u16-to-sequence 12345))
 ;(decode-u24 (u24-to-sequence 12345))
@@ -208,6 +218,9 @@
     (decf (current-stack *current-method*) pop)
     ;;(when (< (current-stack *current-method*) 0)
     ;;  (error "assembler error : stack underflow !"))
+    ;; be conservative, probably should warn once compiler is smarter...
+    (when (< (current-stack *current-method*) 0)
+      (setf (current-stack *current-method*) 0))
     (incf (current-stack *current-method*) push)
     (when (> (current-stack *current-method*)
              (max-stack *current-method*))
@@ -363,6 +376,17 @@
               else collect ,i
               ))))
 
+(defun asm-intern-exception (exception)
+  (cond
+    ;; allow (:id ##) to specify index directly
+    ((and (consp exception) (eq (first exception) :id))
+     (second exception))
+    ;; look up by name
+    ((cdr (assoc exception (exception-names *current-method*))))
+    ;;TODO: should we handle calling :new-catch before the
+    ;; target label has been seen in the asm?
+    (t (error "unknown exception block name ~s" exception))))
+
 (defmacro define-ops (&body ops)
   (let ((coders
          ;; type tag , encoder , optional interner
@@ -387,6 +411,7 @@
            (multiname-q30 variable-length-encode asm-intern-multiname)
            (class-u30     variable-length-encode asm-intern-class)
            (method-u30    variable-length-encode asm-intern-method)
+           (exception-u30 variable-length-encode asm-intern-exception)
            ))
         (decoders
          ;; type tag, decoder, optional constant pool lookup function
@@ -411,6 +436,7 @@
            (multiname-q30 decode-variable-length lookup-multiname)
            (class-u30     decode-variable-length lookup-class)
            (method-u30     decode-variable-length lookup-method)
+           (exception-u30 decode-variable-length) ;; todo: add lookup
 )))
     (flet ((defop (name args opcode
                         &optional (pop 0) (push 0) (pop-scope 0) (push-scope 0) (local 0) (flag 0))
@@ -479,7 +505,9 @@
 (defmacro define-asm-macro (name (&rest args) &body body)
   `(setf (gethash ',name *opcodes*)
          (lambda (,@args)
-           ,@body)))
+           ,@(if (stringp (car body))
+                 (cdr body) ;; drop docstring ;TODO: store docstring somewhere?
+                 body))))
 
 ;;; not sure if these should be handled like this or not...
 (define-asm-macro :%label (name)
@@ -491,8 +519,35 @@
   ;; !!!! if this gets moved somewhere before the peephole optimizer, make
   ;; !!!! sure it leaves a nop of some sort in the instruction stream so we
   ;; !!!! don't combine stuff on either side of a jump target
-  ;; for forward jumps, just mark the location but don't put a label instr
+  "for forward jumps, exception ranges, etc. that don't need an actual
+jump instruction in the bytecode"
   (push (cons name *code-offset*) (label *current-method*))
+  nil)
+
+(define-asm-macro :%exception (name start end &optional (type-name 0) (var-name 0))
+  ;; !!!! if this gets moved somewhere before the peephole optimizer, make
+  ;; !!!! sure it leaves a nop of some sort in the instruction stream so we
+  ;; !!!! don't combine stuff on either side of a jump target
+  ;;
+  "create an exception handler block named NAME, active between the
+  labels START and END, catching objects of type TYPE-NAME (default to *)
+  using VAR-NAME as name for :new-catch slot (default to no name)"
+  (push (cons name *code-offset*) (label *current-method*))
+  ;; vm pushes thrown object onto stack, so adjust stack depth
+  (adjust-stack 0 1)
+  ;; save the exception data
+  (let ((index (length (exceptions *current-method*))))
+    (vector-push-extend
+     (make-instance 'exception-info
+                    'from start
+                    'to end
+                    'target name
+                    'exc-type (asm-intern-multiname type-name)
+                    'var-name (asm-intern-multiname var-name))
+     (exceptions *current-method*)
+     (length (exceptions *current-method*)))
+    (push (cons name index)
+          (exception-names *current-method*)))
   nil)
 
 

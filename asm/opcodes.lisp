@@ -114,7 +114,7 @@ for that here and return count of extra args"
   (:new-activation       ()                      #x57  0 1 0 0 0 +need-activation+)
   (:new-class            ((class-index u30))     #x58  1 1)  ;; 2->1 ? also see docs about scope stuff
   (:get-descendants      ((multiname multiname-q30)) #x59  (1+ (runtime-name-count multiname)) 1)
-  (:new-catch            ((exception-index u30)) #x5a  0 1)
+  (:new-catch            ((exception-index exception-u30)) #x5a  0 1)
   ;; #x5b
   ;; #x5c
   (:find-property-strict ((multiname multiname-q30)) #x5d  (runtime-name-count multiname) 1)
