@@ -1,0 +1,22 @@
+~~~closures
+
+nlx
+
+uwp
+
+interning, defpackage?
+  interning literal objects?
+    ex: (eq #1=(cons 1 . 2) #1#)
+    3.2.4.2.2 : http://www.lispworks.com/documentation/HyperSpec/Body/03_bdbb.htm
+
+setf
+
+global macros
+
+lambda list keywords (&arest and &optional at least)
+
+jumps out of function call arglists
+
+cleanup
+
+implement CL: stuff

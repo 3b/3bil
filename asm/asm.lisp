@@ -61,13 +61,15 @@
 
 (defun assemble-method-body (forms &key (init-scope 0)
                              (max-scope 1 max-scope-p)
-                             (max-stack 1 max-stack-p))
+                             (max-stack 1 max-stack-p)
+                             traits)
   (let ((*current-method* (make-instance 'method-body
                                          'local-count 1
                                          'max-stack 1
                                          'init-scope-depth init-scope
                                          'max-scope-depth init-scope
-                                         'current-scope init-scope)))
+                                         'current-scope init-scope
+                                         'traits traits)))
     (setf (code *current-method*)
           (assemble forms))
     (when max-stack-p
@@ -280,7 +282,9 @@
               'string)))
     (if (eql package (find-package :keyword))
         (setf package "")
-        (setf package (string-downcase (or (package-name package) ""))))
+        (setf package (string-downcase (if package
+                                           (package-name package)
+                                            "##uninterned"))))
     (values (list :qname package sym) sym)))
 
 ;; fixme: not sure we want this anymore, instead store a symbol->qname

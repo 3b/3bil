@@ -11,5 +11,11 @@
                         (:file "low-level")
                         (:file "math-ops")
                         (:file "ffi")
+                        ;; new stuff in progress...
+                        (:file "walker")
+                        (:file "environment")
+                        (:file "ir0")
+                        (:file "ir1")
+                        (:file "ir2-simple")
                         )
            :serial t)

@@ -105,8 +105,8 @@
 (defmethod write-generic ((td avm2-asm::trait-data-slot/const) &optional (*standard-output* *standard-output*))
   #+nil(format *trace-output* "trait-data-slot/const :~s ~s ~s ~s ~s~%"
           (avm2-asm::kind td)
-          ( avm2-asm::slot-id td)
-          ( avm2-asm::type-name td)
+          (avm2-asm::slot-id td)
+          (avm2-asm::type-name td)
           (avm2-asm::vindex td)
           (avm2-asm::vkind td))
   (write-u8 (avm2-asm::kind td))
@@ -389,11 +389,25 @@
 
 (defun assemble-function (name)
   #+nil(format t "--assemble-function ~s :~%" name)
-  (destructuring-bind (n nid argtypes return-type flags asm)
+  (destructuring-bind (n nid argtypes return-type flags asm &optional activation-slots)
       (find-swf-function name)
     ;;(format t "--assemble-function ~s : ~s : ~s ~%" name n nid)
-    (let ((mid (avm2-asm::avm2-method name nid argtypes return-type flags
-                                    :body (avm2-asm::assemble-method-body asm))))
+    (let* ((traits (loop for (name index type) in activation-slots
+                         ;;do (format t "trait = ~s ~s ~s ~%" name index type)
+                         collect (make-instance
+                                  'avm2-asm::trait-info
+                                  'avm2-asm::name (avm2-asm::asm-intern-multiname name)
+                                  'avm2-asm::trait-data
+                                  (make-instance
+                                   'avm2-asm::trait-data-slot/const
+                                   'avm2-asm::kind 0
+                                   'avm2-asm::slot-id index
+                                   'avm2-asm::type-name type
+                                   'avm2-asm::vindex 0 ;; no value
+                                   'avm2-asm::vkind 0 ;; no value
+                                   ))))
+           (mid (avm2-asm::avm2-method name nid argtypes return-type flags
+                                       :body (avm2-asm::assemble-method-body asm :traits traits))))
       (push (list n mid) (function-names *compiler-context*)))))
 
 (defun assemble-class (name ns super properties constructor)
@@ -511,7 +525,7 @@
                                                        'avm2-asm::slot-id 0
                                                        'avm2-asm::classi (second i))))
             ,@(loop for i in (function-names *compiler-context*)
-                 ;;do (format t "-=f-~s~%" i)
+                    ;;do (format t "-=f-~s~%" i)
                  collect (make-instance 'avm2-asm::trait-info
                                         'avm2-asm::name
                                         (if (numberp (first i))
