@@ -1,6 +1,6 @@
 ~~~closures
 
-~nlx
+~~~nlx
  ----------
   need to return to correct exit-point from go/return-from
   bind a var to a unique value at entry to block/tagbody, then close over
@@ -20,7 +20,7 @@
  ----------
 ~~~uwp
 
-tagbody
+~~~tagbody
 
 interning, defpackage?
   interning literal objects?
@@ -46,6 +46,9 @@ inlining/compiler macros/etc
 real test framework, regression tests
 
 arg count checking?
+
+verifier in asm
+  (possibly add fixer for some simple type errors too?)
 ---
 
 http://www.lispworks.com/documentation/HyperSpec/Issues/iss152_w.htm

@@ -28,6 +28,13 @@
                   (%set-property this block-exception-tag a)
                   (%set-property this block-exception-value b)))
 
+  (def-swf-class go-exception-type "what goes here?"
+    %flash:object (go-exception-tag go-exception-index)
+                 ((a b)
+                  ;; fixme: index should be typed as int
+                  (%set-property this go-exception-tag a)
+                  (%set-property this go-exception-index b)))
+
     (swf-defmemfun %intern (package name)
       (%new* %flash:q-name package name))
 
@@ -70,9 +77,13 @@
     (swf-defmemfun y (&arest x)
       (ftrace (+ "global Y called : " x))
       (aref x 0))
+
     (c3 '(progn
+          (ftrace "---------------------------------")
+          (ftrace "---------------------------------")
           (ftrace '1)
           (ftrace 'a)
+          (ftrace (tagbody (+ 1 (go 2) 3) 2))
           (ftrace '(1 2))
           (ftrace '(1 . 2))
           (ftrace #(1 2))
@@ -133,7 +144,6 @@
 ;;; fixme: jump out of function call
           ;;(ftrace (tagbody (+ 1 2 (go foo) 3 4) foo))
           ;;(ftrace (tagbody (+ 1 2 (if (baz) 3 (go foo)) 4 5) foo))
-          ;(ftrace (let ((a 1) (b 2)) (lambda (a c) (+ a b c))))
           (ftrace :here3)
           (ftrace (let ((a 1)) (flet ((foo (b) (+ a b))) (foo 10))))
           (ftracef (let ((a 1) (b 10)) (lambda (a c) (+ a b c))) 100 1000)
@@ -149,7 +159,7 @@
 
           (ftrace (lambda (a) (tagbody (let ((j 123)) (lambda (b) (+ a b j))))))
           (ftrace (lambda (a) (tagbody (let ((k 123)) (let ((j 1)) (let ((l k)) (lambda (b) (+ a b j))))))))
-          ;;(ftrace (lambda (a) (tagbody foo (let ((k 123)) (let ((j 1)) (let ((l k)) (lambda (b) (if (zerop a) (go bar) (+ a b j)))))) bar)))
+          (ftrace (lambda (a) (tagbody foo (let ((k 123)) (let ((j 1)) (let ((l k)) (lambda (b) (if (zerop a) (go bar) (+ a b j)))))) bar)))
           (ftrace :return-from2)
           (ftracef (flet ((xxxx (a) (list (y (return-from xxxx 100) a)))
                           (y (a) (xxxx a))) #'xxxx) 1)
@@ -158,9 +168,11 @@
                                       1000))
                             (y (a) (funcall a 10) 1)) #'x) 1)
           (ftrace (lambda (a) (lambda (x) (+ x a)) a))
-          ;;(ftrace (lambda () (tagbody foo (go bar) bar (lambda () (go foo)))))
+          (ftrace (lambda () (tagbody foo (go bar) bar (lambda () (go foo)))))
 
-          ;;(ftrace (tagbody 1 (lambda (x) (go 1))))
+          (ftrace (tagbody 1 (lambda (x) (go 1))))
+          (ftrace :nlx)
+          (ftrace (tagbody nlx 1 (flet ((x () (go 2))) (x)) (ftrace "bug!") 2))
           (ftracef (lambda (x) (block blah 1)) 101)
           (ftracef (lambda (x) (block blah 1)) 102)
           (ftracef (lambda (x) (block blah (block baz (return-from blah 2)))) 103)
@@ -175,7 +187,7 @@
           (ftrace :return-from-3)
           (ftrace
            (labels ((aaa (f c)
-                      (ftrace (+ "enter" c))
+                      (ftrace (s+ "enter" c))
                       (if (< 10 c)
                           (funcall f)
                           (if f
@@ -223,7 +235,9 @@
           #+nil(ftrace (funcall (block nil
                                   (tagbody a (return-from nil
                                                #'(lambda () (go a)))))))
-          ;;
+          (ftrace :here5)
+          (ftrace (tagbody a (unwind-protect (go b) (ftrace "unwinding")) b))
+;;; setf functions
           ;;(ftrace (flet (((setf foo) (&rest r) r)) (setf (foo 1 2 3) 4))) ;;fixme
           ;;(ftrace (flet (((setf foo) (&rest r) r)) (function (setf foo)))) ;;fixme
 

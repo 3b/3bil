@@ -5,12 +5,19 @@
 
 
 ;;; collect some info that doesn't really fit in the ir1 stuff since
-;;; it probably wouldn't apply to a smarter ir2 (probably some of the
-;;; current ir1 belongs here too...
+;;;   it probably wouldn't apply to a smarter ir2 (probably some of the
+;;;   current ir1 belongs here too...)
+;;; mark vars that need a slot in activation records
+;;; assign indices for nlx go tags
 (defparameter *current-closure-index* nil)
 (defparameter *current-closure-vars* nil)
+;; fixme: pick a better name for this now that it does something else too
 (define-structured-walker mark-activations null-ir1-walker
   :form-var whole
+  :labels ((set-tag-info (var flag value)
+                         (setf (getf (getf *ir1-tag-info* var nil) flag) value))
+           (get-tag-info (var flag &optional default)
+                         (getf (getf *ir1-tag-info* var nil) flag default)))
   :forms
   (((%named-lambda name lambda-list closed-vars activation-vars body)
     (let ((*ir1-in-tagbody* nil)
@@ -31,6 +38,13 @@
     (loop for i in closed-vars
           do (push (list i (1- (incf *current-closure-index*)))
                    *current-closure-vars*))
+    (super whole))
+   ((tagbody name nlx forms)
+    (when nlx
+      (loop with j = 0
+            for i in forms
+            when (atom i)
+            do (set-tag-info i :nlx-index (1- (incf j)))))
     (super whole))))
 
 ;;; skipping serious optimization/type inference for now, so
@@ -323,8 +337,6 @@
                          tag-code ,(let ((*ir1-dest-type* nil)
                                          (exit-point (get-tag-info
                                                       name :exit-point-var)))
-                                        ;; assuming var must be closure, since we
-                                        ;; wouldn't have a nlx if the return was local
                                         (recur `(%ref type ,(get-var-info
                                                              exit-point
                                                              :ref-type :local)
@@ -341,23 +353,41 @@
 
    ((tagbody name nlx forms)
     (if nlx
-        (recur
-         `(%catch type block-exception-type
-                  tag-property block-exception-tag
-                  body (,@(loop for i in forms
-                                when (atom i)
-                                collect `(:%label ,i)
-                                else append `(,@(recur i)
-                                                (:pop)))
-                          (:push-null))
-                  ;; fixme: is this right type? should fix THROW if changed...
-                  tag-code ,(let ((*ir1-dest-type* nil))
-                                 (recur `(%ref type :closure
-                                               var ,name)))
-                  handler-code ((:get-property block-exception-value)
-                                ,@(coerce-type)))
-
-)
+        (let ((bad-nlx-label (gensym "TAGBODY-BUG-")))
+          (recur
+           `(%catch type go-exception-type
+                    tag-property go-exception-tag
+                    body (,@(loop for i in forms
+                                  when (atom i)
+                                  collect `(:%label ,i)
+                                  else append `(,@(recur i)
+                                                  (:pop)))
+                            (:push-null))
+                    tag-code ,(let ((*ir1-dest-type* nil)
+                                    #+nil(exit-point (get-tag-info
+                                                      name :exit-point-var)))
+                                   #+nil(recur `(%ref type ,(get-var-info
+                                                             exit-point
+                                                             :ref-type :local)
+                                                      var ,exit-point))
+                                   (recur `(%ref type ,(get-var-info
+                                                        name
+                                                        :ref-type :local)
+                                                 var ,name)))
+                    handler-code
+                    ((:get-property go-exception-index)
+                     (:convert-integer)
+                     (:lookup-switch
+                      ,bad-nlx-label
+                      ,(mapcar 'second
+                               (sort (loop for i in forms
+                                           when (atom i)
+                                           collect `(,(get-tag-info i :nlx-index)
+                                                      ,i))
+                                     #'< :key #'car)))
+                     (:%dlabel ,bad-nlx-label)
+                     (:push-string "broken tagbody!")
+                     (:throw)))))
         `(,@(loop for i in forms
                   when (atom i)
                   collect `(:%label ,i)
@@ -386,7 +416,9 @@
       (:go `((:find-property-strict go-exception-type)
              ,@(let ((*ir1-dest-type* nil))
                     (recur exit-point))
-             (:construct-prop go-exception-type 1)
+             ,@(let ((*ir1-dest-type* nil))
+                    `((:push-int ,(get-tag-info name :nlx-index))))
+             (:construct-prop go-exception-type 2)
              (:throw)))
       (:return-from `((:comment "nlx return-from" ,name) (:find-property-strict block-exception-type)
                       ;; fixme: check these types
