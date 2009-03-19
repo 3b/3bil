@@ -31,6 +31,9 @@
     (swf-defmemfun %intern (package name)
       (%new* %flash:q-name package name))
 
+    (swf-defmemfun %exit-point-value ()
+      (%new* %flash:q-name "exit" "point"))
+
     (swf-defmemfun ftrace (x)
       (%flash:trace x))
     (swf-defmemfun ftracef (x &arest args)
@@ -43,6 +46,16 @@
       (let ((sum 0))
         (dotimes (i (length x) sum)
           (incf sum (aref x i)))))
+    (swf-defmemfun s+ (&arest x)
+      (let ((sum ""))
+        (dotimes (i (length x) sum)
+          (incf sum (aref x i)))))
+
+    (swf-defmemfun < (a &arest x)
+      (dotimes (i (length x) t)
+        (when (>= a (aref x i)) (return nil))
+        (setf a (aref x i))))
+
 
     (swf-defmemfun foo (&arest x)
       (ftrace (+ "foo called : " x))
@@ -68,6 +81,8 @@
           (ftrace (progn 1))
           (ftrace (progn 1 2 3))
           (ftrace (+ 2 3))
+          (ftrace (if (< 1 2 3) '< '>=))
+          (ftrace (if (< 2 1 3) '< '>=))
           (ftrace (progn (progn 1 2) 'a (+ 2 3) (progn 3)))
           (ftrace (let ((a 1)) a))
           (ftrace (tagbody foo (go baz) baz))
@@ -125,7 +140,8 @@
           (ftrace (let ((a 1) (b 10))
                     (flet ((foo (a c) (+ a b c)))
                       (foo 100 1000))))
-          ;;(ftrace (+ 1 2 (block foo (flet ((bar () (return-from foo 3))) (bar))) 4 5))
+          (ftrace :return-from)
+          (ftrace (+ 1 (block xxfoo (flet ((bar () (return-from xxfoo 100) 1000)) (bar) 10000)) 2))
 
           (ftrace (let ((x 1)) (lambda (y) (+ x y))))
           (ftracef (lambda (a) (lambda (b) (+ a b))) 1234)
@@ -133,9 +149,14 @@
 
           (ftrace (lambda (a) (tagbody (let ((j 123)) (lambda (b) (+ a b j))))))
           (ftrace (lambda (a) (tagbody (let ((k 123)) (let ((j 1)) (let ((l k)) (lambda (b) (+ a b j))))))))
-          (ftrace (lambda (a) (tagbody foo (let ((k 123)) (let ((j 1)) (let ((l k)) (lambda (b) (if (zerop a) (go bar) (+ a b j)))))) bar)))
-          ;;(ftrace (flet ((x (a) (list (y (return-from x 1) a))) (y (a) (x a))) #'x))
-
+          ;;(ftrace (lambda (a) (tagbody foo (let ((k 123)) (let ((j 1)) (let ((l k)) (lambda (b) (if (zerop a) (go bar) (+ a b j)))))) bar)))
+          (ftrace :return-from2)
+          (ftracef (flet ((xxxx (a) (list (y (return-from xxxx 100) a)))
+                          (y (a) (xxxx a))) #'xxxx) 1)
+          ;;(ftracef (block x (lambda (a) (return-from x 100) 10)) 1) ;;uncaught exception
+          (ftracef (labels ((x (a) (+ (y (lambda (x) (return-from x (+ a x))))
+                                      1000))
+                            (y (a) (funcall a 10) 1)) #'x) 1)
           (ftrace (lambda (a) (lambda (x) (+ x a)) a))
           ;;(ftrace (lambda () (tagbody foo (go bar) bar (lambda () (go foo)))))
 
@@ -151,6 +172,58 @@
                             (foo)))
                    (progn (hoge) 3)
                    (return-from foo 1)))
+          (ftrace :return-from-3)
+          (ftrace
+           (labels ((aaa (f c)
+                      (ftrace (+ "enter" c))
+                      (if (< 10 c)
+                          (funcall f)
+                          (if f
+                              (aaa f (1+ c))
+                              (aaa (lambda () (return-from aaa 123)) (1+ c))))
+                      (ftrace (+ "exit " c))))
+             (aaa nil 0)))
+          (ftrace :exit-extent)
+          (ftrace (block ex1 (unwind-protect (return-from ex1 1)
+                               (return-from ex1 2)))) ;;=> 2
+          (ftrace (block a (block b (unwind-protect (return-from a 1) (return-from b 2))))) ;; 2
+          (ftrace (catch nil (unwind-protect (throw nil 1) (throw nil 2)))) ;; 2
+          (ftrace (catch 111 (catch 222 (unwind-protect (throw 111 1) (throw 222 2))))) ;; 2
+          (ftrace :exit-extent4)
+          (ftrace (catch 111
+                    (ftrace (s+ "inner catch = "
+                               (catch 111
+                                 (unwind-protect (throw 111 :first)
+                                   (throw 111 :second)))))
+                    :outer)) ;; print second, return outer
+          (ftrace (catch 111
+                    (catch 222
+                      (unwind-protect (1+ (catch 111 (throw 222 1)))
+                        (throw 111 10))))) ;; 10
+          (ftrace (catch 111
+                    (catch 222
+                      (unwind-protect (throw 111 3)
+                        (throw 222 4)
+                        (ftrace :xxx))))) ;;return 4, don't print xxx
+          (ftrace (catch 111
+                    (catch 222
+                      (unwind-protect (throw 222 3)
+                        (throw 111 4)
+                        (print :xxx))))) ;; return 4, don't print xxx
+          (ftrace (block nil
+                    (let ((x 5))
+                      (unwind-protect (return-from nil)
+                        (ftrace (s+ "x=" x)))))) ;; print 5, return nil
+
+          (ftrace :exit-extent-errors)
+          #+nil(ftrace (funcall (block nil #'(lambda () (return-from nil)))))
+          #+nil(ftrace (let ((a nil))
+                         (tagbody t (setq a #'(lambda () (go t))))
+                         (funcall a)))
+          #+nil(ftrace (funcall (block nil
+                                  (tagbody a (return-from nil
+                                               #'(lambda () (go a)))))))
+          ;;
           ;;(ftrace (flet (((setf foo) (&rest r) r)) (setf (foo 1 2 3) 4))) ;;fixme
           ;;(ftrace (flet (((setf foo) (&rest r) r)) (function (setf foo)))) ;;fixme
 

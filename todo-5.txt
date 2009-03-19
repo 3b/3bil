@@ -1,17 +1,36 @@
 ~~~closures
 
-nlx
+~nlx
+ ----------
+  need to return to correct exit-point from go/return-from
+  bind a var to a unique value at entry to block/tagbody, then close over
+  that in the return-from/go nlx, and use it to identify the correct
+  activation
+  ==
+    (labels ((a (f c)
+               (format t "enter ~s~%" c)
+               (if (>= c 10)
+                   (funcall f)
+                   (if f
+                       (a f (1+ c))
+                       (a (lambda () (return-from a)) (1+ c))))
+               (format t "exit ~s~%" c)))
+      (a nil 0))
 
-uwp
+ ----------
+~~~uwp
+
+tagbody
 
 interning, defpackage?
   interning literal objects?
     ex: (eq #1=(cons 1 . 2) #1#)
     3.2.4.2.2 : http://www.lispworks.com/documentation/HyperSpec/Body/03_bdbb.htm
+  -- set %catch back to if-strict-eq once we can intern symbols
 
 setf
 
-global macros
+global macros/global environment
 
 lambda list keywords (&arest and &optional at least)
 
@@ -20,3 +39,15 @@ jumps out of function call arglists
 cleanup
 
 implement CL: stuff
+
+inlining/compiler macros/etc
+  inline cl stuff
+
+real test framework, regression tests
+
+arg count checking?
+---
+
+http://www.lispworks.com/documentation/HyperSpec/Issues/iss152_w.htm
+http://www.lispworks.com/documentation/HyperSpec/Body/03_af.htm
+http://www.lispworks.com/documentation/HyperSpec/Body/05_b.htm

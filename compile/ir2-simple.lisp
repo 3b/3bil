@@ -250,27 +250,8 @@
                  (:get-property ,name)))
       (:method (error "method calls with object not done yet..."))))
 
-   ((block name nlx forms)
-    (when nlx "error nlx block not done yet")
-    `(,@(recur-progn forms)
-        (:%dlabel ,name)))
-   ((return-from name value)
-    `(,@(recur value)
-        (:jump ,name)))
-
-   ((tagbody nlx forms)
-    (when nlx (error "nlx tagbody not done yet"))
-    `(,@(loop for i in forms
-              when (atom i)
-              collect `(:%label ,i)
-              else append `(,@(recur i)
-                              (:pop)))
-        (:push-null)))
-   ((go tag)
-    `((:jump ,tag)))
-
-   ((catch tag forms)
-    ;;(error "catch not done yet...")
+   ;; common code for nlx handling in catch/return/tagbody
+   ((%catch type body tag-code tag-property handler-code)
     (let ((start (gensym "CATCH-START-"))
           (end (gensym "CATCH-END-"))
           (name (gensym "CATCH-NAME-"))
@@ -279,41 +260,138 @@
       ;;fixme: add avm2 level set of throw/catch ops, and implement with those
       ;;fixme: may need to store value in a temp instead of leaving on stack?
       `((:%dlabel ,start)
-        ,@(recur-progn forms)
+        (:comment "body start")
+        ,@body
+        ,@(coerce-type)
+        (:comment "body end")
         (:%dlabel ,end)
         (:jump ,jump2)
-        (:%exception ,name ,start ,end throw-exception-type)
+        ;; start exception handler block
+        (:%exception ,name ,start ,end ,type)
+        ;; restore scope stack
         (:get-local 0)
         (:push-scope)
         ,@(when *current-closure-vars*
                 `((:get-local ,(get-local-index *activation-local-name*))
                   (:push-scope)))
+        ;; test to see if exception was for us (matching tag)
         (:dup)
-        (:get-property throw-exception-tag)
-        ;; fixme: is this right type? should probably match THROW if changed...
-        ,@(let ((*ir1-dest-type* nil))
-               (recur tag))
+        (:get-property ,tag-property)
+
+        ;;(:comment "debug")
+        ;;(:dup)
+        ;;(:find-property-strict :trace)
+        ;;(:swap)
+        ;;(:push-string "caught :")
+        ;;(:swap)
+        ;;(:add)
+        ;;(:call-property :trace 1)
+        ;;(:pop)
+
+        (:comment "tag start")
+        ,@tag-code
+        (:comment "tag end")
+
+        ;;(:comment "debug2")
+        ;;(:dup)
+        ;;(:find-property-strict :trace)
+        ;;(:swap)
+        ;;(:push-string "checing against tag :")
+        ;;(:swap)
+        ;;(:add)
+        ;;(:call-property :trace 1)
+        ;;(:pop)
+
         (:if-strict-eq ,jump)
+        ;;(:push-int 12345)
         (:throw)
         (:%dlabel ,jump)
-        (:get-property throw-exception-value)
-        ,@(coerce-type)
+        (:comment "handler start")
+        ,@handler-code
+        (:comment "handler end")
         (:%dlabel ,jump2))))
+
+   ((block name nlx forms)
+    (if nlx
+        ;; fixme: return to correct dynamic scope corresponding to the entry from which the return-from was created...
+        (let ((a
+               (recur
+                `(%catch type block-exception-type
+                         tag-property block-exception-tag
+                         body ,(recur-progn forms)
+                         ;; fixme: is this right type? should fix THROW if changed...
+                         tag-code ,(let ((*ir1-dest-type* nil)
+                                         (exit-point (get-tag-info
+                                                      name :exit-point-var)))
+                                        ;; assuming var must be closure, since we
+                                        ;; wouldn't have a nlx if the return was local
+                                        (recur `(%ref type ,(get-var-info
+                                                             exit-point
+                                                             :ref-type :local)
+                                                      var ,exit-point)))
+                         handler-code ((:get-property block-exception-value)
+                                       ,@(coerce-type))))))
+          #+nil(format t "nlx block : ~s:~%     ~a~%" name a) a)
+        `(,@(recur-progn forms)
+            (:%dlabel ,name))))
+   ((return-from name value)
+    `((:comment "local return-from" ,name)
+      ,@(recur value)
+      (:jump ,name)))
+
+   ((tagbody name nlx forms)
+    (if nlx
+        (recur
+         `(%catch type block-exception-type
+                  tag-property block-exception-tag
+                  body (,@(loop for i in forms
+                                when (atom i)
+                                collect `(:%label ,i)
+                                else append `(,@(recur i)
+                                                (:pop)))
+                          (:push-null))
+                  ;; fixme: is this right type? should fix THROW if changed...
+                  tag-code ,(let ((*ir1-dest-type* nil))
+                                 (recur `(%ref type :closure
+                                               var ,name)))
+                  handler-code ((:get-property block-exception-value)
+                                ,@(coerce-type)))
+
+)
+        `(,@(loop for i in forms
+                  when (atom i)
+                  collect `(:%label ,i)
+                  else append `(,@(recur i)
+                                  (:pop)))
+            (:push-null))))
+   ((go tag)
+    `((:jump ,tag)))
+
+   ((catch tag forms)
+    (recur
+     `(%catch type throw-exception-type
+              tag-property throw-exception-tag
+              body ,(recur-progn forms)
+              ;; fixme: is this right type? should fix THROW if changed...
+              tag-code ,(let ((*ir1-dest-type* nil))
+                             (recur tag))
+              handler-code ((:get-property throw-exception-value)
+                            ,@(coerce-type)))))
    ((throw tag result-form)
     (error "got throw, expected it to be handled by %nlx?"))
 
    ;;; combined tag for non-local return-from, go, throw in later passes
-   ((%nlx type name eval value)
+   ((%nlx type name exit-point value)
     (ecase type
       (:go `((:find-property-strict go-exception-type)
              ,@(let ((*ir1-dest-type* nil))
-                    (recur `(quote value ,name)))
+                    (recur exit-point))
              (:construct-prop go-exception-type 1)
              (:throw)))
-      (:return-from `((:find-property-strict block-exception-type)
+      (:return-from `((:comment "nlx return-from" ,name) (:find-property-strict block-exception-type)
                       ;; fixme: check these types
                       ,@(let ((*ir1-dest-type* nil))
-                             (recur `(quote value ,name)))
+                             (recur exit-point))
                       ,@(let ((*ir1-dest-type* t))
                              (recur value))
                       (:construct-prop block-exception-type 2)
@@ -321,7 +399,7 @@
       (:throw `((:find-property-strict throw-exception-type)
                 ;; fixme: should this specify a type (or t)?
                 ,@(let ((*ir1-dest-type* nil))
-                       (recur name))
+                       (recur exit-point))
                 ;; fixme: not sure about correct type for this either...
                 ,@(let ((*ir1-dest-type* t))
                        (recur value))
@@ -351,13 +429,44 @@
     `(,@(recur-progn body)))
 
    ((unwind-protect protected cleanup)
-    `(unwind-protect protected ,(recur protected)
-                     cleanup ,(recur-all cleanup)))
+    ;; can this be combined with the catch stuff?
+    (let ((start (gensym "UWP-START-"))
+          (end (gensym "UWP-END-"))
+          (name (gensym "UWP-NAME-"))
+          (jump (gensym "UWP-JUMP-")))
+      ;;fixme: may need to store value in a temp instead of leaving on stack?
+      `((:%dlabel ,start)
+        (:comment "body start")
+        ,@(recur protected)
+        ,@(coerce-type)
+        (:comment "body end")
+        (:%dlabel ,end)
+        (:jump ,jump) ;; normal exit
+        ;; start exception handler block
+        (:%exception ,name ,start ,end 0) ;; catch anything
+        ;; restore scope stack
+        (:get-local 0)
+        (:push-scope)
+        ,@(when *current-closure-vars*
+                `((:get-local ,(get-local-index *activation-local-name*))
+                  (:push-scope)))
+        ;; exception cleanup body
+        ,@(loop for f in cleanup
+                append (recur f))
+        (:pop)
+        (:throw)
+        ;; fixme: verify that duplicating uwp cleanup doesn't cause any problems
+        ;; normal exit cleanup body
+        (:%dlabel ,jump)
+        ,@(loop for f in cleanup
+                append (recur f))
+        (:comment "handler end"))))
 
    ((%compilation-unit var-info tag-info fun-info lambdas)
     (let ((*ir1-tag-info* tag-info)
-           (*ir1-var-info* var-info)
-           (*ir1-fun-info* fun-info))
+          (*ir1-var-info* var-info)
+          (*ir1-fun-info* fun-info))
+      #+nil(format t "tag info : ~s~%" tag-info)
       `(%compilation-unit
         var-info ,var-info
         tag-info ,tag-info
@@ -396,10 +505,13 @@
    ;;        `(,(car whole) ,@(recur-all (cdr whole))))
 )
 )
-
+(defparameter *ir1-dump-asm* t)
 (defun c2 (form)
-  (let ((form `(%compilation-unit (%named-lambda :top-level () ,form))))
-    (passes form (append *ir1-passes* '(mark-activations assemble-ir1)))))
+  (let* ((form `(%compilation-unit (%named-lambda :top-level () ,form)))
+         (assembled
+          (passes form (append *ir1-passes* '(mark-activations assemble-ir1)))))
+    (when *ir1-dump-asm* (format t "~s~%" assembled))
+    assembled))
 
 ;;(c2 ''1)
 ;;(c2 ''a)
@@ -474,7 +586,7 @@
 ;;(c2 '(block foo (progn 1 2) (block piyo (progn 1 (foo))) (progn (hoge) 3) (return-from foo 1)))
 ;;(c2 '(flet (((setf foo) (&rest r) r)) (setf (foo 1 2 3) 4))) ;;fixme
 ;;(c2 '(flet (((setf foo) (&rest r) r)) (function (setf foo)))) ;;fixme
-
+;;(format t "~s~%" (cc ' (labels ((x (a) (+ (y (lambda (x) (return-from x (+ a x)))) 1000)) (y (a) (funcall a 10) 1)) #'x)))
 (define-structured-walker finish-assembled-ir1 ()
   :forms
   (((%compilation-unit var-info tag-info lambdas)
@@ -538,7 +650,7 @@
                     (if activation-p #x02 0))
             asm
             (when activation-vars
-              (format t "activation-vars : ~s~%" activation-vars)
+              #+nil(format t "activation-vars : ~s~%" activation-vars)
               (loop for (name index) in activation-vars
                     ;; no type info for now..
                     collect `(,name ,index 0)))

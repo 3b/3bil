@@ -100,6 +100,9 @@
    ;;       (t
    ;;        `(,(car whole) ,@(recur-all (cdr whole))))
 ))
+(defparameter *ir1-var-info* nil)
+(defparameter *ir1-tag-info* nil)
+(defparameter *ir1-fun-info* nil)
 
 (defparameter *ir1-in-tagbody* nil)
 (define-structured-walker null-ir1-walker ()
@@ -149,9 +152,10 @@
    ((return-from name value)
     `(return-from name ,name value ,(recur value)))
 
-   ((tagbody nlx forms)
+   ;; we add a (GENSYMed) name for TAGBODY for use with nlx GO
+   ((tagbody name nlx forms)
     (let ((*ir1-in-tagbody* t))
-      `(tagbody nlx ,nlx forms ,(recur-all forms :test #'consp))))
+      `(tagbody name ,name nlx ,nlx forms ,(recur-all forms :test #'consp))))
    ((go tag)
     `(go tag ,tag))
 
@@ -161,8 +165,11 @@
     `(throw tag ,(recur tag) result-form ,(recur result-form)))
 
    ;;; combined tag for non-local return-from, go, throw in later passes
-   ((%nlx type name eval value)
-    `(%nlx type ,type name ,(if eval (recur name) name) value ,(recur value)))
+   ((%nlx type name exit-point value)
+    `(%nlx type ,type
+           name ,name
+           exit-point ,(recur exit-point)
+           value ,(recur value)))
 
 
    ((if condition then else)
@@ -176,11 +183,15 @@
                      cleanup ,(recur-all cleanup)))
 
    ((%compilation-unit var-info tag-info fun-info lambdas)
-    `(%compilation-unit
-      var-info ,var-info
-      tag-info ,tag-info
-      fun-info ,fun-info
-      lambdas ,(recur-all lambdas)))
+    (let* ((*ir1-tag-info* tag-info)
+           (*ir1-var-info* var-info)
+           (*ir1-fun-info* fun-info)
+           (rlambdas (recur-all lambdas)))
+      `(%compilation-unit
+        var-info ,*ir1-var-info*
+        tag-info ,*ir1-tag-info*
+        fun-info ,*ir1-fun-info*
+        lambdas ,rlambdas)))
 
    ;; todo:
 
@@ -214,6 +225,36 @@
    ;;        `(,(car whole) ,@(recur-all (cdr whole))))
 ))
 
+;;; add exit-point bindings to block+tagbody forms
+;;; (so we can associate a go/return from to a particular entry into
+;;;  the corresponding tagbody/block, to catch things like recursive
+;;;  calls, or passing a closure back into a second execution of the form)
+;;; for now implementing exit-point as binding a var around the block/tagbody
+;;;  so nlx can close over it as needed, later optimization passes can
+;;;  remove the unused binding if no nlx was needed
+(define-structured-walker ir1-add-exit-points null-ir1-walker
+  :form-var whole
+  :labels ((set-tag-info (var flag value)
+                         (setf (getf (getf *ir1-tag-info* var nil) flag) value)))
+  :forms
+  (((block name nlx forms)
+    (let ((exit-point-sym (gensym (format nil "EXIT-POINT-~s-" name))))
+      (set-tag-info name :exit-point-var exit-point-sym)
+      `(%bind vars (,exit-point-sym)
+              values ((%call type :normal name %exit-point-value args nil))
+              body (,(super whole)))))
+   ((tagbody name nlx forms)
+    ;; assign a name to the tagbody for use with nlx, and mark all tags with it
+    (let ((name (or name (gensym "TAGBODY-EXIT-POINT-")))
+          (*ir1-in-tagbody* t))
+      (loop for i in forms
+            when (atom i)
+            do (set-tag-info i :exit-point-var name))
+      `(%bind vars (,name)
+              values ((%call type :normal name %exit-point-value args nil))
+              body ((tagbody name ,name nlx ,nlx forms ,(recur-all forms :test #'consp))))))))
+
+
 ;;; decide if uwp cleanup should be inline or extracted to function?
 ;;;  -- inlining for now, since we'll probably need as much work to
 ;;;     set up the call as to just inline it
@@ -221,13 +262,18 @@
 ;;; repeat
 ;;;   mark closed vars
 ;;;   convert closed-over scopes inside loops to lambdas
+;;;   convert go/tagbody to %nlx if needed
+;;;     (needs to happen inside loop, since it has to close over exit-point,
+;;;      which might add closure scopes)
 (defparameter *ir1-local-vars* nil)
 (defparameter *ir1-free-vars* nil)
 (defparameter *ir1-need-another-pass* nil)
 (define-structured-walker ir1-convert-and-extract-nested-activation-scopes null-ir1-walker
   :form-var whole
   :labels
-  ((separate-free-vars (names values)
+  ((set-var-info (var flag value)
+                 (setf (getf (getf *ir1-var-info* var nil) flag) value))
+   (separate-free-vars (names values)
                        (loop for name in names
                              for value in values
                              when (member name *ir1-free-vars*)
@@ -287,11 +333,15 @@
                  (super whole))))
           ((%ref type var)
            (if (member var *ir1-free-vars*)
-               `(%ref type :closure var ,var)
+               (progn
+                 (set-var-info var :ref-type :closure)
+                 `(%ref type :closure var ,var))
                (super whole)))
           ((%set-local-ref var value)
            (if (member var *ir1-free-vars*)
-               `(%set type :closure var ,var value ,(recur value))
+               (progn
+                 (set-var-info var :ref-type :closure)
+                `(%set type :closure var ,var value ,(recur value)))
                (super whole)))
           ((%compilation-unit)
            (let ((*ir1-need-another-pass* nil))
@@ -332,20 +382,8 @@
                      (ir1-convert-and-extract-nested-activation-scopes whole)
                      (values whole nil))
                (when *ir1-free-vars* (format t "local vars: ~s~%" *ir1-local-vars*))
-               (format t "free vars: ~s~%" *ir1-free-vars*)
+               #+nil(format t "free vars: ~s~%" *ir1-free-vars*)
 )))))
-
-
-(defun ir1-closure-scopes (form)
-  (loop with not-done = nil
-        repeat 5
-        for i from 0
-        for *ir1-free-vars* = nil
-        ;;do (format t "i1-c-s/~s:" i)
-        do (setf (values form not-done) (ir1-find-free-vars form))
-        ;;(format t "~%--~s ~s~%" not-done form)
-        while not-done)
-  form)
 
 
 ;;; convert go/return-from through uwp into throw?
@@ -356,42 +394,66 @@
 (defparameter *ir1-in-uwp* nil)
 (define-structured-walker ir1-find-nlx-tags null-ir1-walker
   :form-var whole
+  :labels ((get-tag-info (var flag &optional default)
+                         (getf (getf *ir1-tag-info* var nil) flag default)))
   :forms (((%named-lambda name lambda-list body)
            (let ((*ir1-local-tags* nil)
                  (*ir1-in-uwp* nil))
              (super whole)))
 
           ((unwind-protect protected cleanup)
-           (let ((*ir1-in-uwp* t))
+           (let ((*ir1-in-uwp* t)
+                 (*ir1-local-tags* nil))
              (super whole)))
 
-          ((block name forms)
-           (let ((*ir1-local-tags* (cons name *ir1-local-tags*)))
-             (super whole)))
+          ((block name nlx forms)
+           (let* ((*ir1-local-tags* (cons name *ir1-local-tags*))
+                  (rforms (recur-all forms)))
+             #+nil(format t "block : nlx = ~s ~s/~s~%" (member name *ir1-nlx-tags*)
+                     name *ir1-nlx-tags*)
+             `(block name ,name
+                     nlx ,(or nlx (member name *ir1-nlx-tags*))
+                     forms ,rforms)))
+
           ((return-from name value)
-           (if (or *ir1-in-uwp* (member name *ir1-local-tags*))
+           ;;(format t "return-from name=~s/~s~%" name *ir1-local-tags*)
+           (if (member name *ir1-local-tags*)
                (super whole)
                (progn
+                 (setf *ir1-need-another-pass* t)
                  (push name *ir1-nlx-tags*)
                  `(%nlx type :return-from
                         name ,name
-                        eval nil
+                        exit-point ,(recur `(%ref type :local
+                                                  var ,(get-tag-info
+                                                        name :exit-point-var)))
                         value ,(recur value)))))
 
-          ((tagbody forms)
-           (let ((*ir1-in-tagbody* t)
-                 (*ir1-local-tags* (loop with tags = *ir1-local-tags*
-                                         for i in forms
-                                         when (atom i)
-                                         do (push i tags)
-                                         finally (return tags))))
-             (super whole)))
+          ((tagbody name nlx forms)
+           (let* ((*ir1-in-tagbody* t)
+                  (*ir1-local-tags* (loop with tags = *ir1-local-tags*
+                                          for i in forms
+                                          when (atom i)
+                                          do (push i tags)
+                                          finally (return tags)))
+                  (rforms (recur-all forms :test #'consp))
+                  (nlx (or nlx
+                           (loop for i in forms
+                                 thereis (and (atom i)
+                                              (member i *ir1-nlx-tags*))))))
+             `(tagbody name ,name nlx ,nlx forms ,rforms)))
           ((go tag)
-           (if (or *ir1-in-uwp* (member tag *ir1-local-tags*))
+           (if (member tag *ir1-local-tags*)
                (super whole)
                (progn
+                 (setf *ir1-need-another-pass* t)
                  (push tag *ir1-nlx-tags*)
-                 `(%nlx type :go name ,tag eval nil value (quote value nil)))))
+                 `(%nlx type :go
+                        name ,tag
+                        exit-point ,(recur `(%ref type :local
+                                                  var ,(get-tag-info
+                                                        tag :exit-point-var)))
+                        value (quote value nil)))))
 
           ((catch tag forms)
            (let ((*ir1-local-tags* (cons tag *ir1-local-tags*)))
@@ -402,18 +464,42 @@
                (progn
                  (push tag *ir1-nlx-tags*)
                  ;; go tags are evaluated...
-                 `(%nlx type :throw name ,(recur tag) eval t value ,(recur result-form)))))
+                 `(%nlx type :throw
+                        name ,tag
+                        exit-point ,(recur tag)
+                        value ,(recur result-form)))))
 
 
           ((%compilation-unit)
            (let ((*ir1-local-tags* nil)
-                 (*ir1-nlx-tags* nil))
+                 (*ir1-nlx-tags* nil)
+                 (*ir1-need-another-pass* nil))
              (setf whole (super whole))
              (prog1
-                 whole
+                 (values whole *ir1-need-another-pass*)
                (when *ir1-local-tags* (format t "local tags: ~s~%" *ir1-local-tags*))
-               (format t "nlx tags: ~s~%" *ir1-nlx-tags*)
+               #+nil(format t "nlx tags: ~s~%" *ir1-nlx-tags*)
 )))))
+
+
+
+(defun ir1-closure-scopes (form)
+  (loop with not-done = nil
+        with not-done2 = nil
+        repeat 5
+        for i from 0
+        for *ir1-free-vars* = nil
+        ;;do (format t "closure-scope pass ~s~%->~s~%--------~%" i form)
+        ;; find free vars, convert-closed over bindings to lambdas inside loops
+        do (setf (values form not-done) (ir1-find-free-vars form))
+        ;;do (format t "==closure-scope pass ~s~%->~s~%--------~%" i form)
+        ;; convert non-local go/return-from to %nlx
+        do (setf (values form not-done2) (ir1-find-nlx-tags form))
+        while (or not-done not-done2)
+       )
+  ;;(format t "==closure-scope done ~%->~s~%--------~%" form)
+  form)
+
 
 
 ;;; extract lambdas
@@ -444,10 +530,10 @@
   :labels ((mark-catch-arg ()
              ;; loop over every call in progress, and mark current arg as
              ;; having an exception block
-                           (format t "marking : ~s ->" *ir1-call-stack*)
+                           #+nil(format t "marking : ~s ->" *ir1-call-stack*)
              (loop for i in *ir1-call-stack*
                    do (setf (caaadr i) t))
-             (format t "~s~%" *ir1-call-stack*)))
+             #+nil(format t "~s~%" *ir1-call-stack*)))
   :forms (((%call type name args)
            (let* ((tag (gensym))
                   (flags (list nil))
@@ -500,9 +586,10 @@
                    `(%call type ,type name ,name args ,recurred-args)))))
 
           ((block name nlx forms)
+           #+nil(when nlx (format t "nlx-block ~s~%" whole))
            (when nlx (mark-catch-arg))
            (super whole))
-          ((tagbody nlx forms)
+          ((tagbody name nlx forms)
            (when nlx (mark-catch-arg))
            (super whole))
           ((catch tag forms)
@@ -548,9 +635,6 @@
 ;;;   unused tags
 ;;; ???
 ;;FIXME: do the var part sooner, so we can avoid creating closures for vars that are never modified
-(defparameter *ir1-var-info* nil)
-(defparameter *ir1-tag-info* nil)
-(defparameter *ir1-fun-info* nil)
 (defparameter *ir1-current-fun* nil)
 (defun simple-quote-p (value)
   (typecase value
@@ -602,8 +686,7 @@
     (inc-tag-info name :local-count 1 0)
     (super whole))
 
-   ;((tagbody nlx forms)
-   ; ;; should we add tags here?
+   ;((tagbody name nlx forms)
    ; (super whole))
    ((go tag)
     (inc-tag-info tag :local-count 1 0)
@@ -617,14 +700,14 @@
     (super whole))
 
    ;;; combined tag for non-local return-from, go, throw in later passes
-   ((%nlx type name eval value)
+   ((%nlx type name exit-point value)
     (inc-tag-info name :nlx-count 1 0)
     (super whole))
 
    ((%compilation-unit tag-info var-info fun-info lambdas)
-    (let* ((*ir1-tag-info* nil)
-           (*ir1-var-info* nil)
-           (*ir1-fun-info* nil)
+    (let* ((*ir1-tag-info* tag-info)
+           (*ir1-var-info* var-info)
+           (*ir1-fun-info* fun-info)
            (recurred-lambdas (recur-all lambdas)))
       `(%compilation-unit var-info ,*ir1-var-info*
                           tag-info ,*ir1-tag-info*
@@ -674,6 +757,8 @@
 ;;; simple optimizations part 2:
 ;;;   flatten nested progn
 ;;;   drop obviously unused QUOTE values (ex: 1 and 2 in (progn 1 2 3))
+;;;-  replace single form progn with body
+;;;-  handle prog1 similarly to prog1
 ;;;-  optimize tagbody forms similarly to progn?
 ;;;     flatten progn, drop unused stuff, etc...
 ;;;-  rearrange IF as suggested in various compilation papers, IF with
@@ -733,8 +818,9 @@
         finally (return f)))
 (defparameter *ir1-passes*  '(ir0-minimal-compilation-etc
                               ir0->ir1
+                              ir1-add-exit-points
                               ir1-closure-scopes
-                              ir1-find-nlx-tags
+                              ;;ir1-find-nlx-tags
                               ir1-extract-lambdas
                               ir1-mark-spilled-args
                               ir1-collect-var/tag-info
