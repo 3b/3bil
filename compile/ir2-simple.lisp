@@ -164,8 +164,7 @@
                           append (recur a)))
              (:call-static ,name ,(length args))
              ,@(coerce-type))))
-      (:setf `((:find-property-strict setf-namespace)
-               ;;fixme: this evaluates setf fn. args in wrong order...
+      (:setf `((:get-lex setf-namespace)
                ,@(let ((*ir1-dest-type* nil))
                       (loop for a in args
                             append (recur a)))
@@ -440,7 +439,11 @@
 
    ((if condition then else)
     (let ((else-label (gensym "IF-ELSE-"))
-          (done-label (gensym "IF-DONE-")))
+          (done-label (gensym "IF-DONE-"))
+          ;; for now always coerce to * if we don't have a more specific type,
+          ;; to avoid conflicts between branches
+          ;; fixme: derive types for branches and skip this if they match
+          (*ir1-dest-type* (or *ir1-dest-type* t)))
       ;;; fixme: decide how to implement IF
       ;; possibly should eval condition with no type, and then
       ;; (:push-null) (:if-eq) instead of (:if-false)?
@@ -538,8 +541,9 @@
 )
 )
 (defparameter *ir1-dump-asm* t)
-(defun c2 (form)
-  (let* ((form `(%compilation-unit (%named-lambda :top-level () ,form)))
+(defun c2 (form &optional (top-level-name :top-level))
+  (let* ((*new-compiler* t)
+         (form `(%compilation-unit (%named-lambda ,top-level-name () ,form)))
          (assembled
           (passes form (append *ir1-passes* '(mark-activations assemble-ir1)))))
     (when *ir1-dump-asm* (format t "~s~%" assembled))
@@ -619,6 +623,7 @@
 ;;(c2 '(flet (((setf foo) (&rest r) r)) (setf (foo 1 2 3) 4))) ;;fixme
 ;;(c2 '(flet (((setf foo) (&rest r) r)) (function (setf foo)))) ;;fixme
 ;;(format t "~s~%" (cc ' (labels ((x (a) (+ (y (lambda (x) (return-from x (+ a x)))) 1000)) (y (a) (funcall a 10) 1)) #'x)))
+(defparameter *top-level-function* nil)
 (define-structured-walker finish-assembled-ir1 ()
   :forms
   (((%compilation-unit var-info tag-info lambdas)
@@ -627,6 +632,16 @@
       tag-info ,tag-info
       lambdas ,(recur-all lambdas)))
    ((%named-lambda name lambda-list closed-vars activation-vars body)
+    ;; optionally add a call to this function to the top-level script-init
+    ;; fixme: probably should store the name or a flag in the %compilation-unit instead of tracking it separately like this
+    (when (eq name *top-level-function*)
+      (setf (load-top-level *compiler-context*)
+            ;; we call top-level function with 1 arg, the script object
+            (append (load-top-level *compiler-context*)
+                    `(
+                      (:get-scope-object 0)
+                      (:call-static ,name 0)
+                      (:pop)))))
     (flet ((parse-arglist (args)
              ;; fixme: add error checking, better lambda list parsing
              (loop with rest = nil
@@ -685,9 +700,13 @@
               #+nil(format t "activation-vars : ~s~%" activation-vars)
               (loop for (name index) in activation-vars
                     ;; no type info for now..
-                    collect `(,name ,index 0)))
-)
+                    collect `(,name ,index 0))))
            (gethash name (functions *symbol-table*) (list)))))))))
 
-(defun c3 (form)
-  (finish-assembled-ir1 (c2 form)))
+(defun c3 (name form)
+    (finish-assembled-ir1 (c2 form name)))
+
+(defun c4 (name form)
+  (let ((*top-level-function* name))
+    (c3 name form)))
+

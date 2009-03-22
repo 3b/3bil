@@ -595,6 +595,18 @@
           ((catch tag forms)
            (mark-catch-arg)
            (super whole))
+          ;; we match local jumps too, to catch stuff like (+ 1 (go 2) 3))
+          ;;  we should probably limit it to forms that actually exit the
+          ;;  arglist, but being conservative for now
+          ;;  (ex: (+ 1 (block x (return-from x 2)) 3) is safe
+          ((return-from name value)
+           (mark-catch-arg)
+           (super whole))
+          ((go tag)
+           (mark-catch-arg)
+           (super whole))
+
+
           ;; u-w-p possibly shouldn't be here, since f we don't
           ;; trigger the exception block on normal exits from the
           ;; block, then the stack is still valid, and when it does
@@ -810,6 +822,8 @@
                             cleanup ,(flatten-progn cleanup)))
 ))
 (defparameter *ir1-verbose* nil)
+;; hack to allow using same macros in old and new compiler...
+(defparameter *new-compiler* nil)
 (defun passes (form passes)
   (when *ir1-verbose* (format t "~%~%compiling~%~S~%" form))
   (loop for p in passes
@@ -827,8 +841,9 @@
                               ir1-optimize1
                               ir1-optimize2))
 (defun cc (form)
-  (let ((form `(%compilation-unit (%named-lambda :top-level () ,form))))
-    (passes form *ir1-passes*)))
+  (let ((*new-compiler* t))
+   (let ((form `(%compilation-unit (%named-lambda :top-level () ,form))))
+     (passes form *ir1-passes*))))
 
 ;;(cc ''1)
 ;;(cc ''a)

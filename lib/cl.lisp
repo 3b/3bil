@@ -29,17 +29,19 @@
   ;;  so we can start using it while waiting on real implementation
   ;; adding hack for (setf foo) functions also (doesn't work yet though)
   (swf-defmacro %setf-1 (place value)
-    (if (consp place)
-        (cond
-          ((find-swf-property (first place))
-           `(%set-property ,(second place) ,(first place) ,value))
-          (t `((setf ,(first place)) ,(second place) ,(first place) ,value)))
-        `(%set-local ,place ,value)))
+    (if *new-compiler*
+        `(%setf ,place ,value)
+        (if (consp place)
+            (cond
+              ((find-swf-property (first place))
+               `(%set-property ,(second place) ,(first place) ,value))
+              (t `((setf ,(first place)) ,(second place) ,(first place) ,value)))
+            `(%set-local ,place ,value))))
 
   (swf-defmacro setf (&rest args)
     `(progn
        ,@(loop for (var value) on args by #'cddr
-            collect `(%setf-1 ,var ,value))))
+               collect `(%setf-1 ,var ,value))))
 
   ;; partial implementation of psetf, only handles setting local vars,
   ;;  so we can start using it while waiting on real implementation

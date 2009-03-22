@@ -287,7 +287,7 @@
              (%local-function ,temp-name)))
         (let ((binding (lexenv-get-function-binding name)))
           (cond
-            ((special-operator-p name)
+            ((and (symbolp name) (special-operator-p name))
              (error "calling FUNCTION on special operator: ~s" name))
             ((and (consp binding) (eq (car binding) :macro))
              (error "calling FUNCTION on macrolet: ~s" name))
@@ -295,7 +295,7 @@
              `(function ,(second binding)))
             ;; todo: global macros
             ((and (consp name) (eq (car name) 'setf))
-             (error "don't know how to call FUNCTION on setf functions yet: ~s" name))
+             (error "don't know how to call FUNCTION on global setf functions yet: ~s" name))
             (t `(function ,name))))))
 
    ((setq &rest pairs)
@@ -371,9 +371,12 @@
    ;; expand macros,macrolets
    (t
     (destructuring-bind (operator &rest args) whole
-      (let ((binding (lexenv-get-function-binding operator)))
+      (let ((binding (lexenv-get-function-binding operator))
+            (cmacro (find-swf-cmacro-function operator))
+            (macro (find-swf-macro-function operator))
+            (temp))
         (cond
-          ((special-operator-p operator)
+          ((and (symbolp operator) (special-operator-p operator))
            (super whole))
           ;; expand local macros
           ((and (consp binding) (eq (car binding) :macro))
@@ -381,17 +384,35 @@
           ;; mark local function calls
           ((and (consp binding) (eq (car binding) :function))
            `(%local-call ,(second binding) ,@(recur-all args)))
-          ;; todo: global macros
+          ;; compiler macros
+          ;; fixme: add an environment param to compile-macro expansion
+          ((and cmacro (not (eq (setf temp (funcall cmacro whole nil))
+                                whole))
+                (recur temp)))
+          ;; normal macros
+          ;; fixme: add an environment param to macroexpansion
+          (macro
+           (format t "expanding macro ~s~%" whole)
+           (format t "-> ~s~%" (funcall macro whole nil))
+           (recur (funcall macro whole nil)))
+
           ;; todo: known functions (cl:foo, etc)
           ;; special case SETF until macro can handle it...
-          ((eq operator 'setf)
+          ((member operator '(setf %setf))
+           (format t "handling special cased setf ~s~%" whole)
            (if (> (length args) 2)
                (recur `(progn ,@(loop for (var val) on args by #'cddr
                                       collect `(setf ,var ,val))))
                (if (consp (car args))
-                   `(%setf-call ,(caar args)
-                                ,(recur (second args))
-                                ,@(recur-all (cdar args)))
-                   (recur `(%setq ,@args)))))
+                   (let* ((sym  `(setf ,(caar args)))
+                          (setf-fun (lexenv-get-function-binding sym)))
+                     (if setf-fun
+                         `(%local-call ,(second setf-fun)
+                                      ,(recur (second args))
+                                       ,@(recur-all (cdar args)))
+                         `(%setf-call ,(caar args)
+                                      ,(recur (second args))
+                                      ,@(recur-all (cdar args)))))
+                   (recur `(setq ,@args)))))
           ;; wrap anything else in %normal-call
           (t `(%normal-call ,operator ,@(recur-all args)))))))))

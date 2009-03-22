@@ -58,11 +58,19 @@
         (dotimes (i (length x) sum)
           (incf sum (aref x i)))))
 
+    (swf-defmemfun = (a &arest x)
+      (dotimes (i (length x) t)
+        (unless (eq a (aref x i))
+          (return nil))))
+
     (swf-defmemfun < (a &arest x)
       (dotimes (i (length x) t)
         (when (>= a (aref x i)) (return nil))
         (setf a (aref x i))))
 
+
+    (swf-defmemfun baz (&arest x)
+      (if (< (random 2) 1) t nil))
 
     (swf-defmemfun foo (&arest x)
       (ftrace (+ "foo called : " x))
@@ -78,12 +86,12 @@
       (ftrace (+ "global Y called : " x))
       (aref x 0))
 
-    (c3 '(progn
+    (c3 :top-level
+        '(progn
           (ftrace "---------------------------------")
           (ftrace "---------------------------------")
           (ftrace '1)
           (ftrace 'a)
-          (ftrace (tagbody (+ 1 (go 2) 3) 2))
           (ftrace '(1 2))
           (ftrace '(1 . 2))
           (ftrace #(1 2))
@@ -141,9 +149,9 @@
           ;(ftrace (catch 'a (throw 'a 'thrown-a)))
           ;(ftrace (catch 'a (throw 'b 'thrown-a))) ;; uncaught exception
           (ftrace (let ((a (catch '123 (throw '123 'thrown-123)))) a))
-;;; fixme: jump out of function call
-          ;;(ftrace (tagbody (+ 1 2 (go foo) 3 4) foo))
-          ;;(ftrace (tagbody (+ 1 2 (if (baz) 3 (go foo)) 4 5) foo))
+          (ftrace (tagbody (ftrace (+ 1 2 (go foo) 3 4)) (go bar) foo (ftrace "went to foo") bar))
+          (ftrace (tagbody (ftrace (+ 1 2 (if (baz) 3 (go foo)) 4 5)) (go bar) foo
+                     (ftrace "went to foo") bar))
           (ftrace :here3)
           (ftrace (let ((a 1)) (flet ((foo (b) (+ a b))) (foo 10))))
           (ftracef (let ((a 1) (b 10)) (lambda (a c) (+ a b c))) 100 1000)
@@ -237,15 +245,77 @@
                                                #'(lambda () (go a)))))))
           (ftrace :here5)
           (ftrace (tagbody a (unwind-protect (go b) (ftrace "unwinding")) b))
+          (ftrace (+ 1 (block x (return-from x 2)) 3))
+          (ftrace (tagbody (+ 1 (go 2) 3) 2))
 ;;; setf functions
-          ;;(ftrace (flet (((setf foo) (&rest r) r)) (setf (foo 1 2 3) 4))) ;;fixme
-          ;;(ftrace (flet (((setf foo) (&rest r) r)) (function (setf foo)))) ;;fixme
+          (ftrace :flet-setf)
+          (ftrace (flet (((setf foo) (a b c d) (s+ a b c d)))
+                    (setf (foo 1 2 3) 4)))
+          (ftrace (labels (((setf foo) (a b c d) (s+ a b c d))
+                           (bar () (setf (foo "a" "b" "c") "d")))
+                    (bar)))
+          (ftracef (flet (((setf foo) (a b c d) (s+ a b c d)))
+                    (function (setf foo))) 1 2 3 4)
+;;; fixme: ensure compatible types of branches/jumps when no dest type
+          (ftrace (if t 1 "2"))
+          (ftrace :done)))
+    (swf-defmemfun setf-foo (&arest x)
+      (ftrace (+ "setf foo called : " x))
+      (aref x 0))
 
-          (ftrace :done)
-))
+    (swf-defmemfun init-setf1 ()
+      (let ((o  (%new* %flash:object)))
+        (%asm
+         (:@ this)
+         (:@ o)
+         (:init-property setf-namespace)
+         (:push-null))))
+
+    (def-swf-class setf-namespace-type "what goes here?"
+      %flash:object ()
+      (()
+       (%asm (:push-null))))
+
+    (swf-defmemfun init-setf ()
+      (%set-property this setf-namespace (%new* setf-namespace-type))
+      #+nil(%set-aref-1 (slot-value this setf-namespace) 'foo
+                        (function setf-foo))
+      (let ((n (slot-value this setf-namespace))
+            (f (function setf-foo)))
+        (%asm
+         (:@ n)
+         (:@ f)
+         (:init-property foo)
+         (:push-null)))
+      #+nil(%set-property (slot-value this setf-namespace) foo
+                     (function setf-foo)))
+
+    ;;(push 'setf-namespace )
+
+
+    (push '(setf-namespace 0) (script-slots *compiler-context*))
+    #+nil(c4 :top-level-init
+        '(progn
+          (ftrace "top-level init")
+          (init-setf)
+          ))
+    #+nil(c3 :setf-test
+        '(progn
+          (ftrace (setf (foo 1 2) 3))))
+
+    (c3 :more-tests
+        '(progn
+          (ftrace "dotimes 10 :")
+          (dotimes (i 10)
+            (ftrace (s+ "  i = " i)))
+          (ftrace )
+          ))
 
     (swf-defmemfun run-tests ()
-      (+ "| =" (:top-level)))
+      ;;(+ "| =" (:top-level-init))
+      ;;(+ "| =" (:setf-test))
+      (+ "| =" (:top-level))
+      (+ "| =" (:more-tests)))
 
     (swf-defmemfun main (arg)
       (let ((foo (%new %flash.text:Text-Field 0))

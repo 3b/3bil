@@ -26,17 +26,18 @@ interning, defpackage?
   interning literal objects?
     ex: (eq #1=(cons 1 . 2) #1#)
     3.2.4.2.2 : http://www.lispworks.com/documentation/HyperSpec/Body/03_bdbb.htm
-  -- set %catch back to if-strict-eq once we can intern symbols
 
 setf
+  ~~~flet/labels
+  global setf functions
 
 global macros/global environment
 
 lambda list keywords (&arest and &optional at least)
 
-jumps out of function call arglists
+~~~jumps out of function call arglists
 
-cleanup
+code cleanup
 
 implement CL: stuff
 
@@ -46,6 +47,15 @@ inlining/compiler macros/etc
 real test framework, regression tests
 
 arg count checking?
+
+skip :coerce_foo when value is known to be correct type
+
+store&use type info, allow type declarations
+  (maybe some simple type propagation too?)
+
+enforce same type on all exits from a block, or branches in an if
+  (lazy way = specify coerce_a when no type specified externally,
+   soem minimal type checking would be nicer though)
 
 verifier in asm
   (possibly add fixer for some simple type errors too?)

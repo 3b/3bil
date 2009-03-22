@@ -435,7 +435,8 @@
                   (or (swf-name (find-swf-class super))
                       super))
                  ;; todo: add interfaces
-                 09 nil ;; flags, interfaces
+                 9 ;;flags 1=sealed,2=final,4=interface, 8=protectedns?
+                 nil ;; interfaces
                  constructor-mid
                  (loop for i in properties
                     collect
@@ -515,6 +516,17 @@
          #+nil(format t "==-== boilerplate2~%")
          (vector-push-extend
           `(,,script-init
+            ,@(loop for i in (script-slots *compiler-context*)
+                    collect (make-instance 'avm2-asm::trait-info
+                                           'avm2-asm::name
+                                           (avm2-asm::asm-intern-multiname (first i))
+                                           'avm2-asm::trait-data
+                                           (make-instance 'avm2-asm::trait-data-slot/const
+                                                          'avm2-asm::kind 0
+                                                          'avm2-asm::slot-id 0
+                                                          'avm2-asm::type-name (second i)
+                                                          'avm2-asm::vindex 0
+                                                          'avm2-asm::vkind 0)))
             ,@(loop for i in (class-names *compiler-context*)
                  ;;do (format t "-=c-~s~%" i)
                  collect (make-instance 'avm2-asm::trait-info
@@ -526,6 +538,7 @@
                                                        'avm2-asm::classi (second i))))
             ,@(loop for i in (function-names *compiler-context*)
                     ;;do (format t "-=f-~s~%" i)
+                    
                  collect (make-instance 'avm2-asm::trait-info
                                         'avm2-asm::name
                                         (if (numberp (first i))

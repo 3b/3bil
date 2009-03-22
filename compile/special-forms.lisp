@@ -343,7 +343,8 @@ call with %flet-call, which sets up hidden return label arg
   `(,@(scompile array)
     ,@(scompile index)
     ,@(scompile value)
-      (:set-property (:multiname-l "" ""))))
+      (:set-property (:multiname-l "" ""))
+      (:push-null)))
 
 
 ;;(scompile '(list* 1  2 3 4 5))
