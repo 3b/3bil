@@ -59,6 +59,17 @@ enforce same type on all exits from a block, or branches in an if
 
 verifier in asm
   (possibly add fixer for some simple type errors too?)
+
+top level closures?
+    (let ((a 1))
+      (defun a+1 () (incf a)))
+
+get rid of unused bindings (exit-point in particular)
+
+spill u-w-p return value to a local across cleanup if needed?
+   (or maybe just always for now?)
+ (unwind-protect 1 (catch 2 (throw 2))) -> 1?
+
 ---
 
 http://www.lispworks.com/documentation/HyperSpec/Issues/iss152_w.htm

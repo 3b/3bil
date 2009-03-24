@@ -160,6 +160,20 @@
          ,@body
          ,temp)))
 
+  ;; temporary hacks for new compiler
+  (swf-defmacro defun (name args &body body)
+    `(%named-lambda ,name ,args (block ,name ,@body)))
+  (swf-defmacro defmacro (name args &body body)
+    (let ((form (gensym))
+          (environment (gensym)))
+      (add-swf-macro-function
+       name
+       (coerce `(lambda (,form ,environment)
+         (declare (ignore ,environment))
+         (destructuring-bind ,args (cdr ,form)
+            ,@body)) 'function)))
+    nil)
+
 )
 
 #+nil(let ((*symbol-table* (make-instance 'symbol-table :inherit (list *cl-symbol-table* *player-symbol-table*))))

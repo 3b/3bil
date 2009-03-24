@@ -1,7 +1,7 @@
 (in-package :avm2-compiler)
 
 (defclass symbol-table ()
-  ((functions :initform (make-hash-table) :accessor functions)
+  ((functions :initform (make-hash-table :test 'equal) :accessor functions)
    ;; functions are really methods at the bytecode level, haven't
    ;; figured out how to make separate functions yet
    (variables :initform (make-hash-table) :accessor variables)
@@ -66,9 +66,12 @@
    (extends :initform nil :initarg :extends :accessor extends)
    (implements :initform nil :initarg :implements :accessor implements)
    (properties :initform nil :initarg :properties :accessor properties)
+   (functions :initform nil :initarg :functions :accessor functions)
+   (class-properties :initform nil :initarg :class-properties :accessor class-properties)
+   (class-functions :initform nil :initarg :class-functions :accessor class-functions)
    (constructor :initform nil :initarg :constructor :accessor constructor)))
 
-(defun add-swf-class (name swf-name &key ns extends implements properties constructor)
+(defun add-swf-class (name swf-name &key ns extends implements properties constructor functions class-properties class-functions)
   (setf (gethash name (classes *symbol-table*))
         (make-instance 'symbol-class-data :name name
                        :swf-name swf-name
@@ -76,6 +79,9 @@
                        :extends extends
                        :implements implements
                        :properties properties
+                       :functions functions
+                       :class-properties class-properties
+                       :class-functions class-functions
                        :constructor constructor)))
 
 (defun find-swf-class (symbol &optional (s *symbol-table*))

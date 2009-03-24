@@ -425,3 +425,11 @@ call with %flet-call, which sets up hidden return label arg
             (avm2-asm::assemble-method-body
              (dump-defun-asm () (let ((a 0)) (dotimes (x 10000000 a) (incf a 1)))))))))
 
+#+nil
+(format t "---~%~{~s~%~}---~%"
+        (avm2-asm::avm2-disassemble
+         (avm2-asm::code
+          (avm2-asm::with-assembler-context
+            (avm2-asm::assemble-method-body
+             (dump-defun-asm () (dotimes (x 1) (dotimes (y 1) (+ x y)))))))))
+

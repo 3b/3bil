@@ -30,6 +30,8 @@
 
    ((%local-ref name)
     `(%ref type :local var ,name))
+   ((%lex-ref object name)
+    `(%ref type :lex var (,object ,name)))
    ((%local-set name value)
     `(%set type :local var ,name value ,(recur value)))
 
@@ -68,6 +70,12 @@
 
    ((%compilation-unit &rest lambdas)
     `(%compilation-unit lambdas ,(recur-all lambdas)))
+
+   ((%asm &rest forms)
+    `(%asm forms ,(loop for i in forms
+                        when (eq (car i) :@)
+                        collect `(:@ ,(recur (second i)) ,@(cddr i))
+                        else collect i)))
 
    ;; todo:
 
@@ -193,6 +201,11 @@
         fun-info ,*ir1-fun-info*
         lambdas ,rlambdas)))
 
+   ((%asm &rest forms)
+    `(%asm forms ,(loop for i in forms
+                        when (eq (car i) :@)
+                        collect `(:@ ,(recur (second i)) ,@(cddr i))
+                        else collect i)))
    ;; todo:
 
    ;;       ((load-time-value form &optional read-only-p)
@@ -302,7 +315,7 @@
                      body
                      ((%named-lambda
                        name ,name
-                       lambda-list ,vars
+                       lambda-list ,(cons 'this vars)
                        body ,(recur-all body))
                       (%call type :local name ,name args ,(recur-all values))))))
                ;; not in a loop, just add closed named to list
@@ -332,12 +345,15 @@
                  ;; no closed vars, leave as-is
                  (super whole))))
           ((%ref type var)
-           (if (member var *ir1-free-vars*)
+           (if (and (not (eq type :lex ))
+                    (member var *ir1-free-vars*))
                (progn
                  (set-var-info var :ref-type :closure)
                  `(%ref type :closure var ,var))
                (super whole)))
-          ((%set-local-ref var value)
+          ((%set-local-ref)
+           (error "broken, got %set-local-ref"))
+          ((%set var value)
            (if (member var *ir1-free-vars*)
                (progn
                  (set-var-info var :ref-type :closure)
@@ -683,7 +699,8 @@
    ((%ref type var)
     (when (eq type :closure)
       (set-fun-info *ir1-current-fun*  :closure t))
-    (inc-var-info var :ref-count 1 0)
+    (when (member type '(:closure :local))
+      (inc-var-info var :ref-count 1 0))
     (super whole))
    ((%set type var value)
     (when (eq type :closure)

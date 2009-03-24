@@ -113,7 +113,7 @@
   (write-u30 (avm2-asm::slot-id td))
   (write-u30 (avm2-asm::type-name td))
   (write-u30 (avm2-asm::vindex td))
-  (unless (zerop (avm2-asm::vindex td)) 
+  (unless (zerop (avm2-asm::vindex td))
     (write-u8 (avm2-asm::vkind td))))
 
 (defmethod write-generic ((td avm2-asm::trait-data-class) &optional (*standard-output* *standard-output*))
@@ -389,7 +389,7 @@
 
 (defun assemble-function (name)
   #+nil(format t "--assemble-function ~s :~%" name)
-  (destructuring-bind (n nid argtypes return-type flags asm &optional activation-slots)
+  (destructuring-bind (n nid argtypes return-type flags asm &key activation-slots class-name class-static)
       (find-swf-function name)
     ;;(format t "--assemble-function ~s : ~s : ~s ~%" name n nid)
     (let* ((traits (loop for (name index type) in activation-slots
@@ -408,9 +408,16 @@
                                    ))))
            (mid (avm2-asm::avm2-method name nid argtypes return-type flags
                                        :body (avm2-asm::assemble-method-body asm :traits traits))))
-      (push (list n mid) (function-names *compiler-context*)))))
+      (if class-name
+          (progn
+            (format t "adding method ~s to class ~s~%  ~s ~s ~s~%" name class-name
+                    n mid  (gethash class-name (classes *symbol-table*)))
+            (if class-static
+                (push (list n mid) (class-functions (gethash class-name (classes *symbol-table*))))
+                (push (list n mid) (functions (gethash class-name (classes *symbol-table*))))))
+          (push (list n mid) (function-names *compiler-context*))))))
 
-(defun assemble-class (name ns super properties constructor)
+(defun assemble-class (name ns super properties constructor instance-functions class-properties class-functions)
   (let* ((constructor-mid (avm2-asm::avm2-method
                            nil 0 ;; id name
                            (loop for i in (first constructor)
@@ -438,21 +445,55 @@
                  9 ;;flags 1=sealed,2=final,4=interface, 8=protectedns?
                  nil ;; interfaces
                  constructor-mid
-                 (loop for i in properties
-                    collect
-                      (make-instance
-                       'avm2-asm::trait-info
-                       'avm2-asm::name (avm2-asm::asm-intern-multiname i)
-                       'avm2-asm::trait-data
-                       (make-instance 'avm2-asm::trait-data-slot/const
-                                                    'avm2-asm::kind 0
-                                                    'avm2-asm::slot-id 0 ;; auto-assign
-                                                    'avm2-asm::type-name 0 ;; */t
-                                                    'avm2-asm::vindex 0 ;; no value
-                                                    'avm2-asm::vkind 0 ;; no value
-                                                    )))
+                 (append
+                  (loop for i in properties
+                        collect
+                        (make-instance
+                         'avm2-asm::trait-info
+                         'avm2-asm::name (avm2-asm::asm-intern-multiname i)
+                         'avm2-asm::trait-data
+                         (make-instance 'avm2-asm::trait-data-slot/const
+                                        'avm2-asm::kind 0
+                                        'avm2-asm::slot-id 0 ;; auto-assign
+                                        'avm2-asm::type-name 0 ;; */t
+                                        'avm2-asm::vindex 0 ;; no value
+                                        'avm2-asm::vkind 0 ;; no value
+                                        )))
+                  (loop for (name index) in instance-functions
+                        collect
+                        (make-instance
+                         'avm2-asm::trait-info
+                         'avm2-asm::name (avm2-asm::asm-intern-multiname name)
+                         'avm2-asm::trait-data
+                         (make-instance 'avm2-asm::trait-data-method/get/set
+                                        'avm2-asm::slot-id 0 ;; none
+                                        'avm2-asm::method index))))
                  class-init
                  :protected-ns junk
+                 :class-traits
+                                  (append
+                  (loop for i in class-properties
+                        collect
+                        (make-instance
+                         'avm2-asm::trait-info
+                         'avm2-asm::name (avm2-asm::asm-intern-multiname i)
+                         'avm2-asm::trait-data
+                         (make-instance 'avm2-asm::trait-data-slot/const
+                                        'avm2-asm::kind 0
+                                        'avm2-asm::slot-id 0 ;; auto-assign
+                                        'avm2-asm::type-name 0 ;; */t
+                                        'avm2-asm::vindex 0 ;; no value
+                                        'avm2-asm::vkind 0 ;; no value
+                                        )))
+                  (loop for (name index) in class-functions
+                        collect
+                        (make-instance
+                         'avm2-asm::trait-info
+                         'avm2-asm::name (avm2-asm::asm-intern-multiname name)
+                         'avm2-asm::trait-data
+                         (make-instance 'avm2-asm::trait-data-method/get/set
+                                        'avm2-asm::slot-id 0 ;; none
+                                        'avm2-asm::method index))))
                  ;; todo: class traits
                  ;; :class-traits nil
                  )))
@@ -476,6 +517,13 @@
        #+nil(format t "==-== body~%")
        ;; compile the body code
        ,@body
+       #+nil(format t "==-== functions~%")
+       ;; assemble functions before classes so methods can get added to classes
+       ;; fixme: clean the method stuff up
+       (loop for k being the hash-keys of (functions *cl-symbol-table*)
+          do (assemble-function k))
+       (loop for k being the hash-keys of (functions *symbol-table*)
+          do (assemble-function k))
        #+nil(format t "==-== classes~%")
        ;; assemble classes
        (loop for symbol-table in (list *cl-symbol-table* *symbol-table*)
@@ -484,7 +532,10 @@
                 do
                   (with-accessors ((swf-name swf-name) (ns ns)
                                    (extends extends) (properties properties)
-                                   (constructor constructor)) v
+                                   (constructor constructor)
+                                   (functions functions)
+                                   (class-properties class-properties)
+                                   (class-functions class-functions)) v
                     (when (or properties constructor)
                       #+nil(format t "name=~s extends = ~s, find=~s sn=~s~%" swf-name
                               extends (find-swf-class extends)
@@ -492,15 +543,12 @@
                               )
                       (assemble-class swf-name ns
                                       extends
-                                      properties constructor)))
+                                      properties constructor
+                                      functions
+                                      class-properties
+                                      class-functions)))
                   (setf ,script-init-scope-setup
                         (append ,script-init-scope-setup (new-class+scopes v)))))
-       #+nil(format t "==-== functions~%")
-       ;; assemble functions
-       (loop for k being the hash-keys of (functions *cl-symbol-table*)
-          do (assemble-function k))
-       (loop for k being the hash-keys of (functions *symbol-table*)
-          do (assemble-function k))
        #+nil(format t "==-== boilerplate~%")
        ;; script boilerplate
        (let ((,script-init
@@ -538,7 +586,6 @@
                                                        'avm2-asm::classi (second i))))
             ,@(loop for i in (function-names *compiler-context*)
                     ;;do (format t "-=f-~s~%" i)
-                    
                  collect (make-instance 'avm2-asm::trait-info
                                         'avm2-asm::name
                                         (if (numberp (first i))

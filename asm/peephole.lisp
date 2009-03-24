@@ -74,8 +74,7 @@ optimized version"
 ;;   (kill x)+ (returnvalue) -> (returnvalue)
 ;;      -- (can't do directly, since then it would only get the last kill
 ;;          need to check rest for more kills and then a returnvalue)
-;;
-
+;;   get-local dec set-local -> dec-local
 
 ;;; push-*/get-*+ pop -> ()
 (def-peephole (:push-null :push-undefined :push-byte :push-short :push-true
@@ -146,6 +145,12 @@ optimized version"
     ((eql :if-false (car next))
      (cons `(:if-strict-ne ,@(cdr next)) rest))
     (t :keep)))
+
+;;; jump1 jump2 -> jump1
+(def-peephole :jump 2 (this next &rest rest)
+  (if (and (eql (car next) :jump))
+      (cons this rest)
+      :keep))
 
 ;; hack to allow comments in generated asm
 (def-peephole :comment 1 (nil &rest rest)

@@ -68,6 +68,35 @@
         (when (>= a (aref x i)) (return nil))
         (setf a (aref x i))))
 
+    (swf-defmemfun - (a &arest x)
+      (let ((sum a))
+        (if (= (length x) 0)
+            (%asm (:@ a)
+                  (:negate)
+                  (:coerce-any))
+            (dotimes (i (length x) sum)
+              (let ((y (aref x i)))
+                (%asm (:@ sum)
+                      (:@ y)
+                      (:subtract)
+                      (:coerce-any)
+                      (:dup)
+                      (:@! sum)))))))
+    (swf-defmemfun / (a &arest x)
+      (let ((sum a))
+        (if (= (length x) 0)
+            (%asm (:push-int 1)
+                  (:@ a)
+                  (:divide)
+                  (:coerce-any))
+            (dotimes (i (length x) sum)
+              (let ((y (aref x i)))
+                (%asm (:@ sum)
+                      (:@ y)
+                      (:divide)
+                      (:coerce-any)
+                      (:dup)
+                      (:@! sum)))))))
 
     (swf-defmemfun baz (&arest x)
       (if (< (random 2) 1) t nil))
@@ -107,10 +136,10 @@
           (ftrace (tagbody foo (go baz) baz))
           (ftrace (tagbody 1 (go 2) 2))
           (ftrace (symbol-macrolet ((a 'foo)) a))
-          (ftrace (symbol-macrolet ((a (foo 123))) (+ a 1)))
+          (ftrace (symbol-macrolet ((a (foo 1231))) (+ a 1)))
           ;;(ftrace (symbol-macrolet ((a (foo 123))) (setq a 1)))
           ;;(ftrace (symbol-macrolet ((a (foo 123))) (let ((b 2)) (setq a 1 b 3))))
-          (ftrace (macrolet ((x (a) `(list ,a))) (x 123)))
+          (ftrace (macrolet ((x (a) `(list ,a))) (x 1232)))
           (ftrace (macrolet ((x (a) (return-from x (list 'list 234 a)) `(list ,a))) (x 123)))
           ;;(ftrace (setq))
           (ftrace (let ((a 2)) (setq a 1)))
@@ -122,18 +151,18 @@
           (ftrace (let ((x (+ 1 2 3))) x))
           (ftrace (let ((x (progn (+ 1 2) (foo 'a) (+ 3 4))) x)))
           (ftrace (let ((x (progn (+ 1 2) (foo 'b) (+ 3 4)))) x))
-          (ftrace (labels ((x (a) (list a))) (x 123)))
-          (ftrace (flet ((x (a) (list a))) (x 123)))
+          (ftrace (labels ((x (a) (list a))) (x 1233)))
+          (ftrace (flet ((x (a) (list a))) (x 1234)))
           (ftrace :here2)
           (ftrace (flet ((x (a) (return-from x 1))) (x 123)))
-          (ftrace (flet ((x (a) (return-from x 111) (list a))) (x 123)))
+          (ftrace (flet ((x (a) (return-from x 111) (list a))) (x 1235)))
           (ftrace :labels)
           (ftrace (labels ((x (a) (z a))
                           (y (a) (+ a 7000))
                           (z (a) (+ (y a) 80000)))
                    (x 654)))
           (ftrace :flet)
-          (ftrace (flet ((x (a) (list (y a)))
+          (ftrace (flet ((x (a) (list 987 (y a)))
                         (y (a) (x a)))
                    (x 1234)))
           (ftracef (function (lambda (x) (+ x 1))) 1000)
@@ -258,6 +287,11 @@
                     (function (setf foo))) 1 2 3 4)
 ;;; fixme: ensure compatible types of branches/jumps when no dest type
           (ftrace (if t 1 "2"))
+          (ftrace :fixme)
+          (let ((ababab 1))
+            (flet ((bbbaaa () (incf ababab)))
+              (ftrace (s+ "bb:" (bbbaaa)" " (bbbaaa)" " (bbbaaa)))))
+          #+nil(ftracef (let ((a 2)) (flet ((b () a)) (function b))))
           (ftrace :done)))
     (swf-defmemfun setf-foo (&arest x)
       (ftrace (+ "setf foo called : " x))
@@ -272,9 +306,12 @@
          (:push-null))))
 
     (def-swf-class setf-namespace-type "what goes here?"
-      %flash:object ()
+      %flash:object (baz)
       (()
        (%asm (:push-null))))
+
+    (swf-defun-in-class-static foo setf-namespace-type (&arest args)
+      (ftrace (s+ " setf foo : " args)))
 
     (swf-defmemfun init-setf ()
       (%set-property this setf-namespace (%new* setf-namespace-type))
@@ -293,7 +330,7 @@
     ;;(push 'setf-namespace )
 
 
-    (push '(setf-namespace 0) (script-slots *compiler-context*))
+    ;;(push '(setf-namespace 0) (script-slots *compiler-context*))
     #+nil(c4 :top-level-init
         '(progn
           (ftrace "top-level init")
@@ -302,20 +339,190 @@
     #+nil(c3 :setf-test
         '(progn
           (ftrace (setf (foo 1 2) 3))))
-
+    (swf-defun bleh ()
+      (let ((a (%new* setf-namespace-type)))
+        (ftrace (s+ "bleh:"
+                    (%asm (:get-lex setf-namespace-type)
+                          (:get-property foo))))))
     (c3 :more-tests
         '(progn
           (ftrace "dotimes 10 :")
           (dotimes (i 10)
             (ftrace (s+ "  i = " i)))
-          (ftrace )
+          (ftrace "...")
+          (ftrace (bleh))
+          (ftrace (setf (:to-string 1) 4))
+          ;;(ftrace (setf (baz 1) 4))
+          (ftrace (setf (foo 1 2 3) 4))
+          (ftrace 'defun)
+          (defun defun-test (a)
+            (ftrace (s+ "defun-test called, arg=" a))
+            (+ a 1000))
+          (ftrace (defun-test 234))
+          (ftrace 'defmacro)
+          (defun defmacro-test-1 (a b)
+            (ftrace (s+ "defmacro-test-1 called, arg=" a b))
+            (+ a b 1000))
+          (defmacro defmacro-test (a1)
+            `(defmacro-test-1 ,a1 ,(* a1 10)))
+          (ftrace (defmacro-test 5))
           ))
 
-    (swf-defmemfun run-tests ()
+    (swf-defmemfun * (&arest x)
+      (let ((sum 1))
+        (dotimes (i (length x) sum)
+          (let ((y (aref x i)))
+            (%asm (:@ sum)
+                  (:@ y)
+                  (:multiply)
+                  (:coerce-any)
+                  (:dup)
+                  (:@! sum))))))
+    (swf-defun type-of (o)
+      (%type-of o))
+
+    ;;; need to figure out how to define top level closures at some point
+    (push '(rand 0) (script-slots *compiler-context*))
+    (c4 :numbers-init
+        '(progn
+          (let ((x 123456789)
+                (y 362436069)
+                (z 521288629)
+                (w 88675123)
+                (v 886756453))
+            (%asm
+             (:find-property-strict rand)
+             (:@ (lambda ()
+                   ;;(ftrace (s+ "rand: " x " " y " " z " " w " " v ))
+                   ;;(incf x)
+                   (%asm
+                    ;;t=(x^(x>>7))
+                    (:@ x :uint)
+                    (:dup)
+                    (:push-byte 7)
+                    (:unsigned-rshift)
+                    (:bit-xor)
+                    ;; leave t on stack
+                    ;;x=y; y=z; z=w; w=v;
+                    (:@ (psetf x y
+                               y z
+                               z w
+                               w v) :ignored)
+                    ;;(:pop)
+                    ;;v=(v^(v<<6))^(t^(t<<13))
+                    ; t ^ (t << 13)
+                    (:dup) ;; t
+                    (:push-byte 13)
+                    (:lshift)
+                    (:bit-xor)
+                    (:@ v :uint)
+                    (:dup)
+                    (:push-byte 6)
+                    (:lshift)
+                    (:bit-xor)
+                    (:bit-xor)
+                    (:dup)
+                    (:@ (setf v (%asm-top-of-stack-typed)))
+                    ;; return (y+y+1)*v;
+                    (:@ y :uint) ;; y v
+                    (:dup)
+                    (:add-i) ;; y+y v
+                    (:push-byte 1)
+                    (:add-i) ;; y+y+1 v
+                    (:multiply-i)
+                    (:convert-unsigned) ;; seems a tiny bit faster here?
+                    #+nil(:coerce-u))))
+             (:init-property rand)
+             (:push-null)))))
+
+    (c3 :numbers
+        '(progn
+          (ftrace 'numbers)
+          (defun num (a)
+            (ftrace a)
+            (ftrace (type-of a)))
+          #+nil(let ((a 1))
+            (dotimes (x 35)
+              (num (setf a (* a 2)) )))
+          (ftrace 'foo)
+          (ftracef
+           (let ((a 1))
+             (lambda () a)))
+
+         #+nil(ftracef
+           (let ((a 3))
+             (flet ((b () a))
+               (function b))))))
+
+    (c3 :rand1
+        '(progn
+          (defmacro %new- (class &rest args)
+            (let ((name (typecase class
+                          (symbol
+                           (let ((c (find-swf-class class)))
+                             (assert c) ;; fixme: better error reporting
+                             (swf-name c)))
+                          (t class))))
+              `(%asm (:find-property-strict ,name)
+                     ,@(loop for i in args
+                             collect `(:@ ,i))
+                     (:construct-prop ,name ,(length args)))))
+          (defmacro time (&body body)
+            (let ((now (gensym)))
+              `(let ((,now (%new- %flash:date)))
+                 ,@body
+                 (ftrace
+                  (s+ "[" ":" (/ (- (%new- %flash:date) ,now) 1000.0) "sec]")))))
+          (defmacro repeated (count &body body)
+            (let ((x (gensym))
+                  (c (gensym))
+                  (top (gensym))
+                  (test (gensym)))
+              `(let ((,x 6565))
+                 (%asm (:@kill ,x)
+                       (:@ ,count)
+                       (:coerce-i)
+                       (:@ (setf ,x (%asm-top-of-stack-untyped)) :ignored)
+                       (:jump ,top)
+                       (:%label ,top)
+                       (:@  (progn ,@body) :ignored)
+                       (:%dlabel ,test)
+                       (:@ ,x)
+                       (:decrement-i)
+                       (:@ (setf ,x (%asm-top-of-stack-untyped)))
+                       (:push-byte 0)
+                       (:if-gt ,top)
+                       (:push-null)))))
+          #+nil(dotimes (x 1) (dotimes (y 1) ))
+          #+nil(dotimes (x 3) (dotimes (y 3) (ftrace (s+ x "," y))))
+          #+nil(dotimes (c 10) (ftrace (rand)))
+          (ftrace :empty-loops)
+          (dotimes (x 3)
+            (time
+             (repeated 1000000)))
+          (ftrace :flash.random)
+          (dotimes (x 3)
+            (time
+             (repeated 1000000 (%flash:random)))
+            (ftrace (%flash:random)))
+          (ftrace :rand)
+          (dotimes (x 3)
+            (time
+             (repeated 1000000 (rand))
+             #+nil(dotimes (c 3) (rand)))
+            (ftrace (rand)))
+
+
+
+)
+        )
+    (swf-defun run-tests ()
       ;;(+ "| =" (:top-level-init))
       ;;(+ "| =" (:setf-test))
       (+ "| =" (:top-level))
-      (+ "| =" (:more-tests)))
+      (+ "| =" (:more-tests))
+      (+ "| =" (:numbers))
+      (+ "| =" (:rand1)))
 
     (swf-defmemfun main (arg)
       (let ((foo (%new %flash.text:Text-Field 0))

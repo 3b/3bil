@@ -11,6 +11,9 @@
            :ns ,ns
            :extends ',super
            :properties ',properties
+           :class-properties nil ;; todo: add interface for this?
+           :functions nil ;; to be added later
+           :class-functions nil ;; to be added later
            :constructor (list ',constructor-args ',constructor)))
      ,@(loop for p in properties
           collect `(add-swf-property ',p ',p))))

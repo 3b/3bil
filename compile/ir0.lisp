@@ -120,6 +120,13 @@
           ;; to collect lambda bodies in later passes
           ((%compilation-unit &rest lambdas)
            `(%compilation-unit ,@(recur-all lambdas)))
+
+          ((%asm &rest forms)
+           `(%asm ,@(loop for i in forms
+                          when (eq (car i) :@)
+                          collect `(:@ ,(recur (second i)) ,@(cddr i))
+                          else collect i)))
+
           ;; anything else, evaluate all args
           (t
            `(,(car whole) ,@(recur-all (cdr whole))))))
@@ -170,7 +177,8 @@
 (define-walker ir0-minimal-compilation-etc null-cl-walker
   :atoms (((or number string simple-vector bit-vector (eql t) (eql nil))
            `(quote ,atom))
-          (symbol (let ((binding (lexenv-get-variable-binding atom)))
+          (symbol (let ((binding (lexenv-get-variable-binding atom))
+                        (constant-binding (find-swf-constant atom)))
                     (cond
                       ((keywordp atom) `(quote ,atom))
                       ((and (consp binding) (eq (car binding) :macro))
@@ -179,6 +187,9 @@
                        `(%local-ref ,(cdr binding)))
                       ((and (consp binding) (eq (car binding) :closed))
                        (error "got closed variable in ir0-minimal-compilation? ~s" atom))
+                      (constant-binding
+                       `(%lex-ref ,(first constant-binding)
+                                  ,(second constant-binding)))
                       (t (error "unknown local in ir0-minimal-compilation? ~s" atom))))))
   :form-var whole
   :forms
@@ -226,7 +237,8 @@
                        collect (list (car i)
                                      (alpha-convert-name (car i)))))
           (lambdas
-           (loop for (n ll . body) in flets
+           (loop for (n _ll . body) in flets
+                 for ll = (cons 'this _ll)
                  for args = (alphatize-var-names (lambda-list-vars ll))
                  collect `(,(alphatize-lambda-list ll args)
                             ,(with-local-vars args
@@ -246,7 +258,8 @@
                                      (alpha-convert-name (car i))))))
       (with-local-functions names
         (let ((lambdas
-               (loop for (n ll . body) in flets
+               (loop for (n _ll . body) in flets
+                     for ll = (cons 'this _ll)
                      for args = (alphatize-var-names (lambda-list-vars ll))
                      collect `(,(alphatize-lambda-list ll args)
                                 ,(with-local-vars args
@@ -275,7 +288,7 @@
    ((function name)
     (if (and (consp name) (eq (car name) 'lambda))
         (let* ((temp-name (gensym "LAMBDA-"))
-               (lambda-list (second name))
+               (lambda-list (cons 'this (second name)))
                (args (alphatize-var-names (lambda-list-vars lambda-list)))
                (body (cddr name)))
           `(progn
@@ -330,13 +343,20 @@
    ((lambda (&rest args) &rest body)
     (recur `(function ,whole)))
    ((%named-lambda name args &rest body)
-    `(%named-lambda ,name ,args ,@(recur-all body)))
+    (let* ((args (cons 'this args))
+           (a-args (alphatize-var-names (lambda-list-vars args))))
+      `(%named-lambda ,name
+                      ,(alphatize-lambda-list args a-args)
+                      ,(with-local-vars a-args
+                                        (recur `(progn ,@body))))))
 
 
 
    ((%local-ref name)
     (let ((binding (lexenv-get-variable-binding name)))
       `(%local-ref ,(or (cdr binding) (error "unknown local ~s" name)))))
+   ((%lex-ref object name)
+    `(%lex-ref ,object ,name))
 
    ((%local-set name value)
     (let ((binding (lexenv-get-variable-binding name)))
@@ -368,6 +388,14 @@
    ((%compilation-unit &rest lambdas)
     `(%compilation-unit ,@(recur-all lambdas)))
 
+  ((%asm &rest forms)
+   (setf whole (mapcar (lambda (x)
+                         (if (and (consp x) (eq (car x) :@kill))
+                             `(:@kill ,(cdr (lexenv-get-variable-binding (second x))))
+                             x))
+                       whole))
+    (super whole))
+
    ;; expand macros,macrolets
    (t
     (destructuring-bind (operator &rest args) whole
@@ -392,14 +420,14 @@
           ;; normal macros
           ;; fixme: add an environment param to macroexpansion
           (macro
-           (format t "expanding macro ~s~%" whole)
-           (format t "-> ~s~%" (funcall macro whole nil))
+           ;;(format t "expanding macro ~s~%" whole)
+           ;;(format t "-> ~s~%" (funcall macro whole nil))
            (recur (funcall macro whole nil)))
 
           ;; todo: known functions (cl:foo, etc)
           ;; special case SETF until macro can handle it...
           ((member operator '(setf %setf))
-           (format t "handling special cased setf ~s~%" whole)
+           ;;(format t "handling special cased setf ~s~%" whole)
            (if (> (length args) 2)
                (recur `(progn ,@(loop for (var val) on args by #'cddr
                                       collect `(setf ,var ,val))))
