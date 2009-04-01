@@ -311,7 +311,7 @@
    stream))
 
 
-(defun write-swf (stream frame-label symbol-classes &key (flash-version 9) (x-twips 8000) (y-twips 6000))
+(defun write-swf (stream frame-label symbol-classes &key (flash-version 9) (x-twips 8000) (y-twips 6000) (frame-rate #x1e00))
   ;;; write out a minimal .swf, based on the stuff hxasm writes
   (write-sequence `(#x46 #x57 #x53 ,flash-version) stream) ;;magic "FWS" + ver
   ;;  (write-u32-raw (+ #x17 6 (length as3) (if (>= (length as3) 63) 6 2)) stream)
@@ -320,7 +320,7 @@
   ;; 8000x6000 twips = 400x300 pels
   ;;(write-sequence '(#x78 #x00 #x03 #xe8 #x00 #x00 #x0b #xb8 #x00) stream)
   (write-rect stream x-twips y-twips)
-  (write-u16 #x1e00 stream) ;; 30fps
+  (write-u16 frame-rate stream) ;; fps
   (write-u16 #x0001 stream) ;; 1 frame
 
   ;; FileAttributes tag
@@ -387,10 +387,11 @@
       (:init-property  ,(swf-name class)))))
 
 
-(defun assemble-function (name)
+(defun assemble-function (name data)
   #+nil(format t "--assemble-function ~s :~%" name)
-  (destructuring-bind (n nid argtypes return-type flags asm &key activation-slots class-name class-static)
-      (find-swf-function name)
+  (destructuring-bind (n nid argtypes return-type flags asm
+                         &key activation-slots class-name class-static)
+      data
     ;;(format t "--assemble-function ~s : ~s : ~s ~%" name n nid)
     (let* ((traits (loop for (name index type) in activation-slots
                          ;;do (format t "trait = ~s ~s ~s ~%" name index type)
@@ -409,12 +410,18 @@
            (mid (avm2-asm::avm2-method name nid argtypes return-type flags
                                        :body (avm2-asm::assemble-method-body asm :traits traits))))
       (if class-name
-          (progn
-            (format t "adding method ~s to class ~s~%  ~s ~s ~s~%" name class-name
-                    n mid  (gethash class-name (classes *symbol-table*)))
-            (if class-static
-                (push (list n mid) (class-functions (gethash class-name (classes *symbol-table*))))
-                (push (list n mid) (functions (gethash class-name (classes *symbol-table*))))))
+          ;; member function
+          (let ((class (find-swf-class class-name)))
+            (assert class) ;; fixme: handle this better
+            (macrolet ((add (n mid alist)
+                         `(progn
+                            (let ((c (assoc ,n ,alist :test 'equal)))
+                              (if c (rplacd c (list ,mid))
+                                  (push (list ,n ,mid) ,alist))))))
+              (if class-static
+                  (add n mid (class-functions class))
+                  (add n mid (functions class)))))
+          ;; normal function
           (push (list n mid) (function-names *compiler-context*))))))
 
 (defun assemble-class (name ns super properties constructor instance-functions class-properties class-functions)
@@ -503,7 +510,7 @@
 ;;(setf *break-compile* t)
 ;;; quick hack for testing, need to write a proper API at some point, which
 ;;;  compiles functions from a list of packages or whatever
-(defmacro with-compilation-to-stream (s (frame-name exports &key (swf-version 9) (x-twips 8000) (y-twips 6000)) &body body)
+(defmacro with-compilation-to-stream (s (frame-name exports &key (swf-version 9) (x-twips 8000) (y-twips 6000) (frame-rate #x1e00)) &body body)
   (let ((script-init (gensym))
         (script-init-scope-setup (gensym)))
 
@@ -518,12 +525,20 @@
        ;; compile the body code
        ,@body
        #+nil(format t "==-== functions~%")
+       ;; reset functions/static functions for cl-symbol-table since we
+       ;; recreate them to get correct moethod IDs
+       ;; fixme: should do this for all long-lasting symbol-tables if we add any
+       (loop for c being the hash-values of (classes *cl-symbol-table*)
+          do (setf (functions c) nil)
+          do (setf (class-functions c) nil))
        ;; assemble functions before classes so methods can get added to classes
        ;; fixme: clean the method stuff up
        (loop for k being the hash-keys of (functions *cl-symbol-table*)
-          do (assemble-function k))
+             using (hash-value v)
+          do (assemble-function k (car v)))
        (loop for k being the hash-keys of (functions *symbol-table*)
-          do (assemble-function k))
+             using (hash-value v)
+             do (assemble-function k (car v)))
        #+nil(format t "==-== classes~%")
        ;; assemble classes
        (loop for symbol-table in (list *cl-symbol-table* *symbol-table*)
@@ -599,4 +614,4 @@
        (when *break-compile* (break))
        #+nil(format t "==-== write~%")
        ;; write out the .swf
-       (write-swf ,s ,frame-name ,exports :flash-version ,swf-version :x-twips ,x-twips :y-twips ,y-twips))))
+       (write-swf ,s ,frame-name ,exports :flash-version ,swf-version :x-twips ,x-twips :y-twips ,y-twips :frame-rate ,frame-rate))))

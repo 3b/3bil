@@ -248,7 +248,7 @@
       `(progn
          ,@(loop for (nil label) in names
                  for lambda in lambdas
-                 collect `(%named-lambda ,label ,@lambda))
+                 collect `(%named-lambda ,label () ,@lambda))
          ,@(with-local-functions names
                                  (recur-all declarations-and-forms)))))
 
@@ -269,7 +269,7 @@
           `(progn
              ,@(loop for (nil label) in names
                      for lambda in lambdas
-                     collect `(%named-lambda ,label ,@lambda))
+                     collect `(%named-lambda ,label () ,@lambda))
              ,@(recur-all declarations-and-forms))))))
 
 
@@ -294,6 +294,7 @@
           `(progn
              (%named-lambda
               ,temp-name
+              () ;; flags
               ,(alphatize-lambda-list lambda-list args)
               ,(with-local-vars args
                                 (recur `(progn ,@body))))
@@ -342,10 +343,11 @@
    ;; temporary hack 'til we have a real macro to expand it...
    ((lambda (&rest args) &rest body)
     (recur `(function ,whole)))
-   ((%named-lambda name args &rest body)
+   ((%named-lambda name flags args &rest body)
     (let* ((args (cons 'this args))
            (a-args (alphatize-var-names (lambda-list-vars args))))
       `(%named-lambda ,name
+                      ,flags
                       ,(alphatize-lambda-list args a-args)
                       ,(with-local-vars a-args
                                         (recur `(progn ,@body))))))

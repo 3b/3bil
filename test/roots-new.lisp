@@ -12,114 +12,7 @@
                     (ftrace (s+ "constructor - " this))
                     (main this)))
 
-    (def-swf-class setf-namespace-type "what goes here?"
-      %flash:object (baz)
-      (()
-       (%asm (:push-null))))
-
-    (swf-defmemfun = (a &arest x)
-      (dotimes (i (length x) t)
-        (unless (eql a (aref x i))
-          (return nil))))
-
-    (swf-defmemfun + (&arest x)
-      (let ((sum 0))
-        (dotimes (i (length x) sum)
-          (setf sum (%2+ sum (aref x i))))))
-
-    (swf-defmemfun - (a &arest x)
-      (let ((sum a))
-        (if (= (length x) 0)
-            (%asm (:@ a)
-                  (:negate)
-                  (:coerce-any))
-            (dotimes (i (length x) sum)
-              (let ((y (aref x i)))
-                (%asm (:@ sum)
-                      (:@ y)
-                      (:subtract)
-                      (:coerce-any)
-                      (:dup)
-                      (:@! sum)))))))
-
-    (swf-defmemfun * (&arest x)
-      (let ((sum 1))
-        (dotimes (i (length x) sum)
-          (let ((y (aref x i)))
-            (%asm (:@ sum)
-                  (:@ y)
-                  (:multiply)
-                  (:coerce-any)
-                  (:dup)
-                  (:@! sum))))))
-
-    (swf-defmemfun / (a &arest x)
-      (let ((sum a))
-        (if (= (length x) 0)
-            (%asm (:push-int 1)
-                  (:@ a)
-                  (:divide)
-                  (:coerce-any))
-            (dotimes (i (length x) sum)
-              (let ((y (aref x i)))
-                (%asm (:@ sum)
-                      (:@ y)
-                      (:divide)
-                      (:coerce-any)
-                      (:dup)
-                      (:@! sum)))))))
-
-    (swf-defmemfun < (a &arest x)
-      (dotimes (i (length x) t)
-        (when (>= a (aref x i)) (return nil))
-        (setf a (aref x i))))
-
-    (swf-defmemfun > (a &arest x)
-      (dotimes (i (length x) t)
-        (when (%2<= a (aref x i)) (return nil))
-        (setf a (aref x i))))
-
-    (swf-defmemfun s+ (&arest x)
-      (let ((sum ""))
-        (dotimes (i (length x) sum)
-          (setf sum (%2+ sum (aref x i))))))
-
-
-  (swf-defmemfun ftrace (x)
-    (%flash:trace x))
-
-
-    (swf-defmemfun %exit-point-value ()
-      (%new* %flash:q-name "exit" "point"))
-
     (c3* :top-level
-      (defmacro %set-property (object prop value)
-        `(%asm
-          (:@ ,value)
-          (:dup)
-          (:@ ,object)
-          (:swap)
-          (:set-property ,prop)
-          ))
-
-      (defmacro %get-property (object prop)
-        `(%asm
-          (:@ ,object)
-          (:get-property ,prop)
-          ))
-
-      (defmacro %new (class &rest args)
-        (let ((name (typecase class
-                      (symbol
-                       (let ((c (find-swf-class class)))
-                         (assert c) ;; fixme: better error reporting
-                         (swf-name c)))
-                      (t class))))
-          `(%asm (:find-property-strict ,name)
-                 ,@(loop for i in args
-                         collect `(:@ ,i))
-                 (:construct-prop ,name ,(length args)))))
-
       (defun random-range (a b)
         (+ a (floor (random (- b a)))))
 
@@ -135,10 +28,9 @@
       (defun rgba (r g b a)
         (+ (* (i255 a) 65536 256) (rgb r g b)))
 
-
       (defun main (arg)
-        (let ((foo (%new %flash.text:text-Field))
-              (canvas (%new %flash.display:sprite)))
+        (let ((foo (%new- %flash.text:text-Field))
+              (canvas (%new- %flash.display:sprite)))
           (setf (%flash.display:width foo) 200)
           (setf (%flash.text:auto-size foo) "left")
           (setf (%flash.text:text-color foo) (rgb 0.2 0.9 0.2 ))
@@ -150,12 +42,11 @@
                   (s+ str (%flash:to-string (vector 1 2 3)))))
           (%flash.display:add-child arg canvas)
           (%flash.display:add-child arg foo)
-          (%set-property this :tc arg)
-          (%set-property this :canvas canvas)
+          (%set-property- this :tc arg)
+          (%set-property- this :canvas canvas)
           (setf (text arg) foo)
           (frame nil)
-          #+nil(%flash.display:add-event-listener arg "enterFrame" (%asm (:get-lex frame)))
-          (%flash.display:add-event-listener canvas "click" (%asm (:get-lex frame)))))
+          (%flash.display:add-event-listener canvas "click" (function frame))))
 
       (defmacro with-fill (gfx (color alpha &key line-style) &body body)
         `(progn
@@ -166,9 +57,9 @@
            (%flash.display:end-fill ,gfx)))
 
       (defun frame (evt)
-        (let* ((canvas (%get-property this :canvas))
+        (let* ((canvas (%get-property- this :canvas))
                (gfx (slot-value canvas '%flash.display:graphics ))
-               (matrix (%new %flash.geom:Matrix 0)))
+               (matrix (%new- %flash.geom:Matrix)))
 
           (setf (%flash.display:opaque-background canvas) #x0d0f00)
           (%flash.display:clear gfx)
@@ -185,18 +76,16 @@
           (%flash.display:draw-rect gfx 0 0 400 300 )
           (%flash.display:end-fill gfx)
           (ftrace "click")
-          (setf (%flash.text:text (%get-property (%get-property this :tc) text))
+          (setf (%flash.text:text (%get-property- (%get-property- this :tc) text))
                 (+ "==" (root canvas 200 150 (random 360) 7 1.0 0.005 0)))
           (ftrace "frame done")))
 
       (defun root (canvas x y angle depth alpha decay count)
-        #+nil(ftrace (s+ "root " canvas " " x " " y " " angle " d=" depth " a=" alpha " " decay " " count))
         (let* ((s (* depth 0.5))
                (w (* s 6.0))
                (line-size (* s 0.5))
                (gfx (slot-value canvas '%flash.display:graphics ))
                (times (* depth (random-range 10 20))))
-          #+nil(ftrace (s+ " times = " times))
           (when (< times 0)
             (ftrace (s+ " root: times = " times))
             (return-from root 0))

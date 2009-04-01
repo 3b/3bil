@@ -15,88 +15,9 @@
                    (()
                     (main this)))
 
-
-  (def-swf-class throw-exception-type "what goes here?"
-    %flash:object (throw-exception-tag throw-exception-value)
-                 ((a b)
-                  (%set-property this throw-exception-tag a)
-                  (%set-property this throw-exception-value b)))
-
-  (def-swf-class block-exception-type "what goes here?"
-    %flash:object (block-exception-tag block-exception-value)
-                 ((a b)
-                  (%set-property this block-exception-tag a)
-                  (%set-property this block-exception-value b)))
-
-  (def-swf-class go-exception-type "what goes here?"
-    %flash:object (go-exception-tag go-exception-index)
-                 ((a b)
-                  ;; fixme: index should be typed as int
-                  (%set-property this go-exception-tag a)
-                  (%set-property this go-exception-index b)))
-
-    (swf-defmemfun %intern (package name)
-      (%new* %flash:q-name package name))
-
-    (swf-defmemfun %exit-point-value ()
-      (%new* %flash:q-name "exit" "point"))
-
-    (swf-defmemfun ftrace (x)
-      (%flash:trace x))
     (swf-defmemfun ftracef (x &arest args)
       (%flash:trace x)
-      (ftrace (+ "=>" (%flash:apply x nil args))))
-    (swf-defmemfun funcall (x &arest args)
-      (%flash:apply x nil args ))
-
-    (swf-defmemfun + (&arest x)
-      (let ((sum 0))
-        (dotimes (i (length x) sum)
-          (incf sum (aref x i)))))
-    (swf-defmemfun s+ (&arest x)
-      (let ((sum ""))
-        (dotimes (i (length x) sum)
-          (incf sum (aref x i)))))
-
-    (swf-defmemfun = (a &arest x)
-      (dotimes (i (length x) t)
-        (unless (eq a (aref x i))
-          (return nil))))
-
-    (swf-defmemfun < (a &arest x)
-      (dotimes (i (length x) t)
-        (when (>= a (aref x i)) (return nil))
-        (setf a (aref x i))))
-
-    (swf-defmemfun - (a &arest x)
-      (let ((sum a))
-        (if (= (length x) 0)
-            (%asm (:@ a)
-                  (:negate)
-                  (:coerce-any))
-            (dotimes (i (length x) sum)
-              (let ((y (aref x i)))
-                (%asm (:@ sum)
-                      (:@ y)
-                      (:subtract)
-                      (:coerce-any)
-                      (:dup)
-                      (:@! sum)))))))
-    (swf-defmemfun / (a &arest x)
-      (let ((sum a))
-        (if (= (length x) 0)
-            (%asm (:push-int 1)
-                  (:@ a)
-                  (:divide)
-                  (:coerce-any))
-            (dotimes (i (length x) sum)
-              (let ((y (aref x i)))
-                (%asm (:@ sum)
-                      (:@ y)
-                      (:divide)
-                      (:coerce-any)
-                      (:dup)
-                      (:@! sum)))))))
+      (%flash:trace (+ "=>" (%flash:apply x nil args))))
 
     (swf-defmemfun baz (&arest x)
       (if (< (random 2) 1) t nil))
@@ -293,11 +214,12 @@
               (ftrace (s+ "bb:" (bbbaaa)" " (bbbaaa)" " (bbbaaa)))))
           #+nil(ftracef (let ((a 2)) (flet ((b () a)) (function b))))
           (ftrace :done)))
-    (swf-defmemfun setf-foo (&arest x)
-      (ftrace (+ "setf foo called : " x))
+
+    #+nil(swf-defmemfun setf-foo (&arest x)
+      (ftrace (+ "setf-foo called : " x))
       (aref x 0))
 
-    (swf-defmemfun init-setf1 ()
+    #+nil(swf-defmemfun init-setf1 ()
       (let ((o  (%new* %flash:object)))
         (%asm
          (:@ this)
@@ -305,15 +227,8 @@
          (:init-property setf-namespace)
          (:push-null))))
 
-    (def-swf-class setf-namespace-type "what goes here?"
-      %flash:object (baz)
-      (()
-       (%asm (:push-null))))
 
-    (swf-defun-in-class-static foo setf-namespace-type (&arest args)
-      (ftrace (s+ " setf foo : " args)))
-
-    (swf-defmemfun init-setf ()
+    #+nil(swf-defmemfun init-setf ()
       (%set-property this setf-namespace (%new* setf-namespace-type))
       #+nil(%set-aref-1 (slot-value this setf-namespace) 'foo
                         (function setf-foo))
@@ -327,10 +242,21 @@
       #+nil(%set-property (slot-value this setf-namespace) foo
                      (function setf-foo)))
 
+    #+nil(c4 :%%init-setf
+        '(progn
+          (let ((n (%new- setf-namespace-type))
+                (f (function setf-foo)))
+            (%set-property this setf-namespace n)
+            (%asm
+             (:@ n)
+             (:@ f)
+             (:init-property foo)
+             (:push-null)))))
+
     ;;(push 'setf-namespace )
 
 
-    ;;(push '(setf-namespace 0) (script-slots *compiler-context*))
+    #+nil(push '(setf-namespace 0) (script-slots *compiler-context*))
     #+nil(c4 :top-level-init
         '(progn
           (ftrace "top-level init")
@@ -339,7 +265,8 @@
     #+nil(c3 :setf-test
         '(progn
           (ftrace (setf (foo 1 2) 3))))
-    (swf-defun bleh ()
+
+    #+nil(swf-defun bleh ()
       (let ((a (%new* setf-namespace-type)))
         (ftrace (s+ "bleh:"
                     (%asm (:get-lex setf-namespace-type)
@@ -350,7 +277,7 @@
           (dotimes (i 10)
             (ftrace (s+ "  i = " i)))
           (ftrace "...")
-          (ftrace (bleh))
+          #+nil(ftrace (bleh))
           (ftrace (setf (:to-string 1) 4))
           ;;(ftrace (setf (baz 1) 4))
           (ftrace (setf (foo 1 2 3) 4))
@@ -366,74 +293,76 @@
           (defmacro defmacro-test (a1)
             `(defmacro-test-1 ,a1 ,(* a1 10)))
           (ftrace (defmacro-test 5))
-          ))
+          (ftrace :defun-setf)
+          (defun-setf hoge (value x y)
+           (ftrace (s+ "setf-hoge " value " " x " " y)))
+          (setf (hoge 1 2) 3)))
 
-    (swf-defmemfun * (&arest x)
-      (let ((sum 1))
-        (dotimes (i (length x) sum)
-          (let ((y (aref x i)))
-            (%asm (:@ sum)
-                  (:@ y)
-                  (:multiply)
-                  (:coerce-any)
-                  (:dup)
-                  (:@! sum))))))
-    (swf-defun type-of (o)
-      (%type-of o))
-
-    ;;; need to figure out how to define top level closures at some point
+    ;; fixme: figure out how to put script-slots and init script calls in other places
     (push '(rand 0) (script-slots *compiler-context*))
-    (c4 :numbers-init
-        '(progn
-          (let ((x 123456789)
-                (y 362436069)
-                (z 521288629)
-                (w 88675123)
-                (v 886756453))
-            (%asm
-             (:find-property-strict rand)
-             (:@ (lambda ()
-                   ;;(ftrace (s+ "rand: " x " " y " " z " " w " " v ))
-                   ;;(incf x)
-                   (%asm
-                    ;;t=(x^(x>>7))
-                    (:@ x :uint)
-                    (:dup)
-                    (:push-byte 7)
-                    (:unsigned-rshift)
-                    (:bit-xor)
-                    ;; leave t on stack
-                    ;;x=y; y=z; z=w; w=v;
-                    (:@ (psetf x y
-                               y z
-                               z w
-                               w v) :ignored)
-                    ;;(:pop)
-                    ;;v=(v^(v<<6))^(t^(t<<13))
-                    ; t ^ (t << 13)
-                    (:dup) ;; t
-                    (:push-byte 13)
-                    (:lshift)
-                    (:bit-xor)
-                    (:@ v :uint)
-                    (:dup)
-                    (:push-byte 6)
-                    (:lshift)
-                    (:bit-xor)
-                    (:bit-xor)
-                    (:dup)
-                    (:@ (setf v (%asm-top-of-stack-typed)))
-                    ;; return (y+y+1)*v;
-                    (:@ y :uint) ;; y v
-                    (:dup)
-                    (:add-i) ;; y+y v
-                    (:push-byte 1)
-                    (:add-i) ;; y+y+1 v
-                    (:multiply-i)
-                    (:convert-unsigned) ;; seems a tiny bit faster here?
-                    #+nil(:coerce-u))))
-             (:init-property rand)
-             (:push-null)))))
+    ;;; need to figure out how to define top level closures at some point
+    (let ((*ir1-dump-asm* nil))
+      (c4 :%rand-init
+          ;; todo: rewrite this to store args in a struct, and close over that instead?
+          '(progn
+            (let ((x 123456789)
+                  (y 362436069)
+                  (z 521288629)
+                  (w 88675123)
+                  (v 886756453))
+              (ftrace "------- init rand")
+              (%asm
+               (:find-property-strict rand)
+               (:@ (lambda ()
+                     ;;(ftrace (s+ "rand: " x " " y " " z " " w " " v ))
+                     ;;(incf x)
+                     (%asm
+                      ;;t=(x^(x>>7))
+
+                      (:@ x :uint)
+
+                      (:dup)
+                      (:push-byte 7)
+                      (:unsigned-rshift)
+                      (:bit-xor)
+                      ;; leave t on stack
+                      ;;x=y; y=z; z=w; w=v;
+
+                      (:@ (setf x y
+                                y z
+                                z w
+                                w v) :ignored)
+
+
+
+                      ;;(:pop)
+                      ;;v=(v^(v<<6))^(t^(t<<13))
+                                        ; t ^ (t << 13)
+                      (:dup)            ;; t
+                      (:push-byte 13)
+                      (:lshift)
+                      (:bit-xor)
+                      (:@ v :uint)
+                      (:dup)
+                      (:push-byte 6)
+                      (:lshift)
+                      (:bit-xor)
+                      (:bit-xor)
+                      (:dup)
+                      (:@ (setf v (%asm-top-of-stack-typed)))
+                      ;; return (y+y+1)*v;
+                      (:@ y :uint) ;; y v
+                      (:dup)
+                      (:add-i) ;; y+y v
+                      (:push-byte 1)
+                      (:add-i) ;; y+y+1 v
+                      (:multiply-i)
+                      (:convert-unsigned) ;; seems a tiny bit faster here?
+                      #+nil(:coerce-u))))
+               (:init-property rand)
+               (:push-null))))))
+
+
 
     (c3 :numbers
         '(progn
@@ -454,28 +383,17 @@
              (flet ((b () a))
                (function b))))))
 
+    (let ((*ir1-verbose* nil))
+      (c3 (gensym)
+          '(defun-asm (empty-fun :no-auto-scope t) ()
+            (:push-int 123))))
+
     (c3 :rand1
         '(progn
-          (defmacro %new- (class &rest args)
-            (let ((name (typecase class
-                          (symbol
-                           (let ((c (find-swf-class class)))
-                             (assert c) ;; fixme: better error reporting
-                             (swf-name c)))
-                          (t class))))
-              `(%asm (:find-property-strict ,name)
-                     ,@(loop for i in args
-                             collect `(:@ ,i))
-                     (:construct-prop ,name ,(length args)))))
-          (defmacro time (&body body)
-            (let ((now (gensym)))
-              `(let ((,now (%new- %flash:date)))
-                 ,@body
-                 (ftrace
-                  (s+ "[" ":" (/ (- (%new- %flash:date) ,now) 1000.0) "sec]")))))
+
           (defmacro repeated (count &body body)
             (let ((x (gensym))
-                  (c (gensym))
+                  #+nil(c (gensym))
                   (top (gensym))
                   (test (gensym)))
               `(let ((,x 6565))
@@ -496,20 +414,24 @@
           #+nil(dotimes (x 1) (dotimes (y 1) ))
           #+nil(dotimes (x 3) (dotimes (y 3) (ftrace (s+ x "," y))))
           #+nil(dotimes (c 10) (ftrace (rand)))
+
           (ftrace :empty-loops)
           (dotimes (x 3)
             (time
-             (repeated 1000000)))
+             (repeated 2000000)))
+          (ftrace :empty-defun)
+          (dotimes (x 3)
+            (time
+             (repeated 2000000) (empty-fun)))
           (ftrace :flash.random)
           (dotimes (x 3)
             (time
-             (repeated 1000000 (%flash:random)))
+             (repeated 2000000 (%flash:random)))
             (ftrace (%flash:random)))
           (ftrace :rand)
           (dotimes (x 3)
             (time
-             (repeated 1000000 (rand))
-             #+nil(dotimes (c 3) (rand)))
+             (repeated 2000000 (rand)))
             (ftrace (rand)))
 
 
@@ -524,9 +446,9 @@
       (+ "| =" (:numbers))
       (+ "| =" (:rand1)))
 
-    (swf-defmemfun main (arg)
-      (let ((foo (%new %flash.text:Text-Field 0))
-            (canvas (%new %flash.display:Sprite 0)))
+    (swf-defun main (arg)
+      (let ((foo (%new* %flash.text:Text-Field))
+            (canvas (%new* %flash.display:Sprite)))
         (setf (%flash.display:width foo) 350)
         (setf (%flash.text:auto-size foo) "left")
         (setf (%flash.text:text-color foo) #x30e830)
@@ -557,7 +479,7 @@
     (swf-defmemfun frame (evt)
       (let* ((canvas (slot-value this :canvas))
              (gfx (slot-value canvas '%flash.display:graphics))
-             (matrix (%new %flash.geom:Matrix 0)))
+             (matrix (%new* %flash.geom:Matrix)))
 
         (setf (%flash.display:opaque-background canvas) #x0d0f00)
         (%flash.display:clear gfx)

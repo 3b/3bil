@@ -10,5 +10,7 @@
                         (:file "cl-conses2")
                         (:file "cl-arrays")
                         (:file "cl-sequences")
+                        ;; temprorary hack for new compiler
+                        (:file "cl-new")
                         )
            :serial t)

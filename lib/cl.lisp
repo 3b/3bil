@@ -162,7 +162,7 @@
 
   ;; temporary hacks for new compiler
   (swf-defmacro defun (name args &body body)
-    `(%named-lambda ,name ,args (block ,name ,@body)))
+    `(%named-lambda ,name () ,args (block ,name ,@body)))
   (swf-defmacro defmacro (name args &body body)
     (let ((form (gensym))
           (environment (gensym)))

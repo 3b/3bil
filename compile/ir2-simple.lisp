@@ -19,7 +19,7 @@
            (get-tag-info (var flag &optional default)
                          (getf (getf *ir1-tag-info* var nil) flag default)))
   :forms
-  (((%named-lambda name lambda-list closed-vars activation-vars body)
+  (((%named-lambda name flags lambda-list closed-vars activation-vars body)
     (let ((*ir1-in-tagbody* nil)
           (*current-closure-vars* nil)
           (*current-closure-index* 1))
@@ -30,6 +30,7 @@
       (let ((rbody (recur-all body)))
         `(%named-lambda
           name ,name
+          flags ,flags
           lambda-list ,lambda-list
           closed-vars ,closed-vars
           activation-vars ,*current-closure-vars*
@@ -160,7 +161,7 @@
                  ,@(coerce-type)))
             ;; known static methods
             ((setf tmp (find-swf-static-method name *symbol-table*))
-             (format t "compiling known static method call to ~s~%  tmp=~s~%"
+             #+nil(format t "compiling known static method call to ~s~%  tmp=~s~%"
                      name tmp)
              `(;#+nil(:find-property-strict ,(car tmp)) ;;??
                (:get-lex ,(if (find-swf-class (car tmp))
@@ -270,7 +271,7 @@
       (ecase type
         ;; fixme: should these coerce the type after the dup instead of before?
         ;; fixme: possibly should factor out the recur + dup?
-        (:local (format t "%set local name=~s info=~s~%" var (getf *ir1-var-info* var nil))
+        (:local #+nil(format t "%set local name=~s info=~s~%" var (getf *ir1-var-info* var nil))
                 `(,@(cond
                      ;; hacks to allow (:@ (setf foo <value on top of stack>))
                      ;; in %asm
@@ -281,16 +282,18 @@
                      ;; types for the var and return value
                      (t (let ((*ir1-dest-type* nil))
                           (recur value))))
-                    (:dup)
+                    ,@(unless (eq *ir1-dest-type* :ignored)
+                              `((:dup)))
                     ;; add cast for the assignment if needed
                     ,@(unless (eq (call-name value) '%asm-top-of-stack-untyped)
                               (let ((*ir1-dest-type* (get-var-info var :type t)))
                                 (coerce-type)))
                     (:set-local ,(get-local-index var))
-                    ,@(coerce-type)))
+                    ,@(unless (eq *ir1-dest-type* :ignored)
+                              (coerce-type))))
         (:closure
          (let ((c (get-closure-index var)))
-           (format t "%set closure : var=~s c=~s~%" var c)
+           #+nil(format t "%set closure : var=~s c=~s~%" var c)
            `(,@(cond
                 ;; hacks to allow (:@ (setf foo <value on top of stack>))
                 ;; in %asm
@@ -301,7 +304,8 @@
                 ;; types for the var and return value
                 (t (let ((*ir1-dest-type* nil))
                      (recur value))))
-               (:dup)
+               ,@(unless (eq *ir1-dest-type* :ignored)
+                         `((:dup)))
                ;; add cast for the assignment if needed
                ,@(unless (eq (call-name value) '%asm-top-of-stack-untyped)
                          (let ((*ir1-dest-type* (get-var-info var :type t)))
@@ -313,10 +317,11 @@
                      `((:find-property-strict ,var)
                        (:swap)
                        (:set-property ,var)))
-               ;; convert type of return value
-               ,@(coerce-type))))))
+               ;; convert type of return value if needed
+               ,@(unless (eq *ir1-dest-type* :ignored)
+                         (coerce-type)))))))
 
-     ((%named-lambda name lambda-list closed-vars activation-vars body)
+     ((%named-lambda name flags lambda-list closed-vars activation-vars body)
       (let ((*ir1-in-tagbody* nil)
             (*current-local-index* 0)
             (*current-closure-vars* activation-vars)
@@ -338,6 +343,7 @@
                        ,@(recur-progn body))))
           `(%named-lambda
             name ,name
+            flags ,flags
             lambda-list ,lambda-list
             closed-vars ,closed-vars
             activation-vars ,activation-vars
@@ -651,10 +657,10 @@
 (defparameter *ir1-dump-asm* nil)
 (defun c2 (form &optional (top-level-name :top-level))
   (let* ((*new-compiler* t)
-         (form `(%compilation-unit (%named-lambda ,top-level-name () ,form)))
+         (form `(%compilation-unit (%named-lambda ,top-level-name () () ,form)))
          (assembled
           (passes form (append *ir1-passes* '(mark-activations assemble-ir1)))))
-    (when *ir1-dump-asm* (format t "~s~%" assembled))
+    (when *ir1-dump-asm* (format t "assembly dump:~%~s~%" assembled))
     assembled))
 
 ;;(c2 ''1)
@@ -739,7 +745,7 @@
       var-info ,var-info
       tag-info ,tag-info
       lambdas ,(recur-all lambdas)))
-       ((%named-lambda name lambda-list closed-vars activation-vars body)
+       ((%named-lambda name flags lambda-list closed-vars activation-vars body)
         ;; optionally add a call to this function to the top-level script-init
         ;; fixme: probably should store the name or a flag in the %compilation-unit instead of tracking it separately like this
         (when (eq name *top-level-function*)
@@ -771,16 +777,21 @@
                        and when optional
                        collect i into optional-names
                        finally (return (values arg-names count rest optional-names)))))
+
           (multiple-value-bind (names count rest-p optionals)
               ;; ignore the THIS arg added by compiler...
               (parse-arglist (cdr lambda-list))
             (declare (ignorable optionals))
             (when optionals (error "&optional args not supported yet"))
+            ;;(format t "::::: flags = ~s nas=~s~%" flags (getf flags :no-auto-scope))
             (let* ((asm (with-lambda-context (:args names :blocks nil)
-                          `((:get-local-0)
-                            (:push-scope)
-                            ,@body
-                            (:return-value))))
+                          `(,@(if (getf flags :no-auto-scope)
+                                  `((:comment "skipping auto scope"))
+                                  `((:get-local-0)
+                                    (:push-scope)))
+                              ,@body
+                              ,@(unless (getf flags :no-auto-return)
+                                        `((:return-value))))))
                    (activation-p (find :new-activation asm :key 'car)))
               (when (or (and activation-p (not activation-vars))
                         (and (not activation-p) activation-vars))
