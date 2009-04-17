@@ -310,8 +310,33 @@
          finally (return (append l (list (ash temp 3)))))
    stream))
 
+;; possibly this should use defineBitsJPEG2 or 3 and just write the png directly?
+(defun write-png-tag (id path stream)
+  (let ((png (with-open-file (s path :element-type '(unsigned-byte 8))
+               (png:png-stream->aimage s))))
+    (format t "writing png tag ~sx~s~%"  (png:aimage-width png)  (png:aimage-height png))
+    (write-tag (36 stream) ;; defineBitsLossless2
+      (write-u16 id stream) ;; character id
+      (write-u8 5 stream) ;; 32 bit ARGB
+      (write-u16 (png:aimage-width png) stream)
+      (write-u16 (png:aimage-height png) stream)
+      ;; no color table size, only handling 32bit for now
+      ;; flash wants premultiplied alpha, argb so convert from rgba and fix rgb
+      (loop with data = (png:aimage-data png)
+            for x below (png:aimage-width png)
+           do (loop for y below (png:aimage-height png)
+                  for i = (* 4 (+ x (* y (png:aimage-width png))))
+                  for a = (aref data (+ i 3))
+                  for r = (floor (/ (* a (aref data (+ i 0))) 255))
+                  for g = (floor (/ (* a (aref data (+ i 1))) 255))
+                  for b = (floor (/ (* a (aref data (+ i 2))) 255))
+                  do (setf (aref data (+ i 0)) a
+                           (aref data (+ i 1)) r
+                           (aref data (+ i 2)) g
+                           (aref data (+ i 3)) b)))
+      (write-sequence (salza2:compress-data (png:aimage-data png) 'salza2:zlib-compressor) stream))))
 
-(defun write-swf (stream frame-label symbol-classes &key (flash-version 9) (x-twips 8000) (y-twips 6000) (frame-rate #x1e00))
+(defun write-swf (stream frame-label symbol-classes &key (flash-version 9) (x-twips 8000) (y-twips 6000) (frame-rate #x1e00) pngs)
   ;;; write out a minimal .swf, based on the stuff hxasm writes
   (write-sequence `(#x46 #x57 #x53 ,flash-version) stream) ;;magic "FWS" + ver
   ;;  (write-u32-raw (+ #x17 6 (length as3) (if (>= (length as3) 63) 6 2)) stream)
@@ -340,6 +365,11 @@
   (write-tag (43 stream)
     (write-0-terminated-string frame-label stream))
 
+  ;;optionally embed some .png files, probably limited to 32 bit RGBA for now
+  (loop for (pathname nil) in pngs
+        for id from  (length symbol-classes)
+        do (write-png-tag id pathname stream))
+
   ;; AS3 tag
   (write-as3-tag avm2-asm::*assembler-context* "frame" stream)
   ;; SymbolClass tag, tag=76 length=8
@@ -347,11 +377,18 @@
   ;;   NumSymbols=#x0001 Tag[1] = #x0000 Name[1]="foo"#x0
   ;;  (write-sequence '(#x01 00 00 00 #x66 #x6f #x6f 00) stream)
   (write-tag (76 stream)
-    (write-u16 (length symbol-classes) stream) ;; # of symbols
-    (loop for i in symbol-classes
+    (write-u16 (+ (length symbol-classes)
+                  (length pngs)) stream) ;; # of symbols
+    (loop for (id name) in symbol-classes
          do
-         (write-u16 (first i) stream) ;; tag
-         (write-0-terminated-string (second i) stream))) ;; name
+         (write-u16 id stream) ;; tag
+         (write-0-terminated-string name stream))
+      (loop for (nil classname) in pngs
+            for id from (length symbol-classes)
+            do
+            (write-u16 id stream)
+            (write-0-terminated-string (string classname) stream))
+      ) ;; name
 
   ;; ShowFrame tag type=1, length=0
   (write-u16 (logior (ash #x01 6) 0) stream) ;; show frame tag
@@ -433,7 +470,8 @@
                            :body
                            (avm2-asm::assemble-method-body
                             (%compile-defun name (first constructor)
-                                            (second constructor) t t))))
+                                            (second constructor) t
+                                            (or (third constructor) t)))))
          ;; fixme: probably should make this configurable at some point
          (class-init (avm2-asm::avm2-method nil 0 nil 0 0 ;; meta-class init
                                           :body
@@ -510,7 +548,7 @@
 ;;(setf *break-compile* t)
 ;;; quick hack for testing, need to write a proper API at some point, which
 ;;;  compiles functions from a list of packages or whatever
-(defmacro with-compilation-to-stream (s (frame-name exports &key (swf-version 9) (x-twips 8000) (y-twips 6000) (frame-rate #x1e00)) &body body)
+(defmacro with-compilation-to-stream (s (frame-name exports &key (swf-version 9) (x-twips 8000) (y-twips 6000) (frame-rate #x1e00) pngs) &body body)
   (let ((script-init (gensym))
         (script-init-scope-setup (gensym)))
 
@@ -614,4 +652,4 @@
        (when *break-compile* (break))
        #+nil(format t "==-== write~%")
        ;; write out the .swf
-       (write-swf ,s ,frame-name ,exports :flash-version ,swf-version :x-twips ,x-twips :y-twips ,y-twips :frame-rate ,frame-rate))))
+       (write-swf ,s ,frame-name ,exports :flash-version ,swf-version :x-twips ,x-twips :y-twips ,y-twips :frame-rate ,frame-rate :pngs ,pngs))))

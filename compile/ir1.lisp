@@ -327,7 +327,7 @@
                (closed-names
                 `(%bind
                   vars ,vars
-                  values ,values
+                  values ,(recur-all values)
                   closed-vars ,(union closed-vars closed-names)
                   body ,(recur-all body)))
                ;; no variables closed over, don't change binding

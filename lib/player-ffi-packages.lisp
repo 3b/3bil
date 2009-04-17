@@ -1123,7 +1123,11 @@
     #:caption
     #:separator-before
     #:enabled
-    #:context-menu-item))
+    #:context-menu-item
+    #:+key-location-standard+
+    #:+key-location-left+
+    #:+key-location-right+
+    #:+key-location-num-pad+))
 
 (defpackage #:%flash.text.engine
   (:export

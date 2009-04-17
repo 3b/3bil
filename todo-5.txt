@@ -75,3 +75,9 @@ spill u-w-p return value to a local across cleanup if needed?
 http://www.lispworks.com/documentation/HyperSpec/Issues/iss152_w.htm
 http://www.lispworks.com/documentation/HyperSpec/Body/03_af.htm
 http://www.lispworks.com/documentation/HyperSpec/Body/05_b.htm
+
+---
+ffi constants %flash.ui:+left+, %flash.ui:+right+ conflicting between
+    Keyboard:LEFT and KeyLocation:LEFT
+
+setf slot-value

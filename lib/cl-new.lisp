@@ -49,12 +49,20 @@
 
     (swf-defmemfun < (a &arest x)
       (dotimes (i (length x) t)
-        (when (>= a (aref x i)) (return nil))
+        (when (%2>= a (aref x i)) (return nil))
+        (setf a (aref x i))))
+    (swf-defmemfun <= (a &arest x)
+      (dotimes (i (length x) t)
+        (when (%2> a (aref x i)) (return nil))
         (setf a (aref x i))))
 
     (swf-defmemfun > (a &arest x)
       (dotimes (i (length x) t)
         (when (%2<= a (aref x i)) (return nil))
+        (setf a (aref x i))))
+    (swf-defmemfun >= (a &arest x)
+      (dotimes (i (length x) t)
+        (when (%2< a (aref x i)) (return nil))
         (setf a (aref x i))))
 
     (swf-defmemfun - (a &arest x)

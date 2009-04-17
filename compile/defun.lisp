@@ -11,7 +11,7 @@
          '((:get-local-0)
            (:push-scope))
          nil)
-     (if constructor
+     (if (and constructor (not (eq constructor :no-super)))
          '((:get-local-0)
            (:construct-super 0))
          nil)

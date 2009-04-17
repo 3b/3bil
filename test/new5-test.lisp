@@ -305,6 +305,8 @@
       (c4 :%rand-init
           ;; todo: rewrite this to store args in a struct, and close over that instead?
           '(progn
+            ;; random # generator from
+            ;; http://groups.google.com/group/comp.lang.c/msg/e3c4ea1169e463ae
             (let ((x 123456789)
                   (y 362436069)
                   (z 521288629)

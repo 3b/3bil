@@ -7917,10 +7917,10 @@
   (declare-swf-class %flash.ui:key-location (%flash:object)
     :swf-name "flash.ui::KeyLocation"
     :constants
-    ((%flash.ui:+standard+ :swf-name "STANDARD" :type "uint" :value 0)
-     (%flash.ui:+right+ :swf-name "RIGHT" :type "uint" :value 2)
-     (%flash.ui:+left+ :swf-name "LEFT" :type "uint" :value 1)
-     (%flash.ui:+num-pad+ :swf-name "NUM_PAD" :type "uint" :value 3))
+    ((%flash.ui:+key-location-standard+ :swf-name "STANDARD" :type "uint" :value 0)
+     (%flash.ui:+key-location-right+ :swf-name "RIGHT" :type "uint" :value 2)
+     (%flash.ui:+key-location-left+ :swf-name "LEFT" :type "uint" :value 1)
+     (%flash.ui:+key-location-num-pad+ :swf-name "NUM_PAD" :type "uint" :value 3))
     :properties
     ()
     :methods
