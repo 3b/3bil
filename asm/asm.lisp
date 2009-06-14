@@ -266,20 +266,33 @@
 ;; (asm-intern-int '(:id 3))
 ;; x(asm-intern-int :id) ;; should fail even if no ints interned yet, but doesn't
 
+(defun symbol-name-to-string (name &key init-cap)
+  (coerce
+   (loop
+      for prev = (if init-cap #\- #\Space) then c
+      for c across name
+      when (or (not (alpha-char-p prev)) (char/= c #\-))
+      collect (if (char= prev #\-)
+                  (char-upcase c)
+                  (char-downcase c)))
+   'string))
+
+(defun symbol-to-export-string (name &key init-cap)
+  ;; quick hack to convert symbols into a string suitable for use in export tags
+  (let ((package (symbol-package name))
+        (sym (symbol-name-to-string (symbol-name name) :init-cap init-cap)))
+    (if (eql package (find-package :keyword))
+        sym
+        (format nil "~a::~a" (string-downcase (if package
+                                                  (package-name package)
+                                                  "##uninterned"))
+                sym))))
 
 (defun symbol-to-qname-list (name &key init-cap)
   ;; just a quick hack for now, doesn't actually try to determine if
   ;; there is a valid property or not...
   (let ((package (symbol-package name))
-        (sym (coerce
-              (loop
-                 for prev = (if init-cap #\- #\Space) then c
-                 for c across (symbol-name name)
-                 when (or (not (alpha-char-p prev)) (char/= c #\-))
-                 collect (if (char= prev #\-)
-                             (char-upcase c)
-                             (char-downcase c)))
-              'string)))
+        (sym (symbol-name-to-string (symbol-name name) :init-cap init-cap)))
     (if (eql package (find-package :keyword))
         (setf package "")
         (setf package (string-downcase (if package

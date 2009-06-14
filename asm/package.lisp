@@ -1,6 +1,6 @@
 
 
-(defpackage :3b-swf (:use :cl))
+#+nil(defpackage :3b-swf (:use :cl))
 
 (defpackage #:avm2-asm
   (:use #:cl)
