@@ -54,6 +54,11 @@
   (pushnew swf-name
            (gethash symbol (properties s) (list))
            :test 'string=))
+;; not sure if this needs any separate handling?
+(defun add-swf-class-property (symbol swf-name &optional (s *symbol-table*))
+  (pushnew swf-name
+           (gethash symbol (properties s) (list))
+           :test 'string=))
 
 
 (defmethod swf-name ((object (eql nil)))

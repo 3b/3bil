@@ -102,6 +102,7 @@
 
 (defmethod translate-trait (trait)
   (error "unhandled trait type in translate-trait? ~s" trait))
+
 (defmethod translate-trait ((trait avm2-asm::trait-info))
   (translate-trait-data (avm2-asm::trait-data trait)
                         (avm2-asm::name trait)
@@ -149,17 +150,17 @@
   (destructuring-bind (name super-name flags interfaces iinit traits
                             &optional protected-ns)
       instance
-    (format t "~%instance = ~s~%" instance)
-    (print (make-instance '%swf:abc-instance-info
-                    '%swf:name name
-                    '%swf:super-name super-name
-                    '%swf:class-interface-p (logbitp 2 flags)
-                    '%swf:class-final-p (logbitp 1 flags)
-                    '%swf:class-sealed-p (logbitp 0 flags)
-                    '%swf:protected-ns protected-ns
-                    '%swf:interfaces interfaces
-                    '%swf:instance-init iinit
-                    '%swf:traits (mapcar #'translate-trait traits)))))
+    ;;(format t "~%instance = ~s~%" instance)
+    (make-instance '%swf:abc-instance-info
+                   '%swf:name name
+                   '%swf:super-name super-name
+                   '%swf:class-interface-p (logbitp 2 flags)
+                   '%swf:class-final-p (logbitp 1 flags)
+                   '%swf:class-sealed-p (logbitp 0 flags)
+                   '%swf:protected-ns protected-ns
+                   '%swf:interfaces interfaces
+                   '%swf:instance-init iinit
+                   '%swf:traits (mapcar #'translate-trait traits))))
 
 (defun translate-class (class)
   ;; class = (cinit trait1 trait2 ... traitN)

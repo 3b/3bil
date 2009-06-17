@@ -18,7 +18,7 @@
      ,@(loop for p in properties
           collect `(add-swf-property ',p ',p))))
 
-
+;; is this used anywhere?
 (defmacro def-swf-class* (name ns super (&rest properties) ((&rest constructor-args)  &body constructor))
   `(progn
      (setf (gethash ',name (classes *symbol-table*))
@@ -34,3 +34,22 @@
            :constructor (list ',constructor-args ',constructor :no-super)))
      ,@(loop for p in properties
           collect `(add-swf-property ',p ',p))))
+
+;; fixme:clean up these APIs
+(defmacro def-swf-class** (name ns super (&key properties static-properties) ((&rest constructor-args) &body constructor))
+  `(progn
+     (setf (gethash ',name (classes *symbol-table*))
+          (add-swf-class
+           ',name
+           ',(avm2-asm::symbol-to-qname-list name)
+           :ns ,ns
+           :extends ',super
+           :properties ',properties
+           :class-properties ',static-properties
+           :functions nil ;; to be added later
+           :class-functions nil ;; to be added later
+           :constructor (list ',constructor-args ',constructor)))
+     ,@(loop for p in properties
+          collect `(add-swf-property ',p ',p))
+     ,@(loop for p in static-properties
+          collect `(add-swf-class-property ',p ',p))))

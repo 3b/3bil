@@ -24,6 +24,18 @@
         ;; fixme: should probably be %flash:length instead of :length
         (%get-property sequence :length)))
 
-
+  (swf-defmemfun delete (item sequence)
+    ;; &key from-end test test-not start end count key
+   (if (%typep sequence %flash:array)
+        (%error "array DELETE not done yet...")
+        ;;(%flash:filter (lambda (x) (eql x item)) sequence)
+        ;; fixme: avoid this temporary
+       (let ((temp (cons nil sequence)))
+         (do* ((a temp)
+               (next (cdr a) (cdr a)))
+              ((null next) (cdr temp))
+           (if (eql item (car next))
+                (rplacd a (cdr next))
+                (setf a next))))))
 
 )

@@ -111,8 +111,12 @@
     (swf-defun type-of (o)
       (%type-of o))
 
-
     (c3* :%%misc
+      (defun not (x)
+        (%asm
+          (:@ x)
+          (:not))
+)
         (defmacro %new- (class &rest args)
           (let ((name (typecase class
                         (symbol
@@ -122,7 +126,7 @@
                         (t class))))
             `(%asm (:find-property-strict ,name)
                    ,@(loop for i in args
-                           collect `(:@ ,i))
+                        collect `(:@ ,i))
                    (:comment "%new-")
                    (:construct-prop ,name ,(length args)))))
         (defmacro time (&body body)
@@ -144,6 +148,19 @@
           `(%asm
             (:@ ,object)
             (:get-property ,prop)))
+        (defmacro %get-property-static (class prop)
+          `(%asm
+            (:get-global-scope)
+            (:get-property ,class)
+            (:get-property ,prop)))
+        (defmacro %set-property-static (class prop value)
+          `(%asm
+            (:@ ,value)
+            (:dup)
+            (:get-global-scope)
+            (:get-property ,class)
+            (:swap) ;; leave a copy of value on stack when done
+            (:set-property ,prop)))
 
         (defmacro %new-a (class &rest args)
           (let ((name (typecase class
@@ -154,7 +171,7 @@
                         (t class))))
             `(%asm (:find-property-strict ,name)
                    ,@(loop for i in args
-                           collect `(:@ ,i))
+                        collect `(:@ ,i))
                    (:construct-prop ,name ,(length args)))))
 
 )

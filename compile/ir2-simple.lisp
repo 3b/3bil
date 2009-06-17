@@ -553,8 +553,9 @@
                #+nil  (:if-false ,else-label)
                ,@(let ((*ir1-dest-type* nil))
                       (recur condition))
-               (:push-null)
-               (:if-strict-eq ,else-label)
+               ;;(:push-null)
+               ;; was :if-strict-eq, but then avm false isn't false in lisp :/
+               (:if-false ,else-label)
                ,@(recur then)
                (:jump ,done-label)
                (:%dlabel ,else-label)
