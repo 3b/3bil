@@ -18,8 +18,8 @@
      ,@(loop for p in properties
           collect `(add-swf-property ',p ',p))))
 
-;; is this used anywhere?
 (defmacro def-swf-class* (name ns super (&rest properties) ((&rest constructor-args)  &body constructor))
+  "def-swf-class with no automatic call to construct-super"
   `(progn
      (setf (gethash ',name (classes *symbol-table*))
           (add-swf-class
@@ -37,6 +37,7 @@
 
 ;; fixme:clean up these APIs
 (defmacro def-swf-class** (name ns super (&key properties static-properties) ((&rest constructor-args) &body constructor))
+  "def-swf-class with extra field for static members"
   `(progn
      (setf (gethash ',name (classes *symbol-table*))
           (add-swf-class
