@@ -793,7 +793,10 @@
                               ,@body
                               ,@(unless (getf flags :no-auto-return)
                                         `((:return-value))))))
-                   (activation-p (find :new-activation asm :key 'car)))
+                   (activation-p (find :new-activation asm :key 'car))
+                   (anonymous (getf flags :anonymous)))
+              (when flags
+                (format t "asm:~%~S~%" asm))
               (when (or (and activation-p (not activation-vars))
                         (and (not activation-p) activation-vars))
                 ;; not completely sure this is an error, but shouldn't be
@@ -817,6 +820,7 @@
                 (logior (if rest-p #x04 0)    ;; flags, #x04 = &rest
                         (if activation-p #x02 0))
                 asm
+                :anonymous anonymous
                 :activation-slots
                 (when activation-vars
                   #+nil(format t "activation-vars : ~s~%" activation-vars)

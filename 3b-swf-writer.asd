@@ -2,7 +2,8 @@
 (asdf:defsystem :3b-swf-writer
   :depends-on ("avm2-lib"
                "chipz"
-               "salza2")
+               "salza2"
+               "3b-swf")
   :components ((:module
                 "file"
                 :serial t

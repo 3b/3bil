@@ -11,10 +11,11 @@
          '((:get-local-0)
            (:push-scope))
          nil)
-     (if (and constructor (not (eq constructor :no-super)))
+     (if (eq constructor t)
          '((:get-local-0)
            (:construct-super 0))
-         nil)
+         (when (listp constructor)
+           constructor))
      (when debug-filename `((:debug-file ,debug-filename)))
      (when debug-line-number `((:debug-line ,debug-line-number)))
      (if constructor

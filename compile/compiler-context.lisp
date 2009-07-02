@@ -74,9 +74,10 @@
    (functions :initform nil :initarg :functions :accessor functions)
    (class-properties :initform nil :initarg :class-properties :accessor class-properties)
    (class-functions :initform nil :initarg :class-functions :accessor class-functions)
-   (constructor :initform nil :initarg :constructor :accessor constructor)))
+   (constructor :initform nil :initarg :constructor :accessor constructor)
+   (flags :initform nil :initarg :flags :accessor flags)))
 
-(defun add-swf-class (name swf-name &key ns extends implements properties constructor functions class-properties class-functions)
+(defun add-swf-class (name swf-name &key ns extends implements properties constructor functions class-properties class-functions flags)
   (setf (gethash name (classes *symbol-table*))
         (make-instance 'symbol-class-data :name name
                        :swf-name swf-name
@@ -87,7 +88,8 @@
                        :functions functions
                        :class-properties class-properties
                        :class-functions class-functions
-                       :constructor constructor)))
+                       :constructor constructor
+                       :flags flags)))
 
 (defun find-swf-class (symbol &optional (s *symbol-table*))
   (let ((c (or (gethash symbol (classes s))

@@ -17,6 +17,7 @@
         `(%named-lambda ,(car name) ,(cdr name) ,args (%asm ,@body))
         `(%named-lambda ,name () ,args (%asm ,@body))))
 
+  #+nil
   (swf-defmacro defmacro (name args &body body)
     (let ((form (gensym))
           (environment (gensym)))

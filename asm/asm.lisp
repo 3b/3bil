@@ -562,7 +562,7 @@ jump instruction in the bytecode"
                     'exc-type (asm-intern-multiname type-name)
                     'var-name (asm-intern-multiname var-name))
      (exceptions *current-method*)
-     (length (exceptions *current-method*)))
+     (max 2 (length (exceptions *current-method*))))
     (push (cons name index)
           (exception-names *current-method*)))
   nil)

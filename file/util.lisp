@@ -29,7 +29,7 @@
 (defun assemble-function (name data)
   #+nil(format t "--assemble-function ~s :~%" name)
   (destructuring-bind (n nid argtypes return-type flags asm
-                         &key activation-slots class-name class-static)
+                         &key activation-slots class-name class-static anonymous)
       data
     ;;(format t "--assemble-function ~s : ~s : ~s ~%" name n nid)
     (let* ((traits (loop for (name index type) in activation-slots
@@ -61,19 +61,22 @@
                   (add n mid (class-functions class))
                   (add n mid (functions class)))))
           ;; normal function
-          (push (list n mid) (function-names *compiler-context*))))))
+          (unless anonymous
+              (push (list n mid) (function-names *compiler-context*)))))))
 
-(defun assemble-class (name ns super properties constructor instance-functions class-properties class-functions)
-  (let* ((constructor-mid (avm2-asm::avm2-method
-                           nil 0 ;; id name
-                           (loop for i in (first constructor)
-                              collect 0) ;; constructor arg types
-                           0 0
-                           :body
-                           (avm2-asm::assemble-method-body
-                            (%compile-defun name (first constructor)
-                                            (second constructor) t
-                                            (or (third constructor) t)))))
+(defun assemble-class (name ns super properties constructor instance-functions class-properties class-functions flags)
+  (let* ((constructor-mid (if (consp constructor)
+                              (avm2-asm::avm2-method
+                               nil 0 ;; id name
+                               (loop for i in (first constructor)
+                                  collect 0) ;; constructor arg types
+                               0 0
+                               :body
+                               (avm2-asm::assemble-method-body
+                                (%compile-defun name (first constructor)
+                                                (second constructor) t
+                                                (or (third constructor) t))))
+                              constructor))
          ;; fixme: probably should make this configurable at some point
          (class-init (avm2-asm::avm2-method nil 0 nil 0 0 ;; meta-class init
                                           :body
@@ -88,8 +91,9 @@
                  (avm2-asm::asm-intern-multiname
                   (or (swf-name (find-swf-class super))
                       super))
+                 ;;flags 1=sealed,2=final,4=interface, 8=protectedns?
+                 flags ;; (:sealed :final :interface :protected-namespace)
                  ;; todo: add interfaces
-                 9 ;;flags 1=sealed,2=final,4=interface, 8=protectedns?
                  nil ;; interfaces
                  constructor-mid
                  (append

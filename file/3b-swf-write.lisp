@@ -150,13 +150,14 @@
   (destructuring-bind (name super-name flags interfaces iinit traits
                             &optional protected-ns)
       instance
-    ;;(format t "~%instance = ~s~%" instance)
+    (format t "~%instance = ~s / init ~s~%" instance iinit)
     (make-instance '%swf:abc-instance-info
                    '%swf:name name
                    '%swf:super-name super-name
-                   '%swf:class-interface-p (logbitp 2 flags)
-                   '%swf:class-final-p (logbitp 1 flags)
-                   '%swf:class-sealed-p (logbitp 0 flags)
+                   '%swf:class-interface-p (getf flags :interface)
+                   '%swf:class-final-p (and (not (getf flags :not-final))
+                                            (getf flags :final))
+                   '%swf:class-sealed-p (getf flags :sealed)
                    '%swf:protected-ns protected-ns
                    '%swf:interfaces interfaces
                    '%swf:instance-init iinit
@@ -229,14 +230,16 @@
                               (constructor constructor)
                               (functions functions)
                               (class-properties class-properties)
-                              (class-functions class-functions)) v
+                              (class-functions class-functions)
+                              (flags flags)) v
                (when (or properties constructor)
                  (assemble-class swf-name ns
                                  extends
                                  properties constructor
                                  functions
                                  class-properties
-                                 class-functions)))
+                                 class-functions
+                                 flags)))
              (setf script-init-scope-setup
                    (append script-init-scope-setup (new-class+scopes v)))))
 
