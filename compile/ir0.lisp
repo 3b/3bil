@@ -344,7 +344,8 @@
    ((lambda (&rest args) &rest body)
     (recur `(function ,whole)))
    ((%named-lambda name flags args &rest body)
-    (let* ((args (cons 'this args))
+    (let* ((this (or (getf flags :this-arg) 'this))
+           (args (cons this args))
            (a-args (alphatize-var-names (lambda-list-vars args))))
       `(%named-lambda ,name
                       ,flags

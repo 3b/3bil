@@ -52,6 +52,12 @@
                       documentation) spec
                 (declare (ignore type documentation))
                 (format t "slot ~s = ~s ~s ~s ~s~%" name allocation inline-reader inline-writer inline-accessor)
+                (unless (listp inline-reader)
+                  (setf inline-reader (list inline-reader)))
+                (unless (listp inline-writer)
+                  (setf inline-writer (list inline-writer)))
+                (unless (listp inline-accessor)
+                  (setf inline-accessor (list inline-accessor)))
                 (if (eq allocation :class)
                     (push name static-properties)
                     (push name properties))
@@ -98,27 +104,26 @@
            do (add-swf-property p p))
         (loop for p in static-properties
            do (add-swf-class-property p p))
-        (format t "constructor = ~%")
-        `(progn
-           , (print `(%named-lambda ,constructor-sym
-                           (:no-auto-return t :no-auto-scope t :anonymous t)
-                         ;(a b c d e f);;
-                         ,(car constructor)
-                         (%asm
-                          (:get-local-0)
-                          (:push-scope)
-                          (:get-local-0)
-                          ,@(loop for i in super-args
-                               collect `(:@ ,i))
-                          (:construct-super ,(length super-args))
-                          (:push-null))
-                       (block nil
+        ;(format t "constructor = ~%")
+        (print `(progn
+            (%named-lambda ,constructor-sym
+                  (:no-auto-return t :no-auto-scope t :anonymous t)
+                ,(car constructor)      ; lambda list
+              (%asm
+               (:get-local-0)
+               (:push-scope)
+               (:get-local-0)
+               ,@(loop for i in super-args
+                    collect `(:@ ,i))
+               (:construct-super ,(length super-args))
+               (:push-null))
+              (block nil
+                ,@(cdr constructor))
+              (%asm (:return-void)))
+            ,@(nreverse forms)))))
 
-                         ,@(cdr constructor))
-                       (%asm (:return-void))
-                           )) ;; to be overridden separately if needed
-          ,@(nreverse forms))))
-
+    ;; fixme: use new compiler (see :constructor option to defclass-swf)
+    #+nil
     (defmacro swf-constructor (class lambda-list &body body)
       ;; fixme: use eval-when instead of doing things at macroexpansion
       (setf (constructor (find-swf-class class))
@@ -126,9 +131,15 @@
       nil)
 
 
+    (defmacro defmethod-swf (name ((spec-arg spec-type) &rest lambda-list)
+                             &body body)
+      `(%named-lambda ,name
+             (:this-arg ,spec-arg :class-name ,spec-type)
+           ,lambda-list
+         (block ,name
+           ,@body)))
 
-)
-
-
-)
+    (defmacro declaim (&rest a)
+      nil)
+))
 

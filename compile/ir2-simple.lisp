@@ -177,7 +177,9 @@
             ;; unknown function... call directly
             (t
              ;;(format t "compiling normal call to ~s~%" name)
-             `((:find-property-strict ,name)
+             ;; fixme: is this correct?
+             `(#+nil(:find-property-strict ,name)
+                    (:get-global-scope)
                ,@(let ((*ir1-dest-type* nil))
                       (loop for a in args
                             append (recur a)))
@@ -821,6 +823,8 @@
                         (if activation-p #x02 0))
                 asm
                 :anonymous anonymous
+                :class-name (getf flags :class-name)
+                :class-static (getf flags :class-static)
                 :activation-slots
                 (when activation-vars
                   #+nil(format t "activation-vars : ~s~%" activation-vars)
