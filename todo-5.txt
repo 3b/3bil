@@ -4,17 +4,17 @@
  lambda lists (&arest,&optional)
 ?defclass
    flags (sealed, etc)
-   constructors
-     optionally with/without construct-super?
-   static/class properties
- defmethod
+~  constructors
+~    optionally with/without construct-super?
+~  static/class properties
+~ defmethod
    single specializer -> swf method with specialized arg as THIS?
  ffi class declaration?
    need some way to locally specify a class declaration without trying
      to add class definition to abc block (or easier way to link in an
      external set of declarations?)
    possibly some way to autogenerate imports from a loaded abc tag?
- accessors
+~accessors
  wrapper macros (like current c3/c3*/c4 that specify/define a symbol-table
    so the whole thing doesn't need a (let ((*symbol-table* ...)) ...)?
  better API to replace the c3/etc wrapper macros completely?

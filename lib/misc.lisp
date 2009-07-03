@@ -30,7 +30,8 @@
             (forms nil)
             (constructor-sym (gensym (format nil "~a-CTOR-" class-name)))
             (constructor (cdr (assoc :constructor class-options)))
-            (super-args (cdr (assoc :super-args class-options))))
+            (super-args (cdr (assoc :super-args class-options)))
+            (fake-accessors (second (assoc :fake-accessors class-options))))
         (format t "slot-spec = ~s~%" slot-specifiers)
         ;; todo: class options
         ;;  (:swf-flags :sealed <bool> :final <bool> :interface <bool> ...?)
@@ -42,46 +43,20 @@
                       allocation
                       ;; similar to CL, but strict, and currently unused
                       type
-                      ;; swf specific, define functions that are basically
-                      ;;  (defun reader (object)
-                      ;;    (slot-value object slot))
-                      inline-reader inline-writer inline-accessor
                       ;; currently unsupported CL stuff
                       ;; reader writer accessor initarg initform
                       ;; unused, but might as well allow it
-                      documentation) spec
+                      documentation) (if (listp spec) spec (list spec))
                 (declare (ignore type documentation))
-                (format t "slot ~s = ~s ~s ~s ~s~%" name allocation inline-reader inline-writer inline-accessor)
-                (unless (listp inline-reader)
-                  (setf inline-reader (list inline-reader)))
-                (unless (listp inline-writer)
-                  (setf inline-writer (list inline-writer)))
-                (unless (listp inline-accessor)
-                  (setf inline-accessor (list inline-accessor)))
+                ;(format t "slot ~s = ~s ~s ~s ~s~%" name allocation inline-reader inline-writer inline-accessor)
+                (when fake-accessors
+                  (let ((a (gensym)))
+                    (push `(defmacro ,name (,a)
+                             `(slot-value ,,a ,',name))
+                          forms)))
                 (if (eq allocation :class)
                     (push name static-properties)
-                    (push name properties))
-                (loop
-                   with obj = (gensym)
-                   for i in inline-reader
-                   do (push `(declaim (inline ,i)) forms)
-                   do (push `(defun ,i (,obj) (slot-value ,obj ,name)) forms))
-                (loop
-                   with obj = (gensym)
-                   with value = (gensym)
-                   for i in inline-writer
-                   do (push `(declaim (inline ,i)) forms)
-                   do (push `(defun ,i (,obj ,value)
-                               (setf (slot-value ,obj ,name) ,value)) forms))
-                (loop
-                   with obj = (gensym)
-                   with value = (gensym)
-                   for i in inline-accessor
-                   do (push `(declaim (inline ,i)) forms)
-                   do (push `(defun ,i (,obj) (slot-value ,obj ,name)) forms)
-                   do (push `(declaim (inline (setf ,i))) forms)
-                   do (push `(defun-setf ,i (,obj ,value)
-                               (setf (slot-value ,obj ,name) ,value)) forms))))
+                    (push name properties))))
              slot-specifiers)
 
         ;; fixme: this should use eval-when instead of doing things at
