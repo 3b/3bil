@@ -127,7 +127,7 @@
 (defmethod translate-trait-data ((trait avm2-asm::trait-data-method/get/set) name metadata)
   (make-instance (%swf::subclass-from-id '%swf::abc-trait-info (avm2-asm::kind trait))
                  '%swf:slot-id (avm2-asm::slot-id trait)
-                 '%swf:method-name (avm2-asm::method-id trait)
+                 '%swf:method-id (avm2-asm::method-id trait)
                  '%swf:name name
                  '%swf:metadata metadata))
 
@@ -258,6 +258,17 @@
       ;;fixme: create these directly as 3b-swf types?
       (vector-push-extend
        `(,script-init
+         ,(make-instance
+          'avm2-asm::trait-info
+          'avm2-asm::name
+          (avm2-asm::asm-intern-multiname "%%%%%")
+          'avm2-asm::trait-data
+          (make-instance 'avm2-asm::trait-data-slot/const
+                         'avm2-asm::kind 0
+                         'avm2-asm::slot-id 0
+                         'avm2-asm::type-name 0
+                         'avm2-asm::vindex 0
+                         'avm2-asm::vkind 0))
          ,@(loop for i in (script-slots compiler-context)
               collect (make-instance
                        'avm2-asm::trait-info
@@ -323,7 +334,7 @@
       collect (list id string))))
 
 ;; still not sure about proper API...
-(defmacro compile-abc-tag ((exports) &body body)
+(defmacro compile-abc-tag ((exports &key inherit) &body body)
   "exports is a list of (tag-id name), where tag-id is a symbol
 matching a tag in the file, or NIL to specify the class for the root
 timeline, and name is either a string, or a symbol, which is converted
@@ -332,7 +343,10 @@ package prefixes might not work, in which case only some symbols will
 work)"
   `(let ((avm2-asm::*assembler-context* (make-instance 'avm2-asm::assembler-context))
          (*compiler-context* (make-instance 'compiler-context))
-         (*symbol-table* (make-instance 'symbol-table :inherit (list *cl-symbol-table*))))
+         (*symbol-table* (make-instance 'symbol-table :inherit
+                                        (list ,@(if inherit
+                                                    inherit
+                                                    '(*cl-symbol-table*))))))
      ;; fixme: add these to assembler-context constructor or something
      (avm2-asm::avm2-intern "")
      (avm2-asm::avm2-ns-intern "")

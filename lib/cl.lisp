@@ -162,7 +162,9 @@
 
   ;; temporary hacks for new compiler
   (swf-defmacro defun (name args &body body)
-    `(%named-lambda ,name () ,args (block ,name ,@body)))
+    (if (and (listp name) (eq (car name) 'setf))
+        (print `(defun-setf ,(second name) ,args ,@body))
+        `(%named-lambda ,name () ,args (block ,name ,@body))))
 
   (swf-defmacro defmacro (name args &body body)
     (let ((form (gensym))

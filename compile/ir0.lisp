@@ -294,7 +294,7 @@
           `(progn
              (%named-lambda
               ,temp-name
-              () ;; flags
+              (:anonymous t) ;; flags
               ,(alphatize-lambda-list lambda-list args)
               ,(with-local-vars args
                                 (recur `(progn ,@body))))
@@ -397,14 +397,18 @@
                              `(:@kill ,(cdr (lexenv-get-variable-binding (second x))))
                              x))
                        whole))
-    (super whole))
+   (super whole))
 
-   ;; expand macros,macrolets
+   ((declare &rest declarations)
+    '(quote nil))
+
+   ;; expand macros,macrolets, fake accessors
    (t
     (destructuring-bind (operator &rest args) whole
       (let ((binding (lexenv-get-function-binding operator))
             (cmacro (find-swf-cmacro-function operator))
             (macro (find-swf-macro-function operator))
+            (accessor (find-swf-accessor operator))
             (temp))
         (cond
           ((and (symbolp operator) (special-operator-p operator))
@@ -427,7 +431,8 @@
            ;;(format t "-> ~s~%" (funcall macro whole nil))
            (recur (funcall macro whole nil)))
 
-          ;; todo: known functions (cl:foo, etc)
+          ;; todo: known functions (cl:foo, etc)/inlining
+
           ;; special case SETF until macro can handle it...
           ((member operator '(setf %setf))
            ;;(format t "handling special cased setf ~s~%" whole)
@@ -445,5 +450,11 @@
                                       ,(recur (second args))
                                       ,@(recur-all (cdar args)))))
                    (recur `(setq ,@args)))))
+
+          ;; expand fake accessors
+          (accessor
+           (format t "accessor ~s - ~s / ~s~%" accessor operator args)
+           (recur `(slot-value ,@args ,accessor)))
+
           ;; wrap anything else in %normal-call
           (t `(%normal-call ,operator ,@(recur-all args)))))))))

@@ -39,24 +39,26 @@
         (map 'nil
              (lambda (spec)
                (destructuring-bind (name &key
-                      ;; same? as cl
-                      allocation
-                      ;; similar to CL, but strict, and currently unused
-                      type
-                      ;; currently unsupported CL stuff
-                      ;; reader writer accessor initarg initform
-                      ;; unused, but might as well allow it
-                      documentation) (if (listp spec) spec (list spec))
-                (declare (ignore type documentation))
-                ;(format t "slot ~s = ~s ~s ~s ~s~%" name allocation inline-reader inline-writer inline-accessor)
-                (when fake-accessors
-                  (let ((a (gensym)))
-                    (push `(defmacro ,name (,a)
-                             `(slot-value ,,a ,',name))
-                          forms)))
-                (if (eq allocation :class)
-                    (push name static-properties)
-                    (push name properties))))
+                                         ;; same? as cl
+                                         allocation
+                                         ;; similar to CL, but strict, and currently unused
+                                         type
+                                         ;; currently unsupported CL stuff
+                                         ;; reader writer accessor initarg initform
+                                         ;; unused, but might as well allow it
+                                         documentation) (if (listp spec) spec (list spec))
+                 (declare (ignore type documentation))
+                                        ;(format t "slot ~s = ~s ~s ~s ~s~%" name allocation inline-reader inline-writer inline-accessor)
+                 #++(when fake-accessors
+                   (let ((a (gensym)))
+                     (push `(defmacro ,name (,a)
+                              `(slot-value ,,a ,',name))
+                           forms)))
+                 (when fake-accessors
+                   (add-swf-accessor name name))
+                 (if (eq allocation :class)
+                     (push name static-properties)
+                     (push name properties))))
              slot-specifiers)
 
         ;; fixme: this should use eval-when instead of doing things at
@@ -79,23 +81,26 @@
            do (add-swf-property p p))
         (loop for p in static-properties
            do (add-swf-class-property p p))
-        ;(format t "constructor = ~%")
-        (print `(progn
-            (%named-lambda ,constructor-sym
-                  (:no-auto-return t :no-auto-scope t :anonymous t)
-                ,(car constructor)      ; lambda list
-              (%asm
-               (:get-local-0)
-               (:push-scope)
-               (:get-local-0)
-               ,@(loop for i in super-args
-                    collect `(:@ ,i))
-               (:construct-super ,(length super-args))
-               (:push-null))
-              (block nil
-                ,@(cdr constructor))
-              (%asm (:return-void)))
-            ,@(nreverse forms)))))
+                                        ;(format t "constructor = ~%")
+        `(progn
+           ,@(nreverse forms)
+           (%named-lambda ,constructor-sym
+                 (:no-auto-return t :no-auto-scope t :anonymous t
+                                  :prefix
+                                  (
+                                   (:get-local-0)
+                                   (:push-scope)
+                                   (:get-local-0)
+                                   ,@(loop for i in super-args
+                                        collect `(:@ ,i))
+                                   (:construct-super ,(length super-args))
+                                   (:push-null))
+                                  )
+               ,(car constructor)       ; lambda list
+             (block nil
+               ,@(cdr constructor))
+             (%asm (:return-void)))
+           )))
 
     ;; fixme: use new compiler (see :constructor option to defclass-swf)
     #+nil
@@ -116,5 +121,125 @@
 
     (defmacro declaim (&rest a)
       nil)
+
+    (defmacro %typep (object type)
+      `(%asm
+        (:@ ,object)
+        (:get-lex ,(or (swf-name (find-swf-class type)) type))
+        (:is-type-late)))
+
+    (defmacro %aref-1 (array index)
+      `(%asm
+        (:@ ,array)
+        (:@ ,index)
+        (:get-property (:multiname-l "" ""))))
+
+    (defmacro svref (array index)
+      `(%asm
+        (:@ ,array)
+        (:@ ,index)
+        (:get-property (:multiname-l "" ""))))
+
+
+    (defmacro %set-aref-1 (array index value)
+      `(%asm
+        (:@ ,array)
+        (:@ ,index)
+        (:@ ,value)
+        (:set-property (:multiname-l "" ""))
+        (:push-null)
+        (:coerce-any)))
+
+
+    ;; fixme: should be a function
+    (defmacro aref (array &rest subscripts)
+      (let ((a (gensym)))
+        (if (= 1 (length subscripts))
+            `(let ((,a ,array))
+               (if (%typep ,a %flash:array)
+                   (%aref-1 ,a ,(first subscripts))
+                   (if (%typep ,a %flash:string)
+                       (%flash:char-at ,a 1)
+                       (if (%typep ,a not-simple-array-type)
+                           (%aref-n ,a ,@subscripts)
+                           (svref ,a ,@subscripts)))))
+            `(%aref-n ,array ,@subscripts))))
+
+    (defun (setf aref) (value a subscript)
+      ;; fixme: support multiple dimensions (need &rest, apply?)
+      (if (%typep a %flash:array)
+          (%set-aref-1 a subscript value)
+          (if (%typep a %flash:string)
+              ;; fixme: is there a better way to do this?
+              (%flash:concat (%flash:substr a 0 subscript)
+                             value
+                             (%flash:substr a (1+ subscript)))
+              (if (%typep a not-simple-array-type)
+                  (%setf-aref-n a subscript value)
+                  (setf (svref a subscript) value)))))
+    (defmacro %set-property (object property value)
+      ;; (%set-property object property value) -> value
+      (print`(%asm
+         (:@ ,value) ;; calculate value
+         (:dup)      ;; leave a copy on stack so we can return it
+         (:@ ,object) ;; find the object
+         (:swap)      ;; stack => return-value object value
+         (:set-property ,(or (find-swf-property property) property)))))
+
+    (defmacro %array (&rest args)
+      ;; (%array ... ) -> array
+      `(%asm
+        ,@(loop for i in args
+             collect `(:@ ,i)) ;; calculate args
+        (:new-array ,(length args))))
+
+  (defun length (sequence)
+    (if (listp sequence)
+        (list-length sequence)
+        ;; fixme: should probably be %flash:length instead of :length
+        (or (slot-value sequence :length) 0)))
+
+    ;; ugly hack, just enough to make LOOP work...
+    (defmacro with-hash-table-iterator ((name hash-table) &body body)
+      ;; fixme: implement this correctly once VALUES works
+      (let ((values (gensym))
+            (index (gensym)))
+        (format t "w-h-t-i~%")
+        (print `(let ((,index 0))
+            (macrolet ((multiple-value-setq (vars form)
+                         (format t "m-v-s~%")
+                         (print `(let ((,',values))
+                                   ,form
+                                   ,@(loop for var in vars
+                                        for i from 0
+                                        collect `(setf ,var (aref ,',values ,i)))
+                                   (aref ,',values 0))))
+                       (,name ()
+                         (format t "m-v-s~%")
+                         (print `(let* ((next (%asm
+                                               (:@ ,',hash-table)
+                                               (:@ ,',index)
+                                               (:coerce-i)
+                                               (:has-next)))
+                                        (next-p (not (zerop next)))
+                                        (key (when next-p
+                                               (%asm
+                                                (:@ ,',hash-table)
+                                                (:@ ,',index)
+                                                (:coerce-i)
+                                                (:next-name))))
+                                        (val (when next-p
+                                               (%asm
+                                                (:@ ,',hash-table)
+                                                (:@ ,',index)
+                                                (:coerce-i)
+                                                (:next-value)))))
+                                   (ftrace (s+ "hash-it : " next "/" key "/" val))
+                                   (setf ,',index next)
+                                   (setf ,',values (%array next-p key val ))))))
+              ,@body)))))
+
+    #++(defmacro %exit-point-value ()
+      (%new- %flash:q-name "exit" "point"))
 ))
 

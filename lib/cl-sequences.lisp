@@ -17,7 +17,7 @@
         (%flash:reverse sequence)
         (reverse sequence))) ;; fixme: add in-place list reverse
 
-
+  #++
   (swf-defmemfun length (sequence)
     (if (listp sequence)
         (list-length sequence)

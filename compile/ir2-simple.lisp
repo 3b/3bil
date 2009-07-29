@@ -172,8 +172,18 @@
                             append (recur a)))
                  (:call-property ,(second tmp) ,(length args))
                ,@(coerce-type)))
-
-
+            ;; known functions
+            ;; todo: benchmark :find-property-strict vs. :get-global-scope
+            ;; for functions known to be on global object, and optimize
+            ;; that case if useful
+            ((setf tmp (find-swf-function name *symbol-table*))
+             ;; :find-property-strict needed for stuff like %flash:trace
+             `((:find-property-strict ,(car tmp)) ;(:get-global-scope)
+               ,@(let ((*ir1-dest-type* nil))
+                      (loop for a in args
+                         append (recur a)))
+               (:call-property ,(car tmp) ,(length args))
+                 ,@(coerce-type)))
             ;; unknown function... call directly
             (t
              ;;(format t "compiling normal call to ~s~%" name)
@@ -332,7 +342,8 @@
         ;; fixme: implement this properly instead of relying on it picking right numbers on its own
         (loop for i in (lambda-list-vars lambda-list)
               do (get-local-index i))
-        (let ((asm `(,@(when activation-vars
+        (let ((asm `(,@(getf flags :prefix)
+                     ,@(when activation-vars
                              `((:new-activation)
                                (:dup)
                                (:push-scope)

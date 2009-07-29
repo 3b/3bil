@@ -18,26 +18,34 @@
      ;; store constants
      ,@(loop for i in constants
           collect (destructuring-bind (name &key swf-name type value static) i
-                    (declare (ignore type value))
+                    (declare (ignore type value static))
                     `(pushnew (list ,class-swf-name ,swf-name)
                                 (gethash ',name (constants *symbol-table*)
                                          (list))
                                  :test 'equal)))
      ;; store properties
      ,@(loop for i in properties
-          append (destructuring-bind (pname &key swf-name type access declared-by value static) i
-                     (declare (ignore access type value))
-                     `((add-swf-property ',pname  ,swf-name))))
+          append (destructuring-bind (pname &key swf-name type access declared-by value static accessor) i
+                     (declare (ignore access type value static declared-by))
+                     `((add-swf-property ',pname ,swf-name)
+                       ,@(when accessor
+                               `((add-swf-accessor ',accessor ,swf-name))))))
      ;; store methods
      ,@(loop for i in methods
           append (destructuring-bind (mname &key swf-name return-type
-                                           declared-by args static) i
-                     (declare (ignore args return-type))
-                     `((pushnew ,swf-name
-                                (gethash ',mname
-                                         (class-methods *symbol-table*)
-                                         (list))
-                                :test 'string=))))))
+                                            declared-by static args) i
+                   (declare (ignore args return-type declared-by))
+                   (if static
+                       `((pushnew (list ',class-name ,swf-name)
+                                  (gethash ',mname
+                                           (class-static-methods *symbol-table*)
+                                           (list))
+                                  :test 'equal))
+                       `((pushnew ,swf-name
+                                  (gethash ',mname
+                                           (class-methods *symbol-table*)
+                                           (list))
+                                  :test 'string=)))))))
 
 (defmacro swf-ffi-defun-lex (lisp-name member (&rest args) return &key class)
   "declare a static member function of a class, for example Math.random()"

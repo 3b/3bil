@@ -258,7 +258,20 @@
     (let ((exit-point-sym (gensym (format nil "EXIT-POINT-~s-" name))))
       (set-tag-info name :exit-point-var exit-point-sym)
       `(%bind vars (,exit-point-sym)
-              values ((%call type :normal name %exit-point-value args nil))
+              ;; call to %exit-point-value = ~0.6sec / 1M loop
+              ;; inline new qname = ~0.5
+              ;; new-array = ~0.36
+              ;; new-object = ~0.33
+              ;; new-activation = ~0.26
+              ;; nothing = ~0.07
+              values (#++(%call type :normal name %exit-point-value args nil)
+                         #++(%asm forms ((:find-property-strict "QName")
+                                      (:push-string "exit")
+                                      (:push-string "point")
+                                      (:construct-prop "QName" 2)))
+                         #++(%asm forms ((:new-array 0)))
+                         (%asm forms ((:new-object 0)))
+                         #++(%asm forms ((:new-activation))))
               body (,(super whole)))))
    ((tagbody name nlx forms)
     ;; assign a name to the tagbody for use with nlx, and mark all tags with it

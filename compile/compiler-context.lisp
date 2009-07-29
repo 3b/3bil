@@ -6,6 +6,14 @@
    ;; figured out how to make separate functions yet
    (variables :initform (make-hash-table) :accessor variables)
    (properties :initform (make-hash-table) :accessor properties)
+   ;; typing slot-value everywhere (or using a read-macro to do so) is
+   ;; annoying, so we also allow defining a fake accessor that
+   ;; is sort of like (defun foo (x) (slot-value x 'foo)) but that doesn't
+   ;; actually create a function unless we do #'foo
+   ;; (some sort of inline-only declamation would be similar, but we also
+   ;;  want to allow multiple definitions but still be able to detect
+   ;;  conflicts with normal functions/macros)
+   (accessors :initform (make-hash-table) :accessor accessors)
    ;; not sure if constants work the same as properties yet, so
    ;; keeping separate for now
    ;; (static-properties might be a better name, if they are separate?)
@@ -39,6 +47,7 @@
 (define-swf-find-foo find-swf-setf-function setf-functions)
 (define-swf-find-foo find-swf-macro-function macro-functions)
 (define-swf-find-foo find-swf-cmacro-function cmacro-functions)
+(define-swf-find-foo find-swf-accessor accessors)
 ;;(inherited-symbol-tables *symbol-table*)
 ;;(find-swf-static-method '%flash:random )
 
@@ -59,6 +68,16 @@
   (pushnew swf-name
            (gethash symbol (properties s) (list))
            :test 'string=))
+(defun add-swf-accessor (symbol slot-name &optional (s *symbol-table*))
+  (let ((old (find-swf-accessor symbol s)))
+    ;; fixme: proper error
+    (assert (and (or (not old) (equalp old slot-name))
+                 (not (find-swf-function symbol))
+                 (not (find-swf-macro-function symbol)))
+            () "accessor name conflict? old=~s slot-name=~s fn=~s mac=~s~%"
+            old slot-name (find-swf-function symbol) (find-swf-macro-function symbol)))
+  (setf (gethash symbol (accessors s)) (list slot-name)))
+
 
 
 (defmethod swf-name ((object (eql nil)))

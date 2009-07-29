@@ -1,4 +1,67 @@
 
+#'(on-enter-frame ship) ?
+
+~accessors for ffi
+
+make sure setf is using the macro instead of property hack?
+
+optimize bitmap writing
+
+package stuff
+  make sure ffi classes inherit proper symbols (so stuff from superclasses
+    works)
+  export enough from avm2-* to compile things in a separate package
+  (maybe look at doing package based compilation stuff too?)
+  --
+  conflicts:
+    clone
+    position
+    to-string (some have a RADIX arg)
+
+    bytes-total
+    height
+    width
+    bytes-loaded
+    length
+    size
+    text
+    type
+url
+clear
+transform
+color
+x
+target
++none+
+load
+color-transform
++full-screen+
+align
+close
+text-snapshot
+smoothing
+matrix
+index
+thickness
++right+
+data
+add-event-listener
+name
+play
+contains
++default+
+
+~switch accessor hack to compiler level stuff?
+~  compile it directly instead of using a macro, so #' can be made to work?
+  add #' support
+     (expand to #'(lambda (x) (slot-value x 'foo)))
+x  alternately, use inline functions, but that causes problems if we want
+    to detect redefinition, since we will define the accessors multiple
+    times (whenever a class uses that slot name) but still want to catch
+    attempts to use that name for a normal function/macro (or to use it
+    for an accessor when previously fbound)
+
+
 --
 ~defmacro
  lambda lists (&arest,&optional)

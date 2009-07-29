@@ -7,11 +7,14 @@
 
 
 (let ((*symbol-table* *cl-symbol-table*))
-
+  #+nil
   (swf-defmacro aref (array &rest subscripts)
                 (let ((a (gensym)))
                   (if (= 1 (length subscripts))
                       `(let ((,a ,array))
+                         ;; fixme: probably should check for our
+                         ;; special type here instead of just array,
+                         ;; since some other types might act like arrays too
                          (if (%typep ,a %flash:array)
                              (%aref-1 ,a ,(first subscripts))
                              (if (%typep ,a %flash:string)

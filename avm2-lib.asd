@@ -16,5 +16,7 @@
                           (:file "cl-sequences")
                           ;; temprorary hack for new compiler
                           (:file "cl-new")
+                          (:file "misc")
+                          (:file "sacla-loop")
                           )))
            :serial t)
