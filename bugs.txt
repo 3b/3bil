@@ -1,0 +1,7 @@
+++ closure inside constructors don't seem to work right?
+
+++ lambdas break n800 flash player
+  == apparently need to not assign them to global traits?
+
+++ LABELS doesn't close over env properly?
+   (or else nested closrues don't close over outer env properly)
