@@ -248,7 +248,7 @@
       `(progn
          ,@(loop for (nil label) in names
                  for lambda in lambdas
-                 collect `(%named-lambda ,label () ,@lambda))
+                 collect `(%named-lambda ,label (:anonymous t) ,@lambda))
          ,@(with-local-functions names
                                  (recur-all declarations-and-forms)))))
 
@@ -269,7 +269,7 @@
           `(progn
              ,@(loop for (nil label) in names
                      for lambda in lambdas
-                     collect `(%named-lambda ,label () ,@lambda))
+                     collect `(%named-lambda ,label (:anonymous t) ,@lambda))
              ,@(recur-all declarations-and-forms))))))
 
 
@@ -306,7 +306,7 @@
             ((and (consp binding) (eq (car binding) :macro))
              (error "calling FUNCTION on macrolet: ~s" name))
             ((and (consp binding) (eq (car binding) :function))
-             `(function ,(second binding)))
+             `(%local-function ,(second binding)))
             ;; todo: global macros
             ((and (consp name) (eq (car name) 'setf))
              (error "don't know how to call FUNCTION on global setf functions yet: ~s" name))
