@@ -342,25 +342,36 @@
         ;; fixme: implement this properly instead of relying on it picking right numbers on its own
         (loop for i in (lambda-list-vars lambda-list)
               do (get-local-index i))
-        (let ((asm `(,@(getf flags :prefix)
-                     ,@(when activation-vars
-                             `((:new-activation)
-                               (:dup)
-                               (:push-scope)
-                               (:set-local ,(get-local-index *activation-local-name*))))
-                       ,@(loop for var in closed-vars
-                               append `((:comment "assign activation")
-                                        (:get-scope-object ,*current-closure-scope-index*)
-                                        (:get-local ,(get-local-index var))
-                                        (:set-slot ,(get-closure-index var))))
-                       ,@(recur-progn body))))
+        (let ((activation
+               `(,@(when activation-vars
+                   `((:new-activation)
+                     (:dup)
+                     (:push-scope)
+                     (:set-local ,(get-local-index *activation-local-name*))))
+                 ,@(loop for var in closed-vars
+                      append `((:comment "assign activation")
+                               (:get-scope-object ,*current-closure-scope-index*)
+                               (:get-local ,(get-local-index var))
+                               (:set-slot ,(get-closure-index var))))))
+              (asm (recur-progn body)))
+          (setf asm
+                (loop
+                   with found = nil
+                   for i in asm
+                   when (and (consp i) (eq (car i) :%activation-record))
+                   append activation into a
+                   and do (setf found t) (format t "//~s~%" i)
+                   else collect i into a
+                   finally (return (if found
+                                       a
+                                       (append activation a)))))
           `(%named-lambda
-            name ,name
-            flags ,flags
-            lambda-list ,lambda-list
-            closed-vars ,closed-vars
-            activation-vars ,activation-vars
-            body ,asm))))
+                   name ,name
+               flags ,flags
+               lambda-list ,lambda-list
+               closed-vars ,closed-vars
+               activation-vars ,activation-vars
+               body ,asm))))
 
      ((function type name)
       (ecase type

@@ -85,18 +85,17 @@
         `(progn
            ,@(nreverse forms)
            (%named-lambda ,constructor-sym
-                 (:no-auto-return t :no-auto-scope t :anonymous t
-                                  :prefix
-                                  (
-                                   (:get-local-0)
-                                   (:push-scope)
-                                   (:get-local-0)
-                                   ,@(loop for i in super-args
-                                        collect `(:@ ,i))
-                                   (:construct-super ,(length super-args))
-                                   (:push-null))
-                                  )
+                 (:no-auto-return t :no-auto-scope t :anonymous t)
                ,(car constructor)       ; lambda list
+             (%asm
+              (:get-local-0)
+              (:push-scope)
+              (:get-local-0)
+              ,@(loop for i in super-args
+                   collect `(:@ ,i))
+              (:construct-super ,(length super-args))
+              (:%activation-record)
+              (:push-null))
              (block nil
                ,@(cdr constructor))
              (%asm (:return-void)))
