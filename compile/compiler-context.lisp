@@ -69,6 +69,8 @@
            (gethash symbol (properties s) (list))
            :test 'string=))
 (defun add-swf-accessor (symbol slot-name &optional (s *symbol-table*))
+  ;; see also macro in lib/misc.lisp
+  (format t "add-swf-accessor ~s => ~s~%" symbol slot-name)
   (let ((old (find-swf-accessor symbol s)))
     ;; fixme: proper error
     (assert (and (or (not old) (equalp old slot-name))

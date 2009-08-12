@@ -1,3 +1,9 @@
+can't close over THIS in args to super constructor
+
+class member names conflict with class names in constructor
+  ex: (defclass-swf request () ())
+      (defclass-swf foo () (request) (:constructor (setf (request this) (%new- request))))
+
 ++ closure inside constructors don't seem to work right?
 
 ++ lambdas break n800 flash player

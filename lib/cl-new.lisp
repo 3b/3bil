@@ -116,8 +116,14 @@
       (defun not (x)
         (%asm
           (:@ x)
-          (:not))
-)
+          (:not)))
+
+      (defun mod (x y)
+        (%asm
+          (:@ x)
+          (:@ y)
+          (:modulo)))
+
         (defmacro %new- (class &rest args)
           (let ((name (typecase class
                         (symbol

@@ -118,6 +118,10 @@
          (block ,name
            ,@body)))
 
+    (defmacro %add-swf-accessor (sym &optional flash-name)
+      (add-swf-accessor sym (or flash-name sym))
+      nil)
+
     (defmacro declaim (&rest a)
       nil)
 
@@ -164,6 +168,8 @@
                            (svref ,a ,@subscripts)))))
             `(%aref-n ,array ,@subscripts))))
 
+    ;; fixme: what broke this?
+    #++
     (defun (setf aref) (value a subscript)
       ;; fixme: support multiple dimensions (need &rest, apply?)
       (if (%typep a %flash:array)
@@ -237,6 +243,10 @@
                                    (setf ,',index next)
                                    (setf ,',values (%array next-p key val ))))))
               ,@body)))))
+
+    (defun get-universal-time ()
+      (+ (floor (/ (%flash:get-time (%new- %flash:date)) 1000))
+         #. (encode-universal-time 0 0 0 1 1 1970 0)))
 
     #++(defmacro %exit-point-value ()
       (%new- %flash:q-name "exit" "point"))

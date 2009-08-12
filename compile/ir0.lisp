@@ -440,15 +440,22 @@
                (recur `(progn ,@(loop for (var val) on args by #'cddr
                                       collect `(setf ,var ,val))))
                (if (consp (car args))
-                   (let* ((sym  `(setf ,(caar args)))
-                          (setf-fun (lexenv-get-function-binding sym)))
-                     (if setf-fun
-                         `(%local-call ,(second setf-fun)
-                                      ,(recur (second args))
-                                       ,@(recur-all (cdar args)))
-                         `(%setf-call ,(caar args)
-                                      ,(recur (second args))
-                                      ,@(recur-all (cdar args)))))
+                   (let* ((sym `(setf ,(caar args)))
+                          (setf-fun (lexenv-get-function-binding sym))
+                          (setf-accessor (find-swf-accessor (caar args))))
+                     (format t "#setf ~s / ~s ~s~%" (caar args) args setf-accessor)
+                     (cond
+                       (setf-fun `(%local-call ,(second setf-fun)
+                                               ,(recur (second args))
+                                               ,@(recur-all (cdar args))))
+                       (setf-accessor (print `(%asm (:@ ,(recur (second args)))
+                                              (:dup)
+                                              (:@ ,(recur (cadar args)))
+                                              (:swap)
+                                              (:set-property ,setf-accessor))))
+                       (t `(%setf-call ,(caar args)
+                                     ,(recur (second args))
+                                     ,@(recur-all (cdar args))))))
                    (recur `(setq ,@args)))))
 
           ;; expand fake accessors
