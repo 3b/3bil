@@ -1,3 +1,5 @@
+LOOP WHEN tends to cause type conflicts?
+
 can't close over THIS in args to super constructor
 
 class member names conflict with class names in constructor

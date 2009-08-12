@@ -250,5 +250,18 @@
 
     #++(defmacro %exit-point-value ()
       (%new- %flash:q-name "exit" "point"))
+
+    (defun copy-seq (seq)
+      ;; fixme: handle specialized arrays once they are added
+      (cond
+        ((stringp seq) (%new- %flash:string seq))
+        ((consp seq) (copy-list seq))
+        ;; fixme: signal TYPE-ERROR if not a sequence instead of assuming array
+        (t (%flash:slice seq))))
+
+    (defun stringp (s)
+      (%typep s %flash:string))
+
+
 ))
 
