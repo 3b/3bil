@@ -62,7 +62,7 @@
     (loop for tag in taglist
 ;       repeat 1
        when (typep tag '%swf:do-abc-tag)
-       do (symbol-table-from-tag tag)
+       do (symbol-table-from-tag tag renamer)
        )
     *symbol-table*
     )
@@ -177,19 +177,29 @@
        do (setf trait nil)
        ;;(format t "drop trait ~s~%" name)
        when (typep trait '%3b-swf:abc-trait-info-slot)
-       do (push (list (make-name name renamer
+       do (push (list #+nil(make-name name renamer
                                  :default-package package :external nil)
+                      (format nil "~a::~a" package (funcall renamer (first name)))
                       :swf-name (qq (apply 'flash-name name))
                       :type (qq (type-string (%3b-swf:type-name trait) pool))
                       :static (qq static)
-                      :accessor (format nil "~a:.~a"
-                                        package
-                                       (funcall renamer (first name))))
+                      :accessor (if (some 'lower-case-p (first name))
+                                    (format nil "~a:.~a"
+                                            package
+                                            (funcall renamer (first name)))
+                                    ;; getting files with fooBar and FOO_BAR
+                                    ;; in same class, so try to avoid
+                                    ;; clashing on accessors
+                                    (format nil "~a::.+~a+"
+                                            package
+                                            (funcall renamer (first name)))
+                                    ))
                 properties)
 
        when (typep trait '%3b-swf:abc-trait-info-constant)
-       do (push (list (make-name name renamer :wrap "+"
+       do (push (list #+nil(make-name name renamer :wrap "+"
                                  :default-package package)
+                      (format nil "~a:+~a+" package (funcall renamer (first name)))
                       :swf-name (qq (apply 'flash-name name))
                       :type (qq (type-string (%3b-swf:type-name trait) pool))
                       :value (qq (constant-value (%3b-swf:value trait) pool))
@@ -408,7 +418,7 @@
                                         ; really globally constant
                           (format nil "+~a+" (funcall renamer (first name))))
                          ((typep trait '%3b-swf:abc-trait-info-method)
-                          (format nil "---~a.~a"
+                          (format nil "~a.~a"
                                   (funcall renamer (first class-name))
                                   (funcall renamer (first name ))))
                          (t
@@ -433,12 +443,12 @@
             (package-from-tags package (getf (cdr lib) :tags)
                                #'rename-swf-symbol :skip-$ t)))
 
-      (format t "(defparameter ~a (make-instance 'avm2-compiler::symbol-table))~%~%" symbol-table-name)
+      (format t "(defparameter ~a::~a (make-instance 'avm2-compiler::symbol-table))~%~%" package symbol-table-name)
       (loop for tag in (getf (cdr lib) :tags)
                                         ;repeat 10
          when (typep tag '%swf:do-abc-tag)
-         do (format t "(let ((*symbol-table* ~a))~%" symbol-table-name)
-           (ffi-from-tag "as3corelib" tag #'rename-swf-symbol
+         do (format t "(let ((avm2-compiler::*symbol-table* ~a::~a))~%" package symbol-table-name)
+           (ffi-from-tag package tag #'rename-swf-symbol
                           local-types :skip-$ t)
            (format t ")~%~%")))
 )
