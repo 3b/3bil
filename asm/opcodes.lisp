@@ -108,6 +108,8 @@ for that here and return count of extra args"
   (:sign-extend-8to32     ()   #x51 1 1) ;; stack=value,value
   (:sign-extend-16to32    ()   #x52 1 1) ;; stack=value,value
   ;; (:apply-type (?) #x53 1 1) ??
+  ;; see http://blog.richardszalay.com/2009/02/generics-vector-in-avm2.html
+  (:make-generic  ((arg-count u30))  #x53 (1+ arg-count) 1) ;; flash 10
   ;; #x54
   (:new-object           ((arg-count u32))       #x55  (* 2 arg-count) 1)
   (:new-array            ((arg-count u30))       #x56  arg-count 1)
