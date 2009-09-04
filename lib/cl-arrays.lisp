@@ -15,14 +15,14 @@
                          ;; fixme: probably should check for our
                          ;; special type here instead of just array,
                          ;; since some other types might act like arrays too
-                         (if (%typep ,a %flash:array)
+                         (if (%typep ,a flash:array)
                              (%aref-1 ,a ,(first subscripts))
-                             (if (%typep ,a %flash:string)
-                                 (%flash:char-at ,a 1)
+                             (if (%typep ,a flash:string)
+                                 (flash:char-at ,a 1)
                                  (%aref-n ,array ,@subscripts))))
                       `(%aref-n ,array ,@subscripts))))
 
-  (def-swf-class not-simple-array-type "not-simple-array" %flash:object
+  (def-swf-class not-simple-array-type "not-simple-array" flash:object
                  (%dimensions-array
                   %adjustable-p
                   %fill-pointer
@@ -37,10 +37,10 @@
 
 
   (swf-defmemfun %make-simple-array (size)
-    (%new* %flash:Array size))
+    (%new* flash:Array size))
 
   (swf-defmemfun %make-simple-array-with-element (size initial-element)
-    (let ((a (%new* %flash:Array size)))
+    (let ((a (%new* flash:Array size)))
       (dotimes (i size a)
         (%set-aref a i initial-element))))
 

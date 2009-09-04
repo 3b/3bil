@@ -1,3 +1,5 @@
+need to figure out stuff like Array() in new ffi generator
+
 LOOP WHEN tends to cause type conflicts?
 
 can't close over THIS in args to super constructor

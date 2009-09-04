@@ -31,7 +31,7 @@
 
 
     (swf-defmemfun funcall (x &arest args)
-      (%flash:apply x nil args ))
+      (flash:apply x nil args ))
 
     (swf-defmemfun + (&arest x)
       (let ((sum 0))
@@ -124,24 +124,6 @@
           (:@ y)
           (:modulo)))
 
-        (defmacro %new- (class &rest args)
-          (let ((name (typecase class
-                        (symbol
-                         (let ((c (find-swf-class class)))
-                           (assert c) ;; fixme: better error reporting
-                           (swf-name c)))
-                        (t class))))
-            `(%asm (:find-property-strict ,name)
-                   ,@(loop for i in args
-                        collect `(:@ ,i))
-                   (:comment "%new-")
-                   (:construct-prop ,name ,(length args)))))
-        (defmacro time (&body body)
-          (let ((now (gensym)))
-            `(let ((,now (%new- %flash:date)))
-               ,@body
-               (ftrace
-                (s+ "[" ":" (/ (- (%new- %flash:date) ,now) 1000.0) "sec]")))))
 
 
         (defmacro %set-property- (object prop value)
@@ -185,34 +167,34 @@
 
     ;;; internal junk
     (swf-defmemfun %exit-point-value ()
-      (%new* %flash:q-name "exit" "point"))
+      (%new* flash:q-name "exit" "point"))
 
     (def-swf-class throw-exception-type "what goes here?"
-      %flash:object (throw-exception-tag throw-exception-value)
+      flash:object (throw-exception-tag throw-exception-value)
       ((a b)
        (%set-property this throw-exception-tag a)
        (%set-property this throw-exception-value b)))
 
     (def-swf-class block-exception-type "what goes here?"
-      %flash:object (block-exception-tag block-exception-value)
+      flash:object (block-exception-tag block-exception-value)
       ((a b)
        (%set-property this block-exception-tag a)
        (%set-property this block-exception-value b)))
 
     (def-swf-class go-exception-type "what goes here?"
-      %flash:object (go-exception-tag go-exception-index)
+      flash:object (go-exception-tag go-exception-index)
       ((a b)
        ;; fixme: index should be typed as int
        (%set-property this go-exception-tag a)
        (%set-property this go-exception-index b)))
 
     (swf-defmemfun %intern (package name)
-      (%new* %flash:q-name package name))
+      (%new* flash:q-name package name))
 
 
 
     (def-swf-class setf-namespace-type "what goes here?"
-      %flash:object (baz)
+      flash:object (baz)
       (()
        (%asm (:push-null))))
 
@@ -223,19 +205,9 @@
 
     ;; temp hack
     (c3* (gensym)
-      (defmacro defun-setf (name args  body)
-        (%swf-defun name args (list
-                               (loop for i in body
-                                     if (and (consp i) (eql (car i) 'cl))
-                                     collect (cadr i)
-                                     else
-                                     collect i #+nil(list 'quote i)))
-                    :method t
-                    :class-name 'setf-namespace-type
-                    :class-static t)
-        nil))
+)
     ;; debugging aid
     (swf-defmemfun ftrace (x)
-      (%flash:trace x))
+      (flash:trace x))
 
 )

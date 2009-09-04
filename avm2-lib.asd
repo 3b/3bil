@@ -5,8 +5,9 @@
                          "lib"
                          :serial t
                          :components
-                         ((:file "player-ffi-packages")
-                          (:file "player-ffi-defs")
+                         (;(:file "player-ffi-packages")
+                          ;(:file "player-ffi-defs")
+                          (:file "player-ffi-new")
                           (:file "cl")
                           (:file "cl-conses")
                           (:file "sicl-conditionals")
@@ -15,8 +16,10 @@
                           (:file "cl-arrays")
                           (:file "cl-sequences")
                           ;; temprorary hack for new compiler
-                          (:file "cl-new")
                           (:file "misc")
+                          (:file "cl-new")
                           (:file "sacla-loop")
+                          ;; misc extra stuff...
+                          (:file "fu")
                           )))
            :serial t)

@@ -19,7 +19,7 @@
 ;;;    wouldn't match CL sematics very well
 (let ((*symbol-table* *cl-symbol-table*))
   ;; todo: probably should figure out how to make this final/sealed/etc.
-  (def-swf-class cons-type "cons" %flash:object (%car %cdr)
+  (def-swf-class cons-type "cons" flash:object (%car %cdr)
                  ((a b)
                   (%set-property this %car a)
                   (%set-property this %cdr b)))

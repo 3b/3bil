@@ -8,7 +8,7 @@
 ;;; define this here for now instead of special-forms.lisp, as it needs %flash
 (defmethod %quote ((object symbol))
   ;; fixme: need to intern symbols somewhere, this doesn't make symbols that are EQ (though they are EQL with current implementation, which probably means EQL should be EQUAL)
-  (scompile `(%new* %flash:q-name
+  (scompile `(%new* flash:q-name
                     ,(package-name (symbol-package object))
                     ,(symbol-name object))))
 
@@ -16,10 +16,10 @@
 (let ((*symbol-table* *cl-symbol-table*))
 
   (swf-defmacro %apply (function this-arg rest-array)
-    `(%flash:apply ,function ,this-arg ,rest-array))
+    `(flash:apply ,function ,this-arg ,rest-array))
 
   (swf-defmacro %funcall (function this-arg &rest rest)
-    `(%flash:call ,function ,this-arg ,@rest))
+    `(flash:call ,function ,this-arg ,@rest))
 
   (swf-defmacro return (value)
     `(return-from nil ,value))
@@ -73,7 +73,7 @@
   (swf-defmemfun random (a)
     ;;todo: return int for int args
     ;;fixme: don't seem to be able to set seeds, so can't do random-state arg
-    (* (%flash:random) a))
+    (* (flash:math.random) a))
 
   (swf-defmemfun 1- (a)
     (- a 1))
@@ -82,20 +82,20 @@
 
   (swf-defmemfun floor (number)
     ;; todo implement optional divisor arg (need multiple values)
-    (%flash:floor number))
+    (flash:math.floor number))
 
   (swf-defmemfun cos (radians)
-    (%flash:cos radians))
+    (flash:math.cos radians))
   (swf-defmemfun sin (radians)
-    (%flash:sin radians))
+    (flash:math.sin radians))
   (swf-defmemfun tan (radians)
-    (%flash:tan radians))
+    (flash:math.tan radians))
 
   (swf-defmemfun min (&arest numbers)
-    (%apply (function %flash:min) nil numbers))
+    (%apply (function flash:math.min) nil numbers))
 
   (swf-defmemfun max (&arest numbers)
-    (%apply (function %flash:max) nil numbers))
+    (%apply (function flash:math.max) nil numbers))
 
   (swf-defmemfun eq (a b)
     (%asm (:get-local-1)
@@ -138,6 +138,8 @@
 
   (swf-defmacro incf (place &optional (delta 1))
     `(setf ,place (+ ,place ,delta)))
+  (swf-defmacro decf (place &optional (delta 1))
+    `(setf ,place (- ,place ,delta)))
 
   (swf-defmemfun zerop (x)
     (eql x 0))
@@ -181,4 +183,4 @@
 
 #+nil(let ((*symbol-table* (make-instance 'symbol-table :inherit (list *cl-symbol-table* *player-symbol-table*))))
    (dump-defun-asm (&arest rest)
-     (%apply (function %flash:max) nil rest)))
+     (%apply (function flash:max) nil rest)))

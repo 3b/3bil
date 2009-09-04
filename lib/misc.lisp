@@ -22,7 +22,38 @@
 
   (c3* :%%misc2
 
-    (defmacro defclass-swf (class-name (&optional (superclass-name '%flash:object))
+        (defmacro %new- (class &rest args)
+          (let ((name (typecase class
+                        (symbol
+                         (let ((c (find-swf-class class)))
+                           (assert c) ;; fixme: better error reporting
+                           (swf-name c)))
+                        (t class))))
+            `(%asm (:find-property-strict ,name)
+                   ,@(loop for i in args
+                        collect `(:@ ,i))
+                   (:comment "%new-")
+                   (:construct-prop ,name ,(length args)))))
+        (defmacro time (&body body)
+          (let ((now (gensym)))
+            `(let ((,now (%new- flash:date)))
+               ,@body
+               (ftrace
+                (s+ "[" ":" (/ (- (%new- flash:date) ,now) 1000.0) "sec]")))))
+
+      (defmacro defun-setf (name args  body)
+        (%swf-defun name args (list
+                               (loop for i in body
+                                     if (and (consp i) (eql (car i) 'cl))
+                                     collect (cadr i)
+                                     else
+                                     collect i #+nil(list 'quote i)))
+                    :method t
+                    :class-name 'setf-namespace-type
+                    :class-static t)
+        nil)
+
+    (defmacro defclass-swf (class-name (&optional (superclass-name 'flash:object))
                             (&rest slot-specifiers)
                             &rest class-options)
       (let ((properties nil)
@@ -159,10 +190,10 @@
       (let ((a (gensym)))
         (if (= 1 (length subscripts))
             `(let ((,a ,array))
-               (if (%typep ,a %flash:array)
+               (if (%typep ,a flash:array)
                    (%aref-1 ,a ,(first subscripts))
-                   (if (%typep ,a %flash:string)
-                       (%flash:char-at ,a 1)
+                   (if (%typep ,a flash:string)
+                       (flash:char-at ,a 1)
                        (if (%typep ,a not-simple-array-type)
                            (%aref-n ,a ,@subscripts)
                            (svref ,a ,@subscripts)))))
@@ -172,16 +203,29 @@
     #++
     (defun (setf aref) (value a subscript)
       ;; fixme: support multiple dimensions (need &rest, apply?)
-      (if (%typep a %flash:array)
+      (if (%typep a flash:array)
           (%set-aref-1 a subscript value)
-          (if (%typep a %flash:string)
+          (if (%typep a flash:string)
               ;; fixme: is there a better way to do this?
-              (%flash:concat (%flash:substr a 0 subscript)
+              (flash:concat (flash:substr a 0 subscript)
                              value
-                             (%flash:substr a (1+ subscript)))
+                             (flash:substr a (1+ subscript)))
               (if (%typep a not-simple-array-type)
                   (%setf-aref-n a subscript value)
                   (setf (svref a subscript) value)))))
+    (defun-setf aref (value a subscript)
+      ;; fixme: support multiple dimensions (need &rest, apply?)
+      (if (%typep a flash:array)
+          (%set-aref-1 a subscript value)
+          (if (%typep a flash:string)
+              ;; fixme: is there a better way to do this?
+              (flash:concat (flash:substr a 0 subscript)
+                             value
+                             (flash:substr a (1+ subscript)))
+              (if (%typep a not-simple-array-type)
+                  (%setf-aref-n a subscript value)
+                  (setf (svref a subscript) value)))))
+
     (defmacro %set-property (object property value)
       ;; (%set-property object property value) -> value
       (print`(%asm
@@ -201,7 +245,7 @@
   (defun length (sequence)
     (if (listp sequence)
         (list-length sequence)
-        ;; fixme: should probably be %flash:length instead of :length
+        ;; fixme: should probably be flash:length instead of :length
         (or (slot-value sequence :length) 0)))
 
     ;; ugly hack, just enough to make LOOP work...
@@ -245,22 +289,22 @@
               ,@body)))))
 
     (defun get-universal-time ()
-      (+ (floor (/ (%flash:get-time (%new- %flash:date)) 1000))
+      (+ (floor (/ (flash:get-time (%new- flash:date)) 1000))
          #. (encode-universal-time 0 0 0 1 1 1970 0)))
 
     #++(defmacro %exit-point-value ()
-      (%new- %flash:q-name "exit" "point"))
+      (%new- flash:q-name "exit" "point"))
 
     (defun copy-seq (seq)
       ;; fixme: handle specialized arrays once they are added
       (cond
-        ((stringp seq) (%new- %flash:string seq))
+        ((stringp seq) (%new- flash:string seq))
         ((consp seq) (copy-list seq))
         ;; fixme: signal TYPE-ERROR if not a sequence instead of assuming array
-        (t (%flash:slice seq))))
+        (t (flash:slice seq))))
 
     (defun stringp (s)
-      (%typep s %flash:string))
+      (%typep s flash:string))
 
 
 ))

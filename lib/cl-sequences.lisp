@@ -5,30 +5,30 @@
 (let ((*symbol-table* *cl-symbol-table*))
 
   ;;; fixme: handle strings in sequence functions
-  ;; reverse string = (%flash:join (%flash:reverse (%flash:split str "")) "")?
+  ;; reverse string = (flash:join (flash:reverse (flash:split str "")) "")?
   (swf-defmemfun reverse (sequence)
     (typecase sequence
       (cons-type (%reverse-list sequence))
-      (%flash:string (%flash:join (%flash:reverse (%flash:split sequence "")) ""))
-      (%flash:array (%flash:reverse (%flash:concat sequence)))))
+      (flash:string (flash:join (flash:reverse (flash:split sequence "")) ""))
+      (flash:array (flash:reverse (flash:concat sequence)))))
 
   (swf-defmemfun nreverse (sequence)
-    (if (%typep sequence %flash:array)
-        (%flash:reverse sequence)
+    (if (%typep sequence flash:array)
+        (flash:reverse sequence)
         (reverse sequence))) ;; fixme: add in-place list reverse
 
   #++
   (swf-defmemfun length (sequence)
     (if (listp sequence)
         (list-length sequence)
-        ;; fixme: should probably be %flash:length instead of :length
+        ;; fixme: should probably be flash:length instead of :length
         (%get-property sequence :length)))
 
   (swf-defmemfun delete (item sequence)
     ;; &key from-end test test-not start end count key
-   (if (%typep sequence %flash:array)
+   (if (%typep sequence flash:array)
         (%error "array DELETE not done yet...")
-        ;;(%flash:filter (lambda (x) (eql x item)) sequence)
+        ;;(flash:filter (lambda (x) (eql x item)) sequence)
         ;; fixme: avoid this temporary
        (let ((temp (cons nil sequence)))
          (do* ((a temp)
