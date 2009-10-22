@@ -31,7 +31,7 @@
   (destructuring-bind (n nid argtypes return-type flags asm
                          &key activation-slots class-name class-static anonymous)
       data
-    ;;(format t "--assemble-function ~s : ~s : ~s ~%" name n nid)
+    ;;(format t "--assemble-function ~s : ~s : ~s~%" name n nid)
     (let* ((traits (loop for (name index type) in activation-slots
                          ;;do (format t "trait = ~s ~s ~s ~%" name index type)
                          collect (make-instance
@@ -63,20 +63,23 @@
           ;; normal function
           (unless anonymous
               (push (list n mid) (function-names *compiler-context*)))))))
-
+;++
 (defun assemble-class (name ns super properties constructor instance-functions class-properties class-functions flags)
-  (let* ((constructor-mid (if (consp constructor)
-                              (avm2-asm::avm2-method
-                               nil 0 ;; id name
-                               (loop for i in (first constructor)
-                                  collect 0) ;; constructor arg types
-                               0 0
-                               :body
-                               (avm2-asm::assemble-method-body
-                                (%compile-defun name (first constructor)
-                                                (second constructor) t
-                                                (or (third constructor) t))))
-                              constructor))
+  (let* ((constructor-mid
+          (cond
+            #++((consp constructor)
+             (avm2-asm::avm2-method
+              nil 0 ;; id name
+              (loop for i in (first constructor)
+                 collect 0) ;; constructor arg types
+              0 0
+              :body
+              (avm2-asm::assemble-method-body
+               (%compile-defun name (first constructor)
+                               (second constructor) t
+                               (or (third constructor) t)))))
+            ((numberp constructor) constructor)
+            (t (avm2-asm::intern-method-id constructor))))
          ;; fixme: probably should make this configurable at some point
          (class-init (avm2-asm::avm2-method nil 0 nil 0 0 ;; meta-class init
                                           :body

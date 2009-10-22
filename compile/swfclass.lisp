@@ -2,6 +2,7 @@
 
 ;;;; code for defining vm level classes
 
+#+-
 (defmacro def-swf-class (name ns super (&rest properties) ((&rest constructor-args) &body constructor))
   `(progn
      (setf (gethash ',name (classes *symbol-table*))
@@ -18,6 +19,7 @@
      ,@(loop for p in properties
           collect `(add-swf-property ',p ',p))))
 
+#+-
 (defmacro def-swf-class* (name ns super (&rest properties) ((&rest constructor-args)  &body constructor))
   "def-swf-class with no automatic call to construct-super"
   `(progn
@@ -36,6 +38,7 @@
           collect `(add-swf-property ',p ',p))))
 
 ;; fixme:clean up these APIs
+#+-
 (defmacro def-swf-class** (name ns super (&key properties static-properties) ((&rest constructor-args) &body constructor))
   "def-swf-class with extra field for static members"
   `(progn

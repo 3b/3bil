@@ -7,85 +7,86 @@
 
 (let ((*symbol-table* *cl-symbol-table*))
 
-  ;; Function SUBLIS, NSUBLIS
+  (c3* (gensym)
+    ;; Function SUBLIS, NSUBLIS
 
-  ;; Function SUBST, SUBST-IF, SUBST-IF-NOT, NSUBST, NSUBST-IF, NSUBST-IF-NOT
+    ;; Function SUBST, SUBST-IF, SUBST-IF-NOT, NSUBST, NSUBST-IF, NSUBST-IF-NOT
 
-  ;; Function TREE-EQUAL
+    ;; Function TREE-EQUAL
 
-  ;; fixme: write iterative version of copy-list
-  (swf-defmemfun copy-list (list)
-    (%flet (do-copy (list)
-             (if (consp list)
-                 (cons (car list) (do-copy (cdr list)))
-                 list))
-      (if (not (listp list))
-          (%type-error "COPY-LIST" list)
-          (call-%flet do-copy list))))
+    ;; fixme: write iterative version of copy-list
+    (defun copy-list (list)
+      (flet ((do-copy (list)
+               (if (consp list)
+                   (cons (car list) (do-copy (cdr list)))
+                   list)))
+        (if (not (listp list))
+            (%type-error "COPY-LIST" list)
+            (do-copy list))))
 
-  (swf-defmemfun list (&arest rest)
-    (let ((list nil)
-          (length (%get-property rest :length)))
-      (dotimes (i length list)
-        (push (%aref-1 rest (- length i 1)) list))))
+    #+r(defun list (&arest rest)
+      (let ((list nil)
+            (length (%get-property rest :length)))
+        (dotimes (i length list)
+          (push (%aref-1 rest (- length i 1)) list))))
 
-  (swf-defmemfun list* (&arest rest)
-    (when (zerop (%get-property rest :length))
-      (%error "not enough arguments"))
-    (let* ((length (%get-property rest :length))
-           (list (%aref-1 rest (1- length))))
-      (dotimes (i (1- length) list)
-        (push (%aref-1 rest (- length i 2)) list))))
-
-
-
-
-  (swf-defmemfun list-length (list)
-    (if (endp list)
-        0
-        (let ((fast list)
-              (length 0))
-          (dolist (slow list)
-            (when (endp fast) (return length))
-            (when (endp (cdr fast)) (return  (+ length 1)))
-            (when (and (eq fast slow) (> length 0)) (return nil))
-            (incf length 2)
-            (setf fast (cddr fast))))))
-
-  ;; LISTP
-  (swf-defmemfun listp (a)
-    (or (%typep a cons-type) (eq a nil)))
+    #+r(defun list* (&arest rest)
+      (when (zerop (%get-property rest :length))
+        (%error "not enough arguments"))
+      (let* ((length (%get-property rest :length))
+             (list (%aref-1 rest (1- length))))
+        (dotimes (i (1- length) list)
+          (push (%aref-1 rest (- length i 2)) list))))
 
 
-  ;; Function MAKE-LIST
 
-  ;; PUSH, POP in cl-conses
 
-  ;; FIRST - TENTH in cl-conses
+    (defun list-length (list)
+      (if (endp list)
+          0
+          (let ((fast list)
+                (length 0))
+            (dolist (slow list)
+              (when (endp fast) (return length))
+              (when (endp (cdr fast)) (return  (+ length 1)))
+              (when (and (eq fast slow) (> length 0)) (return nil))
+              (incf length 2)
+              (setf fast (cddr fast))))))
 
-  (swf-defmemfun nth (n list)
-    (car (dotimes (x n list)
-           (setf list (cdr list)))))
+    ;; LISTP
+    (defun listp (a)
+      (or (%typep a cons-type) (eq a nil)))
 
-  ;; ENDP, NULL in cl-conses
-  (swf-defmemfun nconc (&arest lists)
-    (let* ((a (if (zerop (slot-value lists 'flash:length))
-                 nil
-                 (%aref-1 lists 0)))
-          (end (last a)))
-      (dotimes (i (1- (slot-value lists 'flash:length)) a)
-        (let ((next (%aref-1 lists (1+ i))))
-          (rplacd (last end) next)
-          (setf end next)))))
 
-  ;;Function APPEND
+    ;; Function MAKE-LIST
 
-  ;;Function REVAPPEND, NRECONC
+    ;; PUSH, POP in cl-conses
 
-  ;;Function BUTLAST, NBUTLAST
+    ;; FIRST - TENTH in cl-conses
 
-  ;; fixme: add optional count arg
-  (swf-defmemfun last (a)
+    (defun nth (n list)
+      (car (dotimes (x n list)
+             (setf list (cdr list)))))
+
+    ;; ENDP, NULL in cl-conses
+    #+r(defun nconc (&arest lists)
+      (let* ((a (if (zerop (slot-value lists 'flash:length))
+                    nil
+                    (%aref-1 lists 0)))
+             (end (last a)))
+        (dotimes (i (1- (slot-value lists 'flash:length)) a)
+          (let ((next (%aref-1 lists (1+ i))))
+            (rplacd (last end) next)
+            (setf end next)))))
+
+    ;;Function APPEND
+
+    ;;Function REVAPPEND, NRECONC
+
+    ;;Function BUTLAST, NBUTLAST
+
+    ;; fixme: add optional count arg
+    (defun last (a)
       (if (endp a)
           nil
           (tagbody
@@ -95,75 +96,76 @@
              (setf a (cdr a))
              (go :start))))
 
-  ;;Function LDIFF, TAILP
+    ;;Function LDIFF, TAILP
 
-  ;;Function NTHCDR
-  (swf-defmemfun nthcdr (n list)
-    (dotimes (a n list)
-      (setf list (cdr list))))
+    ;;Function NTHCDR
+    (defun nthcdr (n list)
+      (dotimes (a n list)
+        (setf list (cdr list))))
 
-  (swf-defmemfun rest (a)
-    (cdr a))
+    (defun rest (a)
+      (cdr a))
 
-  ;;Function MEMBER, MEMBER-IF, MEMBER-IF-NOT
+    ;;Function MEMBER, MEMBER-IF, MEMBER-IF-NOT
 
-  ;;Function MAPC, MAPCAR, MAPCAN, MAPL, MAPLIST, MAPCON
+    ;;Function MAPC, MAPCAR, MAPCAN, MAPL, MAPLIST, MAPCON
 
-  ;;Function ACONS
+    ;;Function ACONS
 
-  ;;Function ASSOC, ASSOC-IF, ASSOC-IF-NOT
+    ;;Function ASSOC, ASSOC-IF, ASSOC-IF-NOT
 
-  ;;Function COPY-ALIST
+    ;;Function COPY-ALIST
 
-  ;;Function PAIRLIS
+    ;;Function PAIRLIS
 
-  ;;Function RASSOC, RASSOC-IF, RASSOC-IF-NOT
+    ;;Function RASSOC, RASSOC-IF, RASSOC-IF-NOT
 
-  ;;Function GET-PROPERTIES
+    ;;Function GET-PROPERTIES
 
-  ;;Accessor GETF
+    ;;Accessor GETF
 
-  ;;Macro REMF
+    ;;Macro REMF
 
-  ;;Function INTERSECTION, NINTERSECTION
+    ;;Function INTERSECTION, NINTERSECTION
 
-  ;;Function ADJOIN
+    ;;Function ADJOIN
 
-  ;;Macro PUSHNEW
+    ;;Macro PUSHNEW
 
-  ;;Function SET-DIFFERENCE, NSET-DIFFERENCE
+    ;;Function SET-DIFFERENCE, NSET-DIFFERENCE
 
-  ;;Function SET-EXCLUSIVE-OR, NSET-EXCLUSIVE-OR
+    ;;Function SET-EXCLUSIVE-OR, NSET-EXCLUSIVE-OR
 
-  ;;Function SUBSETP
+    ;;Function SUBSETP
 
-  ;;Function UNION, NUNION
+    ;;Function UNION, NUNION
 
-  ;;misc
+    ;;misc
 
-  (swf-defmacro %reverse-list (list)
-    `(let ((reversed nil))
-      (dolist (value ,list reversed)
-        (push value reversed))))
+    (defmacro %reverse-list (list)
+      `(let ((reversed nil))
+         (dolist (value ,list reversed)
+           (push value reversed))))
 
-  ;; macro due to lack of &key in functions
-  (swf-defmacro %reduce-list (function sequence &key key from-end (start 0) end (initial-value nil initial-value-p))
-    `(let* ((list (if ,from-end
-                      (nthcdr ,start (%reverse-list ,sequence))
-                      (nthcdr ,start ,sequence)))
-            (count 0)
-            (result (cond
-                      ((,initial-value-p) ,initial-value)
-                      ((null list) (%funcall ,function nil))
-                      (t (prog1
-                             (car list)
-                           (incf count)
-                           (setf list (cdr list)))))))
-       (dolist (a list result)
-         (when (>= count ,end) (return result))
-         (setf result (if ,key
-                          (%funcall ,function nil result (%funcall ,key a))
-                          (%funcall ,function nil result a))))))
+    ;; macro due to lack of &key in functions
+    (defmacro %reduce-list (function sequence &key key from-end (start 0) end (initial-value nil initial-value-p))
+      `(let* ((list (if ,from-end
+                        (nthcdr ,start (%reverse-list ,sequence))
+                        (nthcdr ,start ,sequence)))
+              (count 0)
+              (result (cond
+                        ((,initial-value-p) ,initial-value)
+                        ((null list) (%funcall ,function nil))
+                        (t (prog1
+                               (car list)
+                             (incf count)
+                             (setf list (cdr list)))))))
+         (dolist (a list result)
+           (when (>= count ,end) (return result))
+           (setf result (if ,key
+                            (%funcall ,function nil result (%funcall ,key a))
+                            (%funcall ,function nil result a))))))
 
 
-)
+    
+    ))

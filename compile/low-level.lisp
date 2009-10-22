@@ -3,6 +3,7 @@
 ;;;; misc low level operators, mostly just renaming asm opcodes
 ;;; might not actually need most of these now, use %asm instead?
 
+#+-
 (defmacro define-0ary-ops (&body ops)
   `(progn
      ,@(loop for i in ops
@@ -10,6 +11,7 @@
                      (declare (ignore cdr))
                      '((,(second i)))))))
 
+#+-
 (define-0ary-ops
   (%break :breakpoint)
   (%nop :nop)
@@ -19,6 +21,7 @@
   (%push-null :push-null)
   )
 
+#+-
 (defmacro define-unary-ops (&body ops)
   `(progn
      ,@(loop for i in ops
@@ -27,6 +30,7 @@
                       (scompile (first cdr))
                       '((,(second i))))))))
 
+#+-
 (define-unary-ops
   (throw throw)
   (%1- :negate)
@@ -40,6 +44,7 @@
   (%to-string :convert-string)
 )
 
+#+-
 (define-special %1/ (value)
   (append
    '((:push-byte 1))
@@ -47,6 +52,7 @@
    '((:divide))))
 ;; (scompile '(%1/ 1.234))
 
+#+-
 (defmacro define-binops (&body ops)
   `(progn
      ,@(loop for i in ops
@@ -55,7 +61,7 @@
                       (scompile (first cdr))
                       (scompile (second cdr))
                       '((,(second i))))))))
-
+#+-
 (define-binops
   (mod :modulo)
   (lsh :lshift)

@@ -44,6 +44,7 @@
 ;; locally
 
 
+#+-
 (define-special* progn (cdr)
   (loop for rest on cdr
      for form = (car rest)
@@ -56,6 +57,7 @@
 ;; (scompile '(progn "foo" "bar" :true))
 
 
+#+-
 (define-special let (bindings &rest body)
   (let ((bindings-indices
          (loop for binding in bindings
@@ -81,6 +83,7 @@
                  collect `(:kill ,index))))))))
 ;; (with-lambda-context (:args '(foo)) (scompile '(let ((foo 1.23) (bar foo)) foo)))
 
+#+-
 (define-special %set-local (local value)
   ;; (%set-local var value) -> value
   `(,@(scompile value) ;; calculate value
@@ -88,6 +91,7 @@
       (:set-local ,(or (get-lambda-local-index local) (break)))))
 ;; (with-lambda-context (foo) (scompile '(%set-local foo 2.3)))
 
+#+-
 (define-special %asm (&rest cdr)
   ;; (%asm (op1 args) (op2 ...) ... )
   (mapcar (lambda (x)
@@ -100,6 +104,7 @@
               (otherwise x)))
           cdr))
 
+#+-
 (define-special %label (target)
   ;; (%label name) ;; for reverse jumps only
   `((:%label ,target)
@@ -107,16 +112,19 @@
     ;; removed later by peephole pass
     (:push-null)))
 
+#+-
 (define-special %dlabel (target)
   ;; (%dlabel name) ;; for forward jumps only
   `((:%dlabel ,target)
     (:push-null)))
 
+#+-
 (define-special %go (target)
   ;; (go asm-label)
   `((:jump ,target)
     (:push-null)))
 
+#+-
 (define-special* tagbody (body)
   (let ((tags (loop for tag-or-form in body
                  when (atom tag-or-form)
@@ -132,11 +140,13 @@
              and collect `(:pop))
           (:push-null)))))
 
+#+-
 (define-special go (tag)
   (scompile-cons '%go (list (get-lambda-tag tag))))
 
 ;; (with-lambda-context () (scompile '(tagbody foo (go baz) bar 1 baz 2)))
 
+#+-
 (define-special %if (cond false-test true-branch false-branch)
   (let ((false-label (gensym "%IF-FALSE-"))
         (end-label (gensym "%IF-END-")))
@@ -147,12 +157,14 @@
         (:%dlabel ,false-label)
         ,@(scompile false-branch)
         (:%dlabel ,end-label))))
+#+-
 
 (define-special if (cond true-branch false-branch)
   `(,@(scompile `(%if ,cond :if-false ,true-branch ,false-branch))))
 
 ;; (avm2-asm::with-assembler-context (avm2-asm::code (avm2-asm:assemble-method-body (scompile '(when :true 1)) )))
 
+#+-
 
 (define-special %inc-local-i (var)
   ;; (%inc-local-i var)
@@ -165,6 +177,7 @@
 ;;(scompile '(and 1))
 ;;(scompile '(and 1 2))
 
+#+-
 
 (define-special* %array (args)
   ;; (%array ... ) -> array
@@ -173,15 +186,18 @@
       (:new-array ,(length args))))
 
 
+#+-
 (define-special %error (value)
   `(,@(scompile value)
       (:throw)))
 
+#+-
 (define-special %typep (object type)
   `(,@(scompile object)
       (:get-lex ,(or (swf-name (find-swf-class type)) type))
       (:is-type-late )))
 
+#+-
 
 (define-special %type-of (object)
   `(,@(scompile object)
@@ -227,6 +243,7 @@
 
 
 ||#
+#+-
 (define-special block (name &body body)
   (let ((end (gensym "BLOCK-END-")))
     (with-nested-lambda-block ((cons name (make-lambda-block name end nil end))
@@ -236,6 +253,7 @@
           (:%dlabel ,end)
           (:get-local ,(get-lambda-local-index end))))))
 
+#+-
 (define-special %flet ((fn-name (&rest fn-args) &body fn-body) &body body)
   "limited version of flet, only handles 1 function, can't manipulate
 the function directly, can only call it within the current function,
@@ -283,6 +301,7 @@ call with %flet-call, which sets up hidden return label arg
         ;; compile main body
         ,@(scompile `(progn ,@body))))))
 
+#+-
 (define-special call-%flet (name &rest args)
   (let* ((continuation-label (gensym "CALL-%FLET-CONTINUATION-"))
          (continuation-index (add-lambda-local-continuation continuation-label))
@@ -302,6 +321,7 @@ call with %flet-call, which sets up hidden return label arg
       ;; get return value
       (:get-local ,(get-lambda-local-index (local-return-var *current-lambda*))))))
 
+#+-
 (define-special return-from (name &optional value)
   (let ((block (get-lambda-block name))
         (cleanups (get-lambda-cleanups name)))
@@ -314,10 +334,12 @@ call with %flet-call, which sets up hidden return label arg
              collect '(:pop))
        (:jump ,(end-label block)))))
 
+#+-
 (define-special %with-cleanup ((name code) form)
   (with-cleanup (name code)
     (scompile form)))
 
+#+-
 (define-special unwind-protect (protected &body cleanup)
   (let ((cleanup-name (gensym "UWP-CLEANUP-")))
       (scompile
@@ -333,12 +355,14 @@ call with %flet-call, which sets up hidden return label arg
 ;;(scompile '(list '(list 1 2 3)))
 
 ;;; internal aref, handles single dimensional flash::Array
+#+-
 (define-special %aref-1 (array index)
   `(,@(scompile array)
     ,@(scompile index)
       (:get-property (:multiname-l "" ""))))
 
 
+#+-
 (define-special %set-aref-1 (array index value)
   `(,@(scompile array)
     ,@(scompile index)
@@ -350,6 +374,7 @@ call with %flet-call, which sets up hidden return label arg
 ;;(scompile '(list* 1  2 3 4 5))
 ;;(scompile '(list* 1))
 
+#+-
 (define-special function (arg &optional object)
   ;; fixme: not all branches tested yet...
   (let ((tmp))
@@ -377,6 +402,7 @@ call with %flet-call, which sets up hidden return label arg
       (t
        (scompile `(%get-property-without-object ,arg))))))
 
+#+-
 (define-special quote (object)
   (%quote object))
 

@@ -2,6 +2,7 @@
 
 ;;; expand multiple arg math/comparison ops into chained binary ops
 
+#+-
 (defmacro define-transitive-binops (&body ops)
   (let ((i (gensym)))
     `(progn
@@ -25,6 +26,7 @@
                               collect `(,',opcode))
                            '((:coerce-any))))))))))
 
+#+-
 (define-transitive-binops
   (+ :add 0)
   (- :subtract nil %1-)
@@ -40,6 +42,7 @@
 ;;(scompile '(+ 1 2))
 ;;(scompile '(+ 1 2 3))
 
+#+-
 (defmacro define-compare-binops (&body ops)
   (let ((i (gensym))
         (j (gensym)))
@@ -69,6 +72,7 @@
                                 )
                            '((:coerce-any))))))))))
 
+#+-
 (define-compare-binops
     (< :less-than)
     (<= :less-equals)

@@ -10,7 +10,8 @@
        (scompile
         (progn ,@body)))))
 
-(defmacro swf-defmacro (name (&rest args) &body body)
+
+(defmacro %defmacro (name (&rest args) &body body)
   (let ((form (gensym))
         (environment (gensym)))
     `(add-swf-macro-function

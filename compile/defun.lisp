@@ -1,7 +1,7 @@
 (in-package :avm2-compiler)
 
 ;;;; defun and similar
-
+#+|?|
 (defun %compile-defun (name args body method constructor &key (nil-block t) debug-filename debug-line-number)
   ;; fixme: rename method arg, since it applies to normal function stoo?
   ;; fixme: is the nil-block stuff still valid?
@@ -26,6 +26,7 @@
              (:return-value)))
      (compile-lambda-context-cleanup))))
 
+#+|?|
 (defun %swf-defun (name args body &key class-name method constructor debug-filename debug-line-number class-static)
   ;; was pushnew, but that makes it hard to work on code (since can't
   ;; redefine things) push isn't quite right either, should replace
@@ -87,6 +88,7 @@
 ;;(format t "~{~s~%~}" (sixth (find-swf-function 'floor)))
 ;;(format t "~{~s~%~}" (avm2-asm::avm2-disassemble (avm2-asm:assemble (sixth (find-swf-function 'random)))))
 
+#+-
 (defun old-%swf-defun (name args body &key method constructor)
   (when (symbolp name)
     (setf name (avm2-asm::symbol-to-qname name)))
@@ -115,6 +117,7 @@
         (push (list name mid) (function-names *compiler-context*)))
       mid)))
 
+#+-
 (defmacro swf-defun (name (&rest args) &body body)
   `(%swf-defun ',name ',args (list
                             ,@(loop for i in body
@@ -124,6 +127,7 @@
                                  collect (list 'quote i)))
                :method t))
 
+#+-
 (defmacro swf-constructor (name (&rest args) &body body)
   `(%swf-defun ',name ',args (list
                             ,@(loop for i in body
@@ -134,6 +138,7 @@
                :constructor t))
 
 ;; fixme: remove this (replace with calls to swf-defun)
+#+-
 (defmacro swf-defmemfun (name (&rest args) &body body)
   `(%swf-defun ',name ',args (list
                             ,@(loop for i in body
@@ -146,6 +151,7 @@
                ;;:filename ,(namestring *compile-file-pathname*)
                :method t))
 
+#+-
 (defmacro swf-defun-in-class (name class (&rest args) &body body)
   `(%swf-defun ',name ',args (list
                             ,@(loop for i in body
@@ -159,13 +165,15 @@
                :method t
                :class-name ',class))
 
+;???
+#+|?|
 (defmacro swf-defun-in-class-static (name class (&rest args) &body body)
   `(%swf-defun ',name ',args (list
-                            ,@(loop for i in body
-                                 if (and (consp i) (eql (car i) 'cl))
-                                 collect (cadr i)
-                                 else
-                                 collect (list 'quote i)))
+                              ,@(loop for i in body
+                                   if (and (consp i) (eql (car i) 'cl))
+                                   collect (cadr i)
+                                   else
+                                   collect (list 'quote i)))
                ;; *compile-file-pathname* tends to not be worth
                ;; storing, so not wasting space on it for now...
                ;;:filename ,(namestring *compile-file-pathname*)
@@ -173,6 +181,7 @@
                :class-name ',class
                :class-static t))
 
+#+-
 (defmacro dump-defun-asm (args &body body)
   "debugging function to compile a defun to asm, and print results"
   (let ((asm (gensym)))

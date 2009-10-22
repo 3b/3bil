@@ -60,7 +60,7 @@
     (push (cons (local-return-var lc) (length (locals lc)))
           (locals lc))
     lc))
-
+;++
 (defun get-lambda-local-index (name)
   (let ((i (cdr (assoc name (locals *current-lambda*)))))
     #+nil(or i (break "missing local index in g-l-l-i: ~a" name))
@@ -71,32 +71,39 @@
 ;;; possibly would be better to track used indices separately from names
 ;;;  but still a bit of work to handle keeping indices used while
 ;;;  releasing names
+#++
 (defun kill-lambda-local-names (names)
   (loop for n in (if (listp names) names (list names))
      do (setf (car (assoc n (locals *current-lambda*)))
               (gensym)))
   nil)
 
+#++
 (defun get-lambda-block (name)
   (cdr (assoc name (blocks *current-lambda*))))
 
+#+-
 (defun get-lambda-tag (name)
   (cdr (assoc name (tags *current-lambda*))))
 
+#+-
 (defun get-lambda-local-continuation (label)
   (cdr (assoc label (continuations *current-lambda*))))
 
+#+-
 (defun add-lambda-local-continuation (label)
   (pushnew (cons label (length (continuations *current-lambda*)))
            (continuations *current-lambda*))
   (get-lambda-local-continuation label))
 
+#+-
 (defun get-lambda-cleanups (name)
   (loop for (n . block) in (blocks *current-lambda*)
      when (cleanup-label block)
      collect it
      until (eql n name)))
 
+;++
 (defmacro with-lambda-context ((&key args blocks tags name (parent *current-lambda*)) &body body)
   `(let* ((*current-lambda* (make-lambda-context
                              :args ,args
@@ -106,7 +113,7 @@
                              :parent ,parent)))
      ,@body))
 
-
+#+-
 (defmacro with-simple-lambda-context ((&rest args) &body body)
   `(let* ((*current-lambda* (make-lambda-context
                              :args ',args
@@ -115,6 +122,7 @@
      ,@body))
 
 ;;; not sure if this should be automatic or not, so putting here for now...
+;++
 (defun compile-lambda-context-cleanup ()
   "compile any code that should be after the body of the current
   lambda, (local functions, continuation table, etc)"
@@ -136,23 +144,25 @@
   ;;; know as much about *lambda-context* to add them by hand
   `(let ((*current-lambda* (make-nested-lambda-context *current-lambda*)))
      ,@body))
-
+#+-
 (defun last-local-index ()
   (length (locals *current-lambda*)))
 
-
+#+_
 (defclass lambda-block ()
   ((name :initarg :name :accessor name)
    (end-label :initarg :end-label :accessor end-label)
    (cleanup-label :initarg :cleanup-label :accessor cleanup-label)
    (return-var :initarg :return-var :accessor return-var)))
 
+#+-
 (defun make-lambda-block (name end cleanup var)
   (make-instance 'lambda-block :name name
                  :end-label end :cleanup-label cleanup
                  :return-var var))
 
 ;; fixme: generate these with a macro instead of copy-paste
+;++
 (defmacro with-local-vars ((bindings) &body body)
   (let ((old (gensym "OLD-VARS-")))
     `(let ((,old (locals *current-lambda*)))
@@ -163,6 +173,7 @@
               ,@body)
          (setf (locals *current-lambda*) ,old)))))
 
+#+-
 (defmacro with-nested-lambda-block ((block var) &body body)
   (let ((old (gensym "OLD-BLOCKS-")))
     `(with-local-vars ((list (cons ,var (last-local-index))))
@@ -173,7 +184,7 @@
                ,@body)
           (setf (blocks *current-lambda*) ,old))))))
 
-
+#+-
 (defmacro with-cleanup ((name cleanup) &body body)
   (let* ((var (gensym "WITH-CLEANUP-END-"))
          (old (gensym "OLD-BLOCKS-"))
@@ -190,6 +201,7 @@
                   ,@body)
              (setf (blocks *current-lambda*) ,old)))))))
 
+#+-
 (defmacro with-nested-lambda-tags ((tags) &body body)
   (let ((old (gensym "OLD-TAGS-")))
     `(let ((,old (tags *current-lambda*)))
@@ -202,12 +214,15 @@
 
 ;;; top level (internal?) compiler interface
 ;;; returns assembly corresponding to FORM
+#+-
 (defgeneric  scompile (form))
 
+#+-
 (defmethod scompile ((form string))
   `((:push-string ,form)
     (:coerce-any)))
 
+#+-
 (defmethod scompile ((form integer))
   ;; possibly should have more control than just assuming anything < 2^31
   ;; is int (as well as range checking, etc)
@@ -217,25 +232,29 @@
       `((:push-int ,form)
         (:coerce-any))))
 
+#+-
 (defmethod scompile ((form real))
   `((:push-double ,form)
     (:coerce-any)))
 
 
+#+-
 (defmethod scompile ((form simple-vector))
   `(,@(loop for i across form
          append (scompile i))
       (:new-array ,(length form))))
 
-
+#+-
 (defmethod %quote (object)
   ;; assuming anything without a special handler is self-evaluating for now
   (scompile object))
 
+#+-
 (defmethod %quote ((object cons))
   (scompile `(list ,@(loop for i in object
                         collect `(quote ,i)))))
 
+#+-
 (defmethod scompile ((form symbol))
   (let* ((i (get-lambda-local-index form))
         (constant (unless i (find-swf-constant form))))
@@ -247,12 +266,14 @@
        (%quote form))
       (t (error "unknown local ~s?" form)))))
 
+#+-
 (defmacro define-constants (&body constants)
   `(progn
      ,@(loop for i in constants
           collect `(defmethod scompile ((form (eql ,(car i))))
                      '((,(second i))
                        (:coerce-any))))))
+#+-
 (define-constants
   (:true :push-true)
   (t :push-true)
@@ -264,8 +285,10 @@
 
 ;;; interface for implementing special forms
 
+#+-
 (defgeneric scompile-cons (car cdr))
 
+#+-
 (defmethod scompile ((form cons))
   (let* ((cmacro (find-swf-cmacro-function (car form)))
          (macro (find-swf-macro-function (car form)))
@@ -276,6 +299,7 @@
             (scompile-cons (car form) (cdr form)))
         (scompile new-form))))
 
+#+-
 (defmacro define-special (name (&rest args) &body body)
   "define a special operator, destructuring form into ARGS"
   (let ((car (gensym "CAR"))
@@ -285,6 +309,7 @@
          ,@body))))
 
 
+#+-
 (defmacro define-special* (name (cdr) &body body)
   "define a special operator without any destructuring"
   (let ((car (gensym "CAR")))

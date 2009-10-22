@@ -8,6 +8,7 @@
                          (;(:file "player-ffi-packages")
                           ;(:file "player-ffi-defs")
                           (:file "player-ffi-new")
+                          (:file "bootstrap")
                           (:file "cl")
                           (:file "cl-conses")
                           (:file "sicl-conditionals")

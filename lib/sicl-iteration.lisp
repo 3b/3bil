@@ -83,90 +83,6 @@
       (cons (funcall function (car list))
 	    (local-mapcar function (cdr list)))))
 
-(let ((*symbol-table* *cl-symbol-table*))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Macros dolist and dotimes
-
-;;; The spec says that the variable is bound to nil when the
-;;; result-form is evaluated.  But we don't want the declarations to
-;;; have to include nil as one of the values of var.  For that reason,
-;;; there needs to be a different binding of the variable when the
-;;; forms of the body are evaluated and when the result-form is
-;;; evaluated.
-
-;;; The spec says we have a choice between binding or assigning the
-;;; variable in each iteration.  For dolist, choosing assignment gets
-;;; complicated in the first iteration though, because we would have
-;;; to come up with an initial value of the variable that is
-;;; compatible with the declarations.  For that reason, we choose to
-;;; bind it.
-
-
-  (swf-defmacro dolist ((var list-form &optional result-form) &body body)
-    (progn;; do some syntax checking
-      (unless (symbolp var)
-        (error 'expected-symbol :found var))
-      (unless (proper-list-p body)
-        (error 'malformed-body :body body))
-      (multiple-value-bind (declarations forms)
-          (split-body body)
-        (let ((start-tag (gensym "START"))
-              (end-tag (gensym "END"))
-              (list-var (gensym "LIST-VAR")))
-          `(let ((,list-var ,list-form)
-                 (,var nil))
-             ,@declarations
-             (block nil
-               (tagbody
-                  (when (endp ,list-var)
-                    (go ,end-tag))
-                  #+nil(%go-when (endp ,list-var) ,end-tag)
-                  ,start-tag
-                  (setq ,var (pop ,list-var))
-                  (tagbody ,@forms)
-                 (when ,list-var
-                    (go ,start-tag))
-                  #+nil(%go-when ,list-var ,start-tag)
-                  ,end-tag)
-               (let ((,var nil))
-                 #+nil(declare (ignorable ,var))
-                 ,result-form)))))))
-
-;;; For dotimes, we don't have the problem of initial value which is
-;;; always 0, so we can bind the variable once for the entire loop
-;;; body.
-
-  (swf-defmacro dotimes ((var count-form &optional result-form) &body body)
-    ;; do some syntax checking
-    (unless (symbolp var)
-      (error 'expected-symbol :found var))
-    (unless (proper-list-p body)
-      (error 'malformed-body :body body))
-    (multiple-value-bind (declarations forms)
-        (split-body body)
-      (let ((start-tag (gensym))
-            (end-tag (gensym))
-            (count-var (gensym)))
-        `(let ((,count-var ,count-form)
-               (,var 0))
-           #+nil(declare (type integer ,var))
-           ,@declarations
-           (block nil
-             (tagbody
-                (when (= ,var ,count-var)
-                  (go ,end-tag))
-                ,start-tag
-                (tagbody ,@forms)
-                (incf ,var)
-                (unless (= ,var ,count-var)
-                  (go ,start-tag))
-                ,end-tag)
-             (let ((,var nil))
-               #+nil(declare (ignorable ,var))
-               ,result-form))))))
-
   (defun check-variable-clauses (variable-clauses)
     (unless (proper-list-p variable-clauses)
       (error 'malformed-variable-clauses :found variable-clauses))
@@ -200,56 +116,148 @@
                      (extract-updates (cdr variable-clauses)))
               (extract-updates (cdr variable-clauses))))))
 
-  (swf-defmacro do (variable-clauses end-test &body body)
-    ;; do some syntax checking
-    (check-variable-clauses variable-clauses)
-    (unless (proper-list-p body)
-      (error 'malformed-body :body body))
-    (unless (and (proper-list-p end-test)
-                 (not (null end-test)))
-      (error 'malformed-end-test :found end-test))
-    (multiple-value-bind (declarations forms)
-        (split-body body)
-      (let ((start-tag (gensym)))
-        `(block nil
-           (let ,(extract-bindings variable-clauses)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; target code
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(let ((*symbol-table* *cl-symbol-table*))
+
+  (c3* (gensym)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Macros dolist and dotimes
+
+;;; The spec says that the variable is bound to nil when the
+;;; result-form is evaluated.  But we don't want the declarations to
+;;; have to include nil as one of the values of var.  For that reason,
+;;; there needs to be a different binding of the variable when the
+;;; forms of the body are evaluated and when the result-form is
+;;; evaluated.
+
+;;; The spec says we have a choice between binding or assigning the
+;;; variable in each iteration.  For dolist, choosing assignment gets
+;;; complicated in the first iteration though, because we would have
+;;; to come up with an initial value of the variable that is
+;;; compatible with the declarations.  For that reason, we choose to
+;;; bind it.
+
+
+    (defmacro dolist ((var list-form &optional result-form) &body body)
+      (progn ;; do some syntax checking
+        (unless (symbolp var)
+          (error 'expected-symbol :found var))
+        (unless (proper-list-p body)
+          (error 'malformed-body :body body))
+        (multiple-value-bind (declarations forms)
+            (split-body body)
+          (let ((start-tag (gensym "START"))
+                (end-tag (gensym "END"))
+                (list-var (gensym "LIST-VAR")))
+            `(let ((,list-var ,list-form)
+                   (,var nil))
+               ,@declarations
+               (block nil
+                 (tagbody
+                    (when (endp ,list-var)
+                      (go ,end-tag))
+                    #+nil(%go-when (endp ,list-var) ,end-tag)
+                    ,start-tag
+                    (setq ,var (pop ,list-var))
+                    (tagbody ,@forms)
+                    (when ,list-var
+                      (go ,start-tag))
+                    #+nil(%go-when ,list-var ,start-tag)
+                    ,end-tag)
+                 (let ((,var nil))
+                   #+nil(declare (ignorable ,var))
+                   ,result-form)))))))
+
+;;; For dotimes, we don't have the problem of initial value which is
+;;; always 0, so we can bind the variable once for the entire loop
+;;; body.
+
+    (defmacro dotimes ((var count-form &optional result-form) &body body)
+      ;; do some syntax checking
+      (unless (symbolp var)
+        (error 'expected-symbol :found var))
+      (unless (proper-list-p body)
+        (error 'malformed-body :body body))
+      (multiple-value-bind (declarations forms)
+          (split-body body)
+        (let ((start-tag (gensym))
+              (end-tag (gensym))
+              (count-var (gensym)))
+          `(let ((,count-var ,count-form)
+                 (,var 0))
+             #+nil(declare (type integer ,var))
              ,@declarations
-             (tagbody
-                ,start-tag
-                (when ,(car end-test)
-                  (return
-                    (progn ,@(cdr end-test))))
-                ,@forms
-                (psetq ,@(extract-updates variable-clauses))
-                (go ,start-tag)))))))
+             (block nil
+               (tagbody
+                  (when (= ,var ,count-var)
+                    (go ,end-tag))
+                  ,start-tag
+                  (tagbody ,@forms)
+                  (incf ,var)
+                  (unless (= ,var ,count-var)
+                    (go ,start-tag))
+                  ,end-tag)
+               (let ((,var nil))
+                 #+nil(declare (ignorable ,var))
+                 ,result-form))))))
 
-  (swf-defmacro do* (variable-clauses end-test &body body)
-    ;; do some syntax checking
-    (check-variable-clauses variable-clauses)
-    (unless (proper-list-p body)
-      (error 'malformed-body :body body))
-    (unless (and (proper-list-p end-test)
-                 (not (null end-test)))
-      (error 'malformed-end-test :found end-test))
-    (multiple-value-bind (declarations forms)
-        (split-body body)
-      (let ((start-tag (gensym)))
-        `(block nil
-           (let* ,(extract-bindings variable-clauses)
-             ,@declarations
-             (tagbody
-                ,start-tag
-                (when ,(car end-test)
-                  (return
-                    (progn ,@(cdr end-test))))
-                ,@forms
-                (setq ,@(extract-updates variable-clauses))
-                (go ,start-tag))))))))
+    (defmacro do (variable-clauses end-test &body body)
+      ;; do some syntax checking
+      (check-variable-clauses variable-clauses)
+      (unless (proper-list-p body)
+        (error 'malformed-body :body body))
+      (unless (and (proper-list-p end-test)
+                   (not (null end-test)))
+        (error 'malformed-end-test :found end-test))
+      (multiple-value-bind (declarations forms)
+          (split-body body)
+        (let ((start-tag (gensym)))
+          `(block nil
+             (let ,(extract-bindings variable-clauses)
+               ,@declarations
+               (tagbody
+                  ,start-tag
+                  (when ,(car end-test)
+                    (return
+                      (progn ,@(cdr end-test))))
+                  ,@forms
+                  (psetq ,@(extract-updates variable-clauses))
+                  (go ,start-tag)))))))
+
+    (defmacro do* (variable-clauses end-test &body body)
+      ;; do some syntax checking
+      (check-variable-clauses variable-clauses)
+      (unless (proper-list-p body)
+        (error 'malformed-body :body body))
+      (unless (and (proper-list-p end-test)
+                   (not (null end-test)))
+        (error 'malformed-end-test :found end-test))
+      (multiple-value-bind (declarations forms)
+          (split-body body)
+        (let ((start-tag (gensym)))
+          `(block nil
+             (let* ,(extract-bindings variable-clauses)
+               ,@declarations
+               (tagbody
+                  ,start-tag
+                  (when ,(car end-test)
+                    (return
+                      (progn ,@(cdr end-test))))
+                  ,@forms
+                  (setq ,@(extract-updates variable-clauses))
+                  (go ,start-tag)))))))
 
 
-#+nil(dump-defun-asm ()
-  (let (temp)
-    (dolist (a (cons "a" (cons "b" (cons "c" nil)))
-             temp)
-      (%set-local temp (+ temp (:to-string  a))))))
+    #+nil(dump-defun-asm ()
+           (let (temp)
+             (dolist (a (cons "a" (cons "b" (cons "c" nil)))
+                      temp)
+               (%set-local temp (+ temp (:to-string  a))))))
 
+    ))

@@ -6,16 +6,16 @@
 (let ((*symbol-table* *cl-symbol-table*))
 
   ;; temporary hacks for new compiler
-  (swf-defmacro defun (name args &body body)
-    `(%named-lambda ,name () ,args (block ,name ,@body)))
+  #++(swf-defmacro defun (name args &body body)
+       `(%named-lambda ,name () ,args (block ,name ,@body)))
 
-  (swf-defmacro defun-with-flags (name args &body body)
-    `(%named-lambda ,name () ,args (block ,name ,@body)))
+  #+-(swf-defmacro defun-with-flags (name args &body body)
+       `(%named-lambda ,name () ,args (block ,name ,@body)))
 
-  (swf-defmacro defun-asm (name args &body body)
-    (if (consp name)
-        `(%named-lambda ,(car name) ,(cdr name) ,args (%asm ,@body))
-        `(%named-lambda ,name () ,args (%asm ,@body))))
+  #+-(swf-defmacro defun-asm (name args &body body)
+       (if (consp name)
+           `(%named-lambda ,(car name) ,(cdr name) ,args (%asm ,@body))
+           `(%named-lambda ,name () ,args (%asm ,@body))))
 
   #+nil
   (swf-defmacro defmacro (name args &body body)
@@ -24,49 +24,57 @@
       (add-swf-macro-function
        name
        (coerce `(lambda (,form ,environment)
-         (declare (ignore ,environment))
-         (destructuring-bind ,args (cdr ,form)
-            ,@body)) 'function)))
+                  (declare (ignore ,environment))
+                  (destructuring-bind ,args (cdr ,form)
+                    ,@body)) 'function)))
     nil)
 
 
-    (swf-defmemfun funcall (x &arest args)
-      (flash:apply x nil args ))
+  (c3* (gensym)
+    #+r(defun funcall (x &arest args)
+         (flash:apply x nil args ))
 
-    (swf-defmemfun + (&arest x)
-      (let ((sum 0))
-        (dotimes (i (length x) sum)
-          (incf sum (aref x i)))))
-    (swf-defmemfun s+ (&arest x)
-      (let ((sum ""))
-        (dotimes (i (length x) sum)
-          (incf sum (aref x i)))))
+    #+r(defun + (&arest x)
+         (let ((sum 0))
+           (dotimes (i (length x) sum)
+             (incf sum (aref x i)))))
+
+    #+r(defun s+ (&arest x)
+         (let ((sum ""))
+           (dotimes (i (length x) sum)
+             (incf sum (aref x i)))))
 
 
-    (swf-defmemfun = (a &arest x)
-      (dotimes (i (length x) t)
-        (unless (eq a (aref x i)) ;; eql?
-          (return nil))))
+    #+r(defun = (a &arest x)
+         (dotimes (i (length x) t)
+           (unless (eq a (aref x i)) ;; eql?
+             (return nil))))
 
-    (swf-defmemfun < (a &arest x)
-      (dotimes (i (length x) t)
-        (when (%2>= a (aref x i)) (return nil))
-        (setf a (aref x i))))
-    (swf-defmemfun <= (a &arest x)
+    #+r(defun < (a &arest x)
+         (dotimes (i (length x) t)
+           (when (%2>= a (aref x i)) (return nil))
+           (setf a (aref x i))))
+
+    #+r
+    (defun <= (a &arest x)
       (dotimes (i (length x) t)
         (when (%2> a (aref x i)) (return nil))
         (setf a (aref x i))))
 
-    (swf-defmemfun > (a &arest x)
+    #+r
+    (defun > (a &arest x)
       (dotimes (i (length x) t)
         (when (%2<= a (aref x i)) (return nil))
         (setf a (aref x i))))
-    (swf-defmemfun >= (a &arest x)
+
+    #+r
+    (defun >= (a &arest x)
       (dotimes (i (length x) t)
         (when (%2< a (aref x i)) (return nil))
         (setf a (aref x i))))
 
-    (swf-defmemfun - (a &arest x)
+    #+r
+    (defun - (a &arest x)
       (let ((sum a))
         (if (= (length x) 0)
             (%asm (:@ a)
@@ -80,8 +88,8 @@
                       (:coerce-any)
                       (:dup)
                       (:@! sum)))))))
-
-    (swf-defmemfun / (a &arest x)
+    #+r
+    (defun / (a &arest x)
       (let ((sum a))
         (if (= (length x) 0)
             (%asm (:push-int 1)
@@ -97,8 +105,8 @@
                       (:dup)
                       (:@! sum)))))))
 
-
-    (swf-defmemfun * (&arest x)
+    #+r
+    (defun * (&arest x)
       (let ((sum 1))
         (dotimes (i (length x) sum)
           (let ((y (aref x i)))
@@ -109,105 +117,105 @@
                   (:dup)
                   (:@! sum))))))
 
-    (swf-defun type-of (o)
+    (defun type-of (o)
       (%type-of o))
 
-    (c3* :%%misc
-      (defun not (x)
-        (%asm
-          (:@ x)
-          (:not)))
+    
+    (defun not (x)
+      (%asm
+       (:@ x)
+       (:not)))
 
-      (defun mod (x y)
-        (%asm
-          (:@ x)
-          (:@ y)
-          (:modulo)))
+    (defun mod (x y)
+      (%asm
+       (:@ x)
+       (:@ y)
+       (:modulo)))
 
 
 
-        (defmacro %set-property- (object prop value)
-          `(%asm
-            (:@ ,value)
-            (:dup)
-            (:@ ,object)
-            (:swap)
-            (:set-property ,prop)))
-        (defmacro %get-property- (object prop)
-          `(%asm
-            (:@ ,object)
-            (:get-property ,prop)))
-        (defmacro %get-property-static (class prop)
-          `(%asm
-            (:get-global-scope)
-            (:get-property ,class)
-            (:get-property ,prop)))
-        (defmacro %set-property-static (class prop value)
-          `(%asm
-            (:@ ,value)
-            (:dup)
-            (:get-global-scope)
-            (:get-property ,class)
-            (:swap) ;; leave a copy of value on stack when done
-            (:set-property ,prop)))
+    (defmacro %set-property- (object prop value)
+      `(%asm
+        (:@ ,value)
+        (:dup)
+        (:@ ,object)
+        (:swap)
+        (:set-property ,prop)))
+    (defmacro %get-property- (object prop)
+      `(%asm
+        (:@ ,object)
+        (:get-property ,prop)))
+    (defmacro %get-property-static (class prop)
+      `(%asm
+        (:get-global-scope)
+        (:get-property ,class)
+        (:get-property ,prop)))
+    (defmacro %set-property-static (class prop value)
+      `(%asm
+        (:@ ,value)
+        (:dup)
+        (:get-global-scope)
+        (:get-property ,class)
+        (:swap) ;; leave a copy of value on stack when done
+        (:set-property ,prop)))
 
-        (defmacro %new-a (class &rest args)
-          (let ((name (typecase class
-                        (symbol
-                         (let ((c (find-swf-class class)))
-                           (assert c) ;; fixme: better error reporting
-                           (swf-name c)))
-                        (t class))))
-            `(%asm (:find-property-strict ,name)
-                   ,@(loop for i in args
-                        collect `(:@ ,i))
-                   (:construct-prop ,name ,(length args)))))
+    (defmacro %new-a (class &rest args)
+      (let ((name (typecase class
+                    (symbol
+                     (let ((c (find-swf-class class)))
+                       (assert c) ;; fixme: better error reporting
+                       (swf-name c)))
+                    (t class))))
+        `(%asm (:find-property-strict ,name)
+               ,@(loop for i in args
+                    collect `(:@ ,i))
+               (:construct-prop ,name ,(length args)))))
 
-)
 
-    ;;; internal junk
-    (swf-defmemfun %exit-point-value ()
-      (%new* flash:q-name "exit" "point"))
 
-    (def-swf-class throw-exception-type "what goes here?"
-      flash:object (throw-exception-tag throw-exception-value)
-      ((a b)
-       (%set-property this throw-exception-tag a)
-       (%set-property this throw-exception-value b)))
+;;; internal junk
+    (defun %exit-point-value ()
+      (%new- flash:q-name "exit" "point"))
 
-    (def-swf-class block-exception-type "what goes here?"
-      flash:object (block-exception-tag block-exception-value)
-      ((a b)
+    (defclass-swf throw-exception-type (flash:object)
+      (.throw-exception-tag .throw-exception-value)
+      (:fake-accessors t)
+      (:constructor (a b)
+        (setf (.throw-exception-tag this) a)
+        (setf (.throw-exception-value this) b)))
+
+    (defclass-swf block-exception-type (flash:object)
+      (block-exception-tag block-exception-value)
+      (:constructor (a b)
        (%set-property this block-exception-tag a)
        (%set-property this block-exception-value b)))
 
-    (def-swf-class go-exception-type "what goes here?"
-      flash:object (go-exception-tag go-exception-index)
-      ((a b)
+    (defclass-swf go-exception-type (flash:object)
+      (go-exception-tag go-exception-index)
+      (:constructor (a b)
        ;; fixme: index should be typed as int
        (%set-property this go-exception-tag a)
        (%set-property this go-exception-index b)))
 
-    (swf-defmemfun %intern (package name)
-      (%new* flash:q-name package name))
+    (defun %intern (package name)
+      (%new- flash:q-name package name))
 
 
 
-    (def-swf-class setf-namespace-type "what goes here?"
-      flash:object (baz)
-      (()
-       (%asm (:push-null))))
+    (defclass-swf setf-namespace-type (flash:object)
+      (baz)
+      (:constructor ()
+        (%asm (:push-null))))
 
-    (swf-defun-in-class-static foo setf-namespace-type (&arest args)
-      (ftrace (s+ " setf foo : " args)))
-    (swf-defun-in-class-static bar setf-namespace-type (&arest args)
-      (ftrace (s+ " setf bar : " args)))
-
-    ;; temp hack
-    (c3* (gensym)
-)
     ;; debugging aid
-    (swf-defmemfun ftrace (x)
-      (flash:trace x))
+    (defun ftrace (x)
+      (flash:trace x)))
+  #++
+  (swf-defun-in-class-static foo setf-namespace-type (&arest args)
+    (ftrace (s+ " setf foo : " args)))
+  #++
+  (swf-defun-in-class-static bar setf-namespace-type (&arest args)
+    (ftrace (s+ " setf bar : " args)))
+
 
 )

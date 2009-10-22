@@ -1,3 +1,9 @@
+lambda lists
+  &optional
+  &arest
+  &rest,&key?
+
+fix .asd names (combine some of them?)
 port libs to new compiler
 clean up old junk
 remove old compiler
@@ -7,6 +13,18 @@ document ffi gen?
 clean up line endings
 documentation?
 more libs?
+figure out (+ document/prioritize) what is missing from CL
+
+some way to split out host/target function definitions?
+
+figure out a workflow for working with xcompiled code?
+  goals:
+    make function defs/macros/etc show up in slime autodoc
+    avoid wrapping code in c3* or whatever (at worst, wrap loading of
+     entire files?)
+  longer-term goals:
+    hook into running instance, and allow updating code directly?
+    (or possibly just move straight to self hosting and slime support?)
 
 --
 specials
