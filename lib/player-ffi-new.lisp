@@ -17,410 +17,493 @@
    #:%substr
    #:%substring
    #:%to-string
-   #:+actionscript2+
-   #:+actionscript3+
-   #:+activate+
-   #:+activity+
-   #:+add+
-   #:+added+
-   #:+added-to-stage+
-   #:+advanced+
-   #:+air-prefix+
-   #:+all+
-   #:+all-but-last+
-   #:+all-including-last+
-   #:+alpha+
-   #:+alphanumeric-full+
-   #:+alphanumeric-half+
-   #:+always+
-   #:+amf0+
-   #:+amf3+
-   #:+any+
-   #:+append+
-   #:+arrow+
+   #:+action-script-version.actionscript2+
+   #:+action-script-version.actionscript3+
+   #:+activity-event.activity+
+   #:+anti-alias-type.advanced+
+   #:+anti-alias-type.normal+
+   #:+argument-error.length+
+   #:+array.caseinsensitive+
+   #:+array.descending+
+   #:+array.length+
+   #:+array.numeric+
+   #:+array.returnindexedarray+
+   #:+array.uniquesort+
    #:+as3+
-   #:+ascent+
-   #:+async-error+
-   #:+at-target+
-   #:+auto+
-   #:+axis-angle+
-   #:+backspace+
-   #:+best+
-   #:+bevel+
-   #:+big-endian+
-   #:+binary+
-   #:+bitmap-format+
-   #:+block+
-   #:+blue+
-   #:+bold+
-   #:+bold-italic+
-   #:+bool+
-   #:+bool2+
-   #:+bool3+
-   #:+bool4+
-   #:+bottom+
-   #:+bottom-left+
-   #:+bottom-right+
-   #:+bubbling-phase+
-   #:+button+
-   #:+camera+
-   #:+cancel+
-   #:+caps+
-   #:+caps-and-small-caps+
-   #:+caps-lock+
-   #:+capturing-phase+
-   #:+caseinsensitive+
-   #:+cdata-node+
-   #:+center+
-   #:+cff+
-   #:+change+
-   #:+chinese+
-   #:+clamp+
-   #:+clear+
-   #:+click+
-   #:+clone-only+
-   #:+clone-preferred+
-   #:+close+
-   #:+color+
-   #:+comment-node+
-   #:+common+
-   #:+complete+
-   #:+connect+
-   #:+connect-to-fms+
-   #:+control+
-   #:+copy+
-   #:+crt+
-   #:+curve-to+
-   #:+cut+
-   #:+dark-color+
-   #:+darken+
-   #:+data+
-   #:+deactivate+
-   #:+decimal+
-   #:+default+
-   #:+default-off+
-   #:+default-on+
-   #:+delete+
-   #:+descending+
-   #:+descent+
-   #:+device+
-   #:+difference+
-   #:+direct-connections+
-   #:+disk-error+
-   #:+display+
-   #:+document-type-node+
-   #:+double-click+
-   #:+down+
-   #:+dtostr-exponential+
-   #:+dtostr-fixed+
-   #:+dtostr-precision+
-   #:+dynamic+
-   #:+e+
-   #:+element-node+
-   #:+embedded+
-   #:+embedded-cff+
-   #:+emergency+
-   #:+end+
-   #:+enter+
-   #:+enter-frame+
-   #:+erase+
-   #:+error+
-   #:+escape+
-   #:+euler-angles+
-   #:+even-odd+
-   #:+exact-fit+
-   #:+exit-frame+
-   #:+exotic+
-   #:+f1+
-   #:+f10+
-   #:+f11+
-   #:+f12+
-   #:+f13+
-   #:+f14+
-   #:+f15+
-   #:+f2+
-   #:+f3+
-   #:+f4+
-   #:+f5+
-   #:+f6+
-   #:+f7+
-   #:+f8+
-   #:+f9+
-   #:+fast+
-   #:+file+
-   #:+file-list-format+
-   #:+flash-prefix+
+   #:+async-error-event.async-error+
+   #:+bitmap-data-channel.alpha+
+   #:+bitmap-data-channel.blue+
+   #:+bitmap-data-channel.green+
+   #:+bitmap-data-channel.red+
+   #:+bitmap-filter-quality.high+
+   #:+bitmap-filter-quality.low+
+   #:+bitmap-filter-quality.medium+
+   #:+bitmap-filter-type.full+
+   #:+bitmap-filter-type.inner+
+   #:+bitmap-filter-type.outer+
+   #:+blend-mode.add+
+   #:+blend-mode.alpha+
+   #:+blend-mode.darken+
+   #:+blend-mode.difference+
+   #:+blend-mode.erase+
+   #:+blend-mode.hardlight+
+   #:+blend-mode.invert+
+   #:+blend-mode.layer+
+   #:+blend-mode.lighten+
+   #:+blend-mode.multiply+
+   #:+blend-mode.normal+
+   #:+blend-mode.overlay+
+   #:+blend-mode.screen+
+   #:+blend-mode.shader+
+   #:+blend-mode.subtract+
+   #:+boolean.length+
+   #:+break-opportunity.all+
+   #:+break-opportunity.any+
+   #:+break-opportunity.auto+
+   #:+break-opportunity.none+
+   #:+caps-style.none+
+   #:+caps-style.round+
+   #:+caps-style.square+
+   #:+cff-hinting.horizontal-stem+
+   #:+cff-hinting.none+
+   #:+class.length+
+   #:+clipboard-formats.air-prefix+
+   #:+clipboard-formats.bitmap-format+
+   #:+clipboard-formats.file-list-format+
+   #:+clipboard-formats.flash-prefix+
+   #:+clipboard-formats.html-format+
+   #:+clipboard-formats.reference-prefix+
+   #:+clipboard-formats.rich-text-format+
+   #:+clipboard-formats.serialization-prefix+
+   #:+clipboard-formats.text-format+
+   #:+clipboard-formats.url-format+
+   #:+clipboard-transfer-mode.clone-only+
+   #:+clipboard-transfer-mode.clone-preferred+
+   #:+clipboard-transfer-mode.original-only+
+   #:+clipboard-transfer-mode.original-preferred+
+   #:+color-correction-support.default-off+
+   #:+color-correction-support.default-on+
+   #:+color-correction-support.unsupported+
+   #:+color-correction.default+
+   #:+color-correction.off+
+   #:+color-correction.on+
+   #:+content-element.graphic-element+
+   #:+context-menu-event.menu-item-select+
+   #:+context-menu-event.menu-select+
+   #:+data-event.data+
+   #:+data-event.upload-complete-data+
+   #:+date.length+
+   #:+definition-error.length+
+   #:+delete-object-sample.id+
+   #:+delete-object-sample.size+
+   #:+digit-case.default+
+   #:+digit-case.lining+
+   #:+digit-case.old-style+
+   #:+digit-width.default+
+   #:+digit-width.proportional+
+   #:+digit-width.tabular+
+   #:+displacement-map-filter-mode.clamp+
+   #:+displacement-map-filter-mode.color+
+   #:+displacement-map-filter-mode.ignore+
+   #:+displacement-map-filter-mode.wrap+
+   #:+endian.big-endian+
+   #:+endian.little-endian+
+   #:+error-event.error+
+   #:+error.length+
+   #:+eval-error.length+
+   #:+event-phase.at-target+
+   #:+event-phase.bubbling-phase+
+   #:+event-phase.capturing-phase+
+   #:+event.activate+
+   #:+event.added+
+   #:+event.added-to-stage+
+   #:+event.cancel+
+   #:+event.change+
+   #:+event.clear+
+   #:+event.close+
+   #:+event.complete+
+   #:+event.connect+
+   #:+event.copy+
+   #:+event.cut+
+   #:+event.deactivate+
+   #:+event.enter-frame+
+   #:+event.exit-frame+
+   #:+event.frame-constructed+
+   #:+event.fullscreen+
+   #:+event.id3+
+   #:+event.init+
+   #:+event.mouse-leave+
+   #:+event.open+
+   #:+event.paste+
+   #:+event.removed+
+   #:+event.removed-from-stage+
+   #:+event.render+
+   #:+event.resize+
+   #:+event.scroll+
+   #:+event.select+
+   #:+event.select-all+
+   #:+event.sound-complete+
+   #:+event.tab-children-change+
+   #:+event.tab-enabled-change+
+   #:+event.tab-index-change+
+   #:+event.unload+
    #:+flash-proxy+
-   #:+flash1+
-   #:+flash10+
-   #:+flash2+
-   #:+flash3+
-   #:+flash4+
-   #:+flash5+
-   #:+flash6+
-   #:+flash7+
-   #:+flash8+
-   #:+flash9+
-   #:+float+
-   #:+float2+
-   #:+float3+
-   #:+float4+
-   #:+flushed+
-   #:+focus-in+
-   #:+focus-out+
-   #:+frame-constructed+
-   #:+full+
-   #:+full-screen+
-   #:+fullscreen+
-   #:+get+
-   #:+graphic-element+
-   #:+green+
-   #:+hand+
-   #:+hardlight+
-   #:+high+
-   #:+home+
-   #:+horizontal+
-   #:+horizontal-stem+
-   #:+html-format+
-   #:+http-status+
-   #:+ibeam+
-   #:+id+
-   #:+id3+
-   #:+ideographic-bottom+
-   #:+ideographic-center+
-   #:+ideographic-top+
-   #:+ignore+
-   #:+ime-composition+
+   #:+focus-event.focus-in+
+   #:+focus-event.focus-out+
+   #:+focus-event.key-focus-change+
+   #:+focus-event.mouse-focus-change+
+   #:+font-lookup.device+
+   #:+font-lookup.embedded-cff+
+   #:+font-posture.italic+
+   #:+font-posture.normal+
+   #:+font-style.bold+
+   #:+font-style.bold-italic+
+   #:+font-style.italic+
+   #:+font-style.regular+
+   #:+font-type.device+
+   #:+font-type.embedded+
+   #:+font-type.embedded-cff+
+   #:+font-weight.bold+
+   #:+font-weight.normal+
+   #:+full-screen-event.full-screen+
+   #:+function.length+
+   #:+gradient-type.linear+
+   #:+gradient-type.radial+
+   #:+graphics-path-command.curve-to+
+   #:+graphics-path-command.line-to+
+   #:+graphics-path-command.move-to+
+   #:+graphics-path-command.no-op+
+   #:+graphics-path-command.wide-line-to+
+   #:+graphics-path-command.wide-move-to+
+   #:+graphics-path-winding.even-odd+
+   #:+graphics-path-winding.non-zero+
+   #:+grid-fit-type.none+
+   #:+grid-fit-type.pixel+
+   #:+grid-fit-type.subpixel+
+   #:+http-status-event.http-status+
+   #:+i-me-conversion-mode.alphanumeric-full+
+   #:+i-me-conversion-mode.alphanumeric-half+
+   #:+i-me-conversion-mode.chinese+
+   #:+i-me-conversion-mode.japanese-hiragana+
+   #:+i-me-conversion-mode.japanese-katakana-full+
+   #:+i-me-conversion-mode.japanese-katakana-half+
+   #:+i-me-conversion-mode.korean+
+   #:+i-me-conversion-mode.unknown+
+   #:+i-me-event.ime-composition+
+   #:+i-o-error-event.disk-error+
+   #:+i-o-error-event.io-error+
+   #:+i-o-error-event.network-error+
+   #:+i-o-error-event.verify-error+
    #:+infinity+
-   #:+init+
-   #:+inline+
-   #:+inner+
-   #:+input+
-   #:+insert+
-   #:+insufficient-width+
-   #:+int+
-   #:+int2+
-   #:+int3+
-   #:+int4+
-   #:+invalid+
-   #:+invert+
-   #:+io-error+
-   #:+italic+
-   #:+japanese-hiragana+
-   #:+japanese-katakana-full+
-   #:+japanese-katakana-half+
-   #:+justify+
-   #:+key-down+
-   #:+key-focus-change+
-   #:+key-up+
-   #:+korean+
-   #:+landscape+
-   #:+layer+
-   #:+lcd+
-   #:+left+
-   #:+length+
-   #:+light-color+
-   #:+lighten+
-   #:+line+
-   #:+line-to+
-   #:+linear+
-   #:+linear-rgb+
-   #:+lining+
-   #:+link+
-   #:+listener+
-   #:+little-endian+
-   #:+ln10+
-   #:+ln2+
-   #:+local-storage+
-   #:+local-trusted+
-   #:+local-with-file+
-   #:+local-with-network+
-   #:+log10-e+
-   #:+log2-e+
-   #:+low+
-   #:+lowercase+
-   #:+matrix2-x2+
-   #:+matrix3-x3+
-   #:+matrix4-x4+
-   #:+max-line-width+
-   #:+max-value+
-   #:+medium+
-   #:+menu-item-select+
-   #:+menu-select+
-   #:+methods+
-   #:+methods-and-lines+
-   #:+methods-and-lines-with-args+
-   #:+methods-with-args+
-   #:+microphone+
-   #:+min-value+
-   #:+minimum+
-   #:+miter+
-   #:+mouse-down+
-   #:+mouse-focus-change+
-   #:+mouse-leave+
-   #:+mouse-move+
-   #:+mouse-out+
-   #:+mouse-over+
-   #:+mouse-up+
-   #:+mouse-wheel+
-   #:+move-to+
-   #:+multiply+
-   #:+name+
+   #:+int.length+
+   #:+int.max-value+
+   #:+int.min-value+
+   #:+interpolation-method.linear-rgb+
+   #:+interpolation-method.rgb+
+   #:+joint-style.bevel+
+   #:+joint-style.miter+
+   #:+joint-style.round+
+   #:+justification-style.prioritize-least-adjustment+
+   #:+justification-style.push-in-kinsoku+
+   #:+justification-style.push-out-only+
+   #:+kerning.auto+
+   #:+kerning.off+
+   #:+kerning.on+
+   #:+key-location.left+
+   #:+key-location.num-pad+
+   #:+key-location.right+
+   #:+key-location.standard+
+   #:+keyboard-event.key-down+
+   #:+keyboard-event.key-up+
+   #:+keyboard.backspace+
+   #:+keyboard.caps-lock+
+   #:+keyboard.control+
+   #:+keyboard.delete+
+   #:+keyboard.down+
+   #:+keyboard.end+
+   #:+keyboard.enter+
+   #:+keyboard.escape+
+   #:+keyboard.f1+
+   #:+keyboard.f10+
+   #:+keyboard.f11+
+   #:+keyboard.f12+
+   #:+keyboard.f13+
+   #:+keyboard.f14+
+   #:+keyboard.f15+
+   #:+keyboard.f2+
+   #:+keyboard.f3+
+   #:+keyboard.f4+
+   #:+keyboard.f5+
+   #:+keyboard.f6+
+   #:+keyboard.f7+
+   #:+keyboard.f8+
+   #:+keyboard.f9+
+   #:+keyboard.home+
+   #:+keyboard.insert+
+   #:+keyboard.left+
+   #:+keyboard.numpad-0+
+   #:+keyboard.numpad-1+
+   #:+keyboard.numpad-2+
+   #:+keyboard.numpad-3+
+   #:+keyboard.numpad-4+
+   #:+keyboard.numpad-5+
+   #:+keyboard.numpad-6+
+   #:+keyboard.numpad-7+
+   #:+keyboard.numpad-8+
+   #:+keyboard.numpad-9+
+   #:+keyboard.numpad-add+
+   #:+keyboard.numpad-decimal+
+   #:+keyboard.numpad-divide+
+   #:+keyboard.numpad-enter+
+   #:+keyboard.numpad-multiply+
+   #:+keyboard.numpad-subtract+
+   #:+keyboard.page-down+
+   #:+keyboard.page-up+
+   #:+keyboard.right+
+   #:+keyboard.shift+
+   #:+keyboard.space+
+   #:+keyboard.tab+
+   #:+keyboard.up+
+   #:+ligature-level.common+
+   #:+ligature-level.exotic+
+   #:+ligature-level.minimum+
+   #:+ligature-level.none+
+   #:+ligature-level.uncommon+
+   #:+line-justification.all-but-last+
+   #:+line-justification.all-including-last+
+   #:+line-justification.unjustified+
+   #:+line-scale-mode.horizontal+
+   #:+line-scale-mode.none+
+   #:+line-scale-mode.normal+
+   #:+line-scale-mode.vertical+
+   #:+math.e+
+   #:+math.ln10+
+   #:+math.ln2+
+   #:+math.log10-e+
+   #:+math.log2-e+
+   #:+math.pi+
+   #:+math.sqrt1-2+
+   #:+math.sqrt2+
+   #:+mouse-cursor.arrow+
+   #:+mouse-cursor.auto+
+   #:+mouse-cursor.button+
+   #:+mouse-cursor.hand+
+   #:+mouse-cursor.ibeam+
+   #:+mouse-event.click+
+   #:+mouse-event.double-click+
+   #:+mouse-event.mouse-down+
+   #:+mouse-event.mouse-move+
+   #:+mouse-event.mouse-out+
+   #:+mouse-event.mouse-over+
+   #:+mouse-event.mouse-up+
+   #:+mouse-event.mouse-wheel+
+   #:+mouse-event.roll-out+
+   #:+mouse-event.roll-over+
+   #:+namespace.length+
    #:+nan+
-   #:+negative+
-   #:+negative-infinity+
-   #:+nellymoser+
-   #:+net-status+
-   #:+network-error+
-   #:+never+
-   #:+no-border+
-   #:+no-op+
-   #:+no-scale+
-   #:+non-zero+
-   #:+none+
-   #:+normal+
-   #:+num-pad+
-   #:+numeric+
-   #:+numpad-0+
-   #:+numpad-1+
-   #:+numpad-2+
-   #:+numpad-3+
-   #:+numpad-4+
-   #:+numpad-5+
-   #:+numpad-6+
-   #:+numpad-7+
-   #:+numpad-8+
-   #:+numpad-9+
-   #:+numpad-add+
-   #:+numpad-decimal+
-   #:+numpad-divide+
-   #:+numpad-enter+
-   #:+numpad-multiply+
-   #:+numpad-subtract+
-   #:+off+
-   #:+old-style+
-   #:+on+
-   #:+open+
-   #:+original-only+
-   #:+original-preferred+
-   #:+outer+
-   #:+overlay+
-   #:+pad+
-   #:+page-down+
-   #:+page-up+
-   #:+paste+
-   #:+pending+
-   #:+pi+
-   #:+pixel+
-   #:+portrait+
-   #:+positive+
-   #:+positive-infinity+
-   #:+possibly-invalid+
-   #:+post+
-   #:+prioritize-least-adjustment+
-   #:+privacy+
-   #:+processing-instruction-node+
-   #:+progress+
-   #:+proportional+
-   #:+push-in-kinsoku+
-   #:+push-out-only+
-   #:+quaternion+
-   #:+radial+
-   #:+red+
-   #:+reference-prefix+
-   #:+reflect+
-   #:+regular+
-   #:+remote+
-   #:+removed+
-   #:+removed-from-stage+
-   #:+render+
-   #:+repeat+
-   #:+reset+
-   #:+resize+
-   #:+returnindexedarray+
-   #:+rgb+
-   #:+rich-text-format+
-   #:+right+
-   #:+roll-out+
-   #:+roll-over+
-   #:+roman+
-   #:+rotate-0+
-   #:+rotate-180+
-   #:+rotate-270+
-   #:+rotate-90+
-   #:+round+
-   #:+sample-data+
-   #:+screen+
-   #:+scroll+
-   #:+security-error+
-   #:+select+
-   #:+select-all+
-   #:+serialization-prefix+
-   #:+settings-manager+
-   #:+shader+
-   #:+shift+
-   #:+show-all+
-   #:+size+
-   #:+small-caps+
-   #:+socket-data+
-   #:+sound-complete+
-   #:+space+
-   #:+speex+
-   #:+sqrt1-2+
-   #:+sqrt2+
-   #:+square+
-   #:+stack+
-   #:+standard+
-   #:+start+
-   #:+static+
-   #:+status+
-   #:+stop+
-   #:+subpixel+
-   #:+subtract+
-   #:+success+
-   #:+swap+
-   #:+switch+
-   #:+sync+
-   #:+tab+
-   #:+tab-children-change+
-   #:+tab-enabled-change+
-   #:+tab-index-change+
-   #:+tabular+
-   #:+text+
-   #:+text-format+
-   #:+text-input+
-   #:+text-node+
-   #:+time+
-   #:+timer+
-   #:+timer-complete+
-   #:+title+
-   #:+top+
-   #:+top-left+
-   #:+top-right+
-   #:+type+
-   #:+uncommon+
+   #:+net-status-event.net-status+
+   #:+net-stream-play-transitions.append+
+   #:+net-stream-play-transitions.reset+
+   #:+net-stream-play-transitions.stop+
+   #:+net-stream-play-transitions.swap+
+   #:+net-stream-play-transitions.switch+
+   #:+net-stream.connect-to-fms+
+   #:+net-stream.direct-connections+
+   #:+new-object-sample.id+
+   #:+new-object-sample.type+
+   #:+number.dtostr-exponential+
+   #:+number.dtostr-fixed+
+   #:+number.dtostr-precision+
+   #:+number.length+
+   #:+number.max-value+
+   #:+number.min-value+
+   #:+number.nan+
+   #:+number.negative-infinity+
+   #:+number.positive-infinity+
+   #:+object-encoding.amf0+
+   #:+object-encoding.amf3+
+   #:+object-encoding.default+
+   #:+object.length+
+   #:+orientation3-d.axis-angle+
+   #:+orientation3-d.euler-angles+
+   #:+orientation3-d.quaternion+
+   #:+pixel-snapping.always+
+   #:+pixel-snapping.auto+
+   #:+pixel-snapping.never+
+   #:+print-job-orientation.landscape+
+   #:+print-job-orientation.portrait+
+   #:+progress-event.progress+
+   #:+progress-event.socket-data+
+   #:+q-name.length+
+   #:+range-error.length+
+   #:+reference-error.length+
+   #:+reg-exp.length+
+   #:+rendering-mode.cff+
+   #:+rendering-mode.normal+
+   #:+sample-data-event.sample-data+
+   #:+sample.stack+
+   #:+sample.time+
+   #:+security-error-event.security-error+
+   #:+security-error.length+
+   #:+security-panel.camera+
+   #:+security-panel.default+
+   #:+security-panel.display+
+   #:+security-panel.local-storage+
+   #:+security-panel.microphone+
+   #:+security-panel.privacy+
+   #:+security-panel.settings-manager+
+   #:+security.local-trusted+
+   #:+security.local-with-file+
+   #:+security.local-with-network+
+   #:+security.remote+
+   #:+shader-event.complete+
+   #:+shader-parameter-type.bool+
+   #:+shader-parameter-type.bool2+
+   #:+shader-parameter-type.bool3+
+   #:+shader-parameter-type.bool4+
+   #:+shader-parameter-type.float+
+   #:+shader-parameter-type.float2+
+   #:+shader-parameter-type.float3+
+   #:+shader-parameter-type.float4+
+   #:+shader-parameter-type.int+
+   #:+shader-parameter-type.int2+
+   #:+shader-parameter-type.int3+
+   #:+shader-parameter-type.int4+
+   #:+shader-parameter-type.matrix2-x2+
+   #:+shader-parameter-type.matrix3-x3+
+   #:+shader-parameter-type.matrix4-x4+
+   #:+shader-precision.fast+
+   #:+shader-precision.full+
+   #:+shared-object-flush-status.flushed+
+   #:+shared-object-flush-status.pending+
+   #:+sound-codec.nellymoser+
+   #:+sound-codec.speex+
+   #:+spread-method.pad+
+   #:+spread-method.reflect+
+   #:+spread-method.repeat+
+   #:+stack-frame.file+
+   #:+stack-frame.line+
+   #:+stack-frame.name+
+   #:+stage-align.bottom+
+   #:+stage-align.bottom-left+
+   #:+stage-align.bottom-right+
+   #:+stage-align.left+
+   #:+stage-align.right+
+   #:+stage-align.top+
+   #:+stage-align.top-left+
+   #:+stage-align.top-right+
+   #:+stage-display-state.full-screen+
+   #:+stage-display-state.normal+
+   #:+stage-quality.best+
+   #:+stage-quality.high+
+   #:+stage-quality.low+
+   #:+stage-quality.medium+
+   #:+stage-scale-mode.exact-fit+
+   #:+stage-scale-mode.no-border+
+   #:+stage-scale-mode.no-scale+
+   #:+stage-scale-mode.show-all+
+   #:+status-event.status+
+   #:+string.length+
+   #:+swf-version.flash1+
+   #:+swf-version.flash10+
+   #:+swf-version.flash2+
+   #:+swf-version.flash3+
+   #:+swf-version.flash4+
+   #:+swf-version.flash5+
+   #:+swf-version.flash6+
+   #:+swf-version.flash7+
+   #:+swf-version.flash8+
+   #:+swf-version.flash9+
+   #:+sync-event.sync+
+   #:+syntax-error.length+
+   #:+tab-alignment.center+
+   #:+tab-alignment.decimal+
+   #:+tab-alignment.end+
+   #:+tab-alignment.start+
+   #:+text-baseline.ascent+
+   #:+text-baseline.descent+
+   #:+text-baseline.ideographic-bottom+
+   #:+text-baseline.ideographic-center+
+   #:+text-baseline.ideographic-top+
+   #:+text-baseline.roman+
+   #:+text-baseline.use-dominant-baseline+
+   #:+text-color-type.dark-color+
+   #:+text-color-type.light-color+
+   #:+text-display-mode.crt+
+   #:+text-display-mode.default+
+   #:+text-display-mode.lcd+
+   #:+text-event.link+
+   #:+text-event.text-input+
+   #:+text-field-auto-size.center+
+   #:+text-field-auto-size.left+
+   #:+text-field-auto-size.none+
+   #:+text-field-auto-size.right+
+   #:+text-field-type.dynamic+
+   #:+text-field-type.input+
+   #:+text-format-align.center+
+   #:+text-format-align.justify+
+   #:+text-format-align.left+
+   #:+text-format-align.right+
+   #:+text-format-display.block+
+   #:+text-format-display.inline+
+   #:+text-line-creation-result.complete+
+   #:+text-line-creation-result.emergency+
+   #:+text-line-creation-result.insufficient-width+
+   #:+text-line-creation-result.success+
+   #:+text-line-validity.invalid+
+   #:+text-line-validity.possibly-invalid+
+   #:+text-line-validity.static+
+   #:+text-line-validity.valid+
+   #:+text-line.max-line-width+
+   #:+text-rotation.auto+
+   #:+text-rotation.rotate-0+
+   #:+text-rotation.rotate-180+
+   #:+text-rotation.rotate-270+
+   #:+text-rotation.rotate-90+
+   #:+timer-event.timer+
+   #:+timer-event.timer-complete+
+   #:+trace.file+
+   #:+trace.listener+
+   #:+trace.methods+
+   #:+trace.methods-and-lines+
+   #:+trace.methods-and-lines-with-args+
+   #:+trace.methods-with-args+
+   #:+trace.off+
+   #:+triangle-culling.negative+
+   #:+triangle-culling.none+
+   #:+triangle-culling.positive+
+   #:+type-error.length+
+   #:+typographic-case.caps+
+   #:+typographic-case.caps-and-small-caps+
+   #:+typographic-case.default+
+   #:+typographic-case.lowercase+
+   #:+typographic-case.small-caps+
+   #:+typographic-case.title+
+   #:+typographic-case.uppercase+
+   #:+uint.length+
+   #:+uint.max-value+
+   #:+uint.min-value+
    #:+undefined+
-   #:+uniquesort+
-   #:+unjustified+
-   #:+unknown+
-   #:+unload+
-   #:+unsupported+
-   #:+up+
-   #:+upload-complete-data+
-   #:+uppercase+
-   #:+url-format+
-   #:+use-dominant-baseline+
-   #:+valid+
-   #:+variables+
-   #:+verify-error+
-   #:+vertical+
-   #:+wide-line-to+
-   #:+wide-move-to+
-   #:+wrap+
-   #:+x-axis+
-   #:+xml-declaration+
-   #:+y-axis+
-   #:+z-axis+
+   #:+uninitialized-error.length+
+   #:+uri-error.length+
+   #:+url-loader-data-format.binary+
+   #:+url-loader-data-format.text+
+   #:+url-loader-data-format.variables+
+   #:+url-request-method.get+
+   #:+url-request-method.post+
+   #:+vector3-d.x-axis+
+   #:+vector3-d.y-axis+
+   #:+vector3-d.z-axis+
+   #:+verify-error.length+
+   #:+xml-list.length+
+   #:+xml-node-type.cdata-node+
+   #:+xml-node-type.comment-node+
+   #:+xml-node-type.document-type-node+
+   #:+xml-node-type.element-node+
+   #:+xml-node-type.processing-instruction-node+
+   #:+xml-node-type.text-node+
+   #:+xml-node-type.xml-declaration+
+   #:+xml.length+
    #:.%error-id
    #:.%internal
    #:.a
@@ -2223,7 +2306,7 @@
   (avm2-compiler::declare-swf-class flash:object ()
     :swf-name "Object"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+object.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
     :properties
     ()
     :methods
@@ -2252,7 +2335,7 @@
   (avm2-compiler::declare-swf-class flash:class (object)
     :swf-name "Class"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+class.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
     :properties
     ((flash::prototype :SWF-NAME "prototype" :TYPE "*" :STATIC NIL :ACCESSOR
       flash:.prototype))
@@ -2261,7 +2344,8 @@
   (avm2-compiler::declare-swf-class flash:function (object)
     :swf-name "Function"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+function.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC
+      T))
     :properties
     ((flash::length :SWF-NAME "length" :TYPE "int" :STATIC NIL :ACCESSOR
       flash:.length)
@@ -2278,7 +2362,8 @@
   (avm2-compiler::declare-swf-class flash:namespace (object)
     :swf-name "Namespace"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "*" :VALUE "2" :STATIC T))
+    ((flash:+namespace.length+ :SWF-NAME "length" :TYPE "*" :VALUE "2" :STATIC
+      T))
     :properties
     ((flash::uri :SWF-NAME "uri" :TYPE "String" :STATIC NIL :ACCESSOR
       flash:.uri)
@@ -2292,7 +2377,8 @@
   (avm2-compiler::declare-swf-class flash:boolean (object)
     :swf-name "Boolean"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+boolean.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC
+      T))
     :properties
     ()
     :methods
@@ -2303,22 +2389,22 @@
   (avm2-compiler::declare-swf-class flash:number (object)
     :swf-name "Number"
     :constants
-    ((flash:+nan+ :SWF-NAME "NaN" :TYPE "Number" :VALUE "NOT-A-NUMBER" :STATIC
-      T)
-     (flash:+dtostr-exponential+ :SWF-NAME "Number::DTOSTR_EXPONENTIAL" :TYPE
-      "int" :VALUE "3" :STATIC T)
-     (flash:+max-value+ :SWF-NAME "MAX_VALUE" :TYPE "Number" :VALUE
+    ((flash:+number.nan+ :SWF-NAME "NaN" :TYPE "Number" :VALUE "NOT-A-NUMBER"
+      :STATIC T)
+     (flash:+number.dtostr-exponential+ :SWF-NAME "Number::DTOSTR_EXPONENTIAL"
+      :TYPE "int" :VALUE "3" :STATIC T)
+     (flash:+number.max-value+ :SWF-NAME "MAX_VALUE" :TYPE "Number" :VALUE
       "1.7976931348623157d308" :STATIC T)
-     (flash:+negative-infinity+ :SWF-NAME "NEGATIVE_INFINITY" :TYPE "Number"
-      :VALUE "NEGATIVE-INFINITY" :STATIC T)
-     (flash:+dtostr-precision+ :SWF-NAME "Number::DTOSTR_PRECISION" :TYPE "int"
-      :VALUE "2" :STATIC T)
-     (flash:+positive-infinity+ :SWF-NAME "POSITIVE_INFINITY" :TYPE "Number"
-      :VALUE "POSITIVE-INFINITY" :STATIC T)
-     (flash:+dtostr-fixed+ :SWF-NAME "Number::DTOSTR_FIXED" :TYPE "int" :VALUE
-      "1" :STATIC T)
-     (flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T)
-     (flash:+min-value+ :SWF-NAME "MIN_VALUE" :TYPE "Number" :VALUE
+     (flash:+number.negative-infinity+ :SWF-NAME "NEGATIVE_INFINITY" :TYPE
+      "Number" :VALUE "NEGATIVE-INFINITY" :STATIC T)
+     (flash:+number.dtostr-precision+ :SWF-NAME "Number::DTOSTR_PRECISION"
+      :TYPE "int" :VALUE "2" :STATIC T)
+     (flash:+number.positive-infinity+ :SWF-NAME "POSITIVE_INFINITY" :TYPE
+      "Number" :VALUE "POSITIVE-INFINITY" :STATIC T)
+     (flash:+number.dtostr-fixed+ :SWF-NAME "Number::DTOSTR_FIXED" :TYPE "int"
+      :VALUE "1" :STATIC T)
+     (flash:+number.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T)
+     (flash:+number.min-value+ :SWF-NAME "MIN_VALUE" :TYPE "Number" :VALUE
       "4.9406564584124654d-324" :STATIC T))
     :properties
     ()
@@ -2340,11 +2426,11 @@
   (avm2-compiler::declare-swf-class flash:int (object)
     :swf-name "int"
     :constants
-    ((flash:+max-value+ :SWF-NAME "MAX_VALUE" :TYPE "int" :VALUE "2147483647"
-      :STATIC T)
-     (flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T)
-     (flash:+min-value+ :SWF-NAME "MIN_VALUE" :TYPE "int" :VALUE "-2147483648"
-      :STATIC T))
+    ((flash:+int.max-value+ :SWF-NAME "MAX_VALUE" :TYPE "int" :VALUE
+      "2147483647" :STATIC T)
+     (flash:+int.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T)
+     (flash:+int.min-value+ :SWF-NAME "MIN_VALUE" :TYPE "int" :VALUE
+      "-2147483648" :STATIC T))
     :properties
     ()
     :methods
@@ -2361,10 +2447,11 @@
   (avm2-compiler::declare-swf-class flash:uint (object)
     :swf-name "uint"
     :constants
-    ((flash:+max-value+ :SWF-NAME "MAX_VALUE" :TYPE "uint" :VALUE
+    ((flash:+uint.max-value+ :SWF-NAME "MAX_VALUE" :TYPE "uint" :VALUE
       "4.294967295d9" :STATIC T)
-     (flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T)
-     (flash:+min-value+ :SWF-NAME "MIN_VALUE" :TYPE "uint" :VALUE "0" :STATIC T))
+     (flash:+uint.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T)
+     (flash:+uint.min-value+ :SWF-NAME "MIN_VALUE" :TYPE "uint" :VALUE "0"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -2381,7 +2468,7 @@
   (avm2-compiler::declare-swf-class flash:string (object)
     :swf-name "String"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+string.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
     :properties
     ((flash::length :SWF-NAME "length" :TYPE "int" :STATIC NIL :ACCESSOR
       flash:.length))
@@ -2462,16 +2549,17 @@
   (avm2-compiler::declare-swf-class flash:array (object)
     :swf-name "Array"
     :constants
-    ((flash:+descending+ :SWF-NAME "DESCENDING" :TYPE "uint" :VALUE "2" :STATIC
-      T)
-     (flash:+returnindexedarray+ :SWF-NAME "RETURNINDEXEDARRAY" :TYPE "uint"
-      :VALUE "8" :STATIC T)
-     (flash:+uniquesort+ :SWF-NAME "UNIQUESORT" :TYPE "uint" :VALUE "4" :STATIC
-      T)
-     (flash:+numeric+ :SWF-NAME "NUMERIC" :TYPE "uint" :VALUE "16" :STATIC T)
-     (flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T)
-     (flash:+caseinsensitive+ :SWF-NAME "CASEINSENSITIVE" :TYPE "uint" :VALUE
-      "1" :STATIC T))
+    ((flash:+array.descending+ :SWF-NAME "DESCENDING" :TYPE "uint" :VALUE "2"
+      :STATIC T)
+     (flash:+array.returnindexedarray+ :SWF-NAME "RETURNINDEXEDARRAY" :TYPE
+      "uint" :VALUE "8" :STATIC T)
+     (flash:+array.uniquesort+ :SWF-NAME "UNIQUESORT" :TYPE "uint" :VALUE "4"
+      :STATIC T)
+     (flash:+array.numeric+ :SWF-NAME "NUMERIC" :TYPE "uint" :VALUE "16"
+      :STATIC T)
+     (flash:+array.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T)
+     (flash:+array.caseinsensitive+ :SWF-NAME "CASEINSENSITIVE" :TYPE "uint"
+      :VALUE "1" :STATIC T))
     :properties
     ((flash::length :SWF-NAME "length" :TYPE "uint" :STATIC NIL :ACCESSOR
       flash:.length))
@@ -2798,9 +2886,12 @@
   (avm2-compiler::declare-swf-class flash::flash.sampler.stack-frame (object)
     :swf-name "flash.sampler::StackFrame"
     :constants
-    ((flash:+file+ :SWF-NAME "file" :TYPE "String" :VALUE "NIL" :STATIC NIL)
-     (flash:+name+ :SWF-NAME "name" :TYPE "String" :VALUE "NIL" :STATIC NIL)
-     (flash:+line+ :SWF-NAME "line" :TYPE "uint" :VALUE "NIL" :STATIC NIL))
+    ((flash:+stack-frame.file+ :SWF-NAME "file" :TYPE "String" :VALUE "NIL"
+      :STATIC NIL)
+     (flash:+stack-frame.name+ :SWF-NAME "name" :TYPE "String" :VALUE "NIL"
+      :STATIC NIL)
+     (flash:+stack-frame.line+ :SWF-NAME "line" :TYPE "uint" :VALUE "NIL"
+      :STATIC NIL))
     :properties
     ()
     :methods
@@ -2809,8 +2900,10 @@
   (avm2-compiler::declare-swf-class flash::flash.sampler.sample (object)
     :swf-name "flash.sampler::Sample"
     :constants
-    ((flash:+time+ :SWF-NAME "time" :TYPE "Number" :VALUE "NIL" :STATIC NIL)
-     (flash:+stack+ :SWF-NAME "stack" :TYPE "Array" :VALUE "NIL" :STATIC NIL))
+    ((flash:+sample.time+ :SWF-NAME "time" :TYPE "Number" :VALUE "NIL" :STATIC
+      NIL)
+     (flash:+sample.stack+ :SWF-NAME "stack" :TYPE "Array" :VALUE "NIL" :STATIC
+      NIL))
     :properties
     ()
     :methods
@@ -2818,8 +2911,10 @@
   (avm2-compiler::declare-swf-class flash::flash.sampler.new-object-sample (flash.sampler.sample)
     :swf-name "flash.sampler::NewObjectSample"
     :constants
-    ((flash:+id+ :SWF-NAME "id" :TYPE "Number" :VALUE "NIL" :STATIC NIL)
-     (flash:+type+ :SWF-NAME "type" :TYPE "Class" :VALUE "NIL" :STATIC NIL))
+    ((flash:+new-object-sample.id+ :SWF-NAME "id" :TYPE "Number" :VALUE "NIL"
+      :STATIC NIL)
+     (flash:+new-object-sample.type+ :SWF-NAME "type" :TYPE "Class" :VALUE
+      "NIL" :STATIC NIL))
     :properties
     ((flash::object :SWF-NAME "object" :TYPE "*" :STATIC NIL :ACCESSOR
       flash:.object))
@@ -2828,8 +2923,10 @@
   (avm2-compiler::declare-swf-class flash::flash.sampler.delete-object-sample (flash.sampler.sample)
     :swf-name "flash.sampler::DeleteObjectSample"
     :constants
-    ((flash:+id+ :SWF-NAME "id" :TYPE "Number" :VALUE "NIL" :STATIC NIL)
-     (flash:+size+ :SWF-NAME "size" :TYPE "Number" :VALUE "NIL" :STATIC NIL))
+    ((flash:+delete-object-sample.id+ :SWF-NAME "id" :TYPE "Number" :VALUE
+      "NIL" :STATIC NIL)
+     (flash:+delete-object-sample.size+ :SWF-NAME "size" :TYPE "Number" :VALUE
+      "NIL" :STATIC NIL))
     :properties
     ()
     :methods
@@ -2840,63 +2937,70 @@
   (avm2-compiler::declare-swf-class flash::flash.events.event (object)
     :swf-name "flash.events::Event"
     :constants
-    ((flash:+select+ :SWF-NAME "SELECT" :TYPE "String" :VALUE "select" :STATIC
-      T)
-     (flash:+activate+ :SWF-NAME "ACTIVATE" :TYPE "String" :VALUE "activate"
+    ((flash:+event.select+ :SWF-NAME "SELECT" :TYPE "String" :VALUE "select"
       :STATIC T)
-     (flash:+id3+ :SWF-NAME "ID3" :TYPE "String" :VALUE "id3" :STATIC T)
-     (flash:+copy+ :SWF-NAME "COPY" :TYPE "String" :VALUE "copy" :STATIC T)
-     (flash:+deactivate+ :SWF-NAME "DEACTIVATE" :TYPE "String" :VALUE
+     (flash:+event.activate+ :SWF-NAME "ACTIVATE" :TYPE "String" :VALUE
+      "activate" :STATIC T)
+     (flash:+event.id3+ :SWF-NAME "ID3" :TYPE "String" :VALUE "id3" :STATIC T)
+     (flash:+event.copy+ :SWF-NAME "COPY" :TYPE "String" :VALUE "copy" :STATIC
+      T)
+     (flash:+event.deactivate+ :SWF-NAME "DEACTIVATE" :TYPE "String" :VALUE
       "deactivate" :STATIC T)
-     (flash:+paste+ :SWF-NAME "PASTE" :TYPE "String" :VALUE "paste" :STATIC T)
-     (flash:+tab-index-change+ :SWF-NAME "TAB_INDEX_CHANGE" :TYPE "String"
-      :VALUE "tabIndexChange" :STATIC T)
-     (flash:+exit-frame+ :SWF-NAME "EXIT_FRAME" :TYPE "String" :VALUE
+     (flash:+event.paste+ :SWF-NAME "PASTE" :TYPE "String" :VALUE "paste"
+      :STATIC T)
+     (flash:+event.tab-index-change+ :SWF-NAME "TAB_INDEX_CHANGE" :TYPE
+      "String" :VALUE "tabIndexChange" :STATIC T)
+     (flash:+event.exit-frame+ :SWF-NAME "EXIT_FRAME" :TYPE "String" :VALUE
       "exitFrame" :STATIC T)
-     (flash:+removed-from-stage+ :SWF-NAME "REMOVED_FROM_STAGE" :TYPE "String"
-      :VALUE "removedFromStage" :STATIC T)
-     (flash:+added+ :SWF-NAME "ADDED" :TYPE "String" :VALUE "added" :STATIC T)
-     (flash:+mouse-leave+ :SWF-NAME "MOUSE_LEAVE" :TYPE "String" :VALUE
+     (flash:+event.removed-from-stage+ :SWF-NAME "REMOVED_FROM_STAGE" :TYPE
+      "String" :VALUE "removedFromStage" :STATIC T)
+     (flash:+event.added+ :SWF-NAME "ADDED" :TYPE "String" :VALUE "added"
+      :STATIC T)
+     (flash:+event.mouse-leave+ :SWF-NAME "MOUSE_LEAVE" :TYPE "String" :VALUE
       "mouseLeave" :STATIC T)
-     (flash:+close+ :SWF-NAME "CLOSE" :TYPE "String" :VALUE "close" :STATIC T)
-     (flash:+open+ :SWF-NAME "OPEN" :TYPE "String" :VALUE "open" :STATIC T)
-     (flash:+scroll+ :SWF-NAME "SCROLL" :TYPE "String" :VALUE "scroll" :STATIC
+     (flash:+event.close+ :SWF-NAME "CLOSE" :TYPE "String" :VALUE "close"
+      :STATIC T)
+     (flash:+event.open+ :SWF-NAME "OPEN" :TYPE "String" :VALUE "open" :STATIC
       T)
-     (flash:+connect+ :SWF-NAME "CONNECT" :TYPE "String" :VALUE "connect"
+     (flash:+event.scroll+ :SWF-NAME "SCROLL" :TYPE "String" :VALUE "scroll"
       :STATIC T)
-     (flash:+removed+ :SWF-NAME "REMOVED" :TYPE "String" :VALUE "removed"
+     (flash:+event.connect+ :SWF-NAME "CONNECT" :TYPE "String" :VALUE "connect"
       :STATIC T)
-     (flash:+select-all+ :SWF-NAME "SELECT_ALL" :TYPE "String" :VALUE
+     (flash:+event.removed+ :SWF-NAME "REMOVED" :TYPE "String" :VALUE "removed"
+      :STATIC T)
+     (flash:+event.select-all+ :SWF-NAME "SELECT_ALL" :TYPE "String" :VALUE
       "selectAll" :STATIC T)
-     (flash:+fullscreen+ :SWF-NAME "FULLSCREEN" :TYPE "String" :VALUE
+     (flash:+event.fullscreen+ :SWF-NAME "FULLSCREEN" :TYPE "String" :VALUE
       "fullScreen" :STATIC T)
-     (flash:+complete+ :SWF-NAME "COMPLETE" :TYPE "String" :VALUE "complete"
+     (flash:+event.complete+ :SWF-NAME "COMPLETE" :TYPE "String" :VALUE
+      "complete" :STATIC T)
+     (flash:+event.resize+ :SWF-NAME "RESIZE" :TYPE "String" :VALUE "resize"
       :STATIC T)
-     (flash:+resize+ :SWF-NAME "RESIZE" :TYPE "String" :VALUE "resize" :STATIC
-      T)
-     (flash:+change+ :SWF-NAME "CHANGE" :TYPE "String" :VALUE "change" :STATIC
-      T)
-     (flash:+clear+ :SWF-NAME "CLEAR" :TYPE "String" :VALUE "clear" :STATIC T)
-     (flash:+cut+ :SWF-NAME "CUT" :TYPE "String" :VALUE "cut" :STATIC T)
-     (flash:+tab-children-change+ :SWF-NAME "TAB_CHILDREN_CHANGE" :TYPE
+     (flash:+event.change+ :SWF-NAME "CHANGE" :TYPE "String" :VALUE "change"
+      :STATIC T)
+     (flash:+event.clear+ :SWF-NAME "CLEAR" :TYPE "String" :VALUE "clear"
+      :STATIC T)
+     (flash:+event.cut+ :SWF-NAME "CUT" :TYPE "String" :VALUE "cut" :STATIC T)
+     (flash:+event.tab-children-change+ :SWF-NAME "TAB_CHILDREN_CHANGE" :TYPE
       "String" :VALUE "tabChildrenChange" :STATIC T)
-     (flash:+frame-constructed+ :SWF-NAME "FRAME_CONSTRUCTED" :TYPE "String"
-      :VALUE "frameConstructed" :STATIC T)
-     (flash:+added-to-stage+ :SWF-NAME "ADDED_TO_STAGE" :TYPE "String" :VALUE
-      "addedToStage" :STATIC T)
-     (flash:+tab-enabled-change+ :SWF-NAME "TAB_ENABLED_CHANGE" :TYPE "String"
-      :VALUE "tabEnabledChange" :STATIC T)
-     (flash:+render+ :SWF-NAME "RENDER" :TYPE "String" :VALUE "render" :STATIC
+     (flash:+event.frame-constructed+ :SWF-NAME "FRAME_CONSTRUCTED" :TYPE
+      "String" :VALUE "frameConstructed" :STATIC T)
+     (flash:+event.added-to-stage+ :SWF-NAME "ADDED_TO_STAGE" :TYPE "String"
+      :VALUE "addedToStage" :STATIC T)
+     (flash:+event.tab-enabled-change+ :SWF-NAME "TAB_ENABLED_CHANGE" :TYPE
+      "String" :VALUE "tabEnabledChange" :STATIC T)
+     (flash:+event.render+ :SWF-NAME "RENDER" :TYPE "String" :VALUE "render"
+      :STATIC T)
+     (flash:+event.init+ :SWF-NAME "INIT" :TYPE "String" :VALUE "init" :STATIC
       T)
-     (flash:+init+ :SWF-NAME "INIT" :TYPE "String" :VALUE "init" :STATIC T)
-     (flash:+unload+ :SWF-NAME "UNLOAD" :TYPE "String" :VALUE "unload" :STATIC
-      T)
-     (flash:+sound-complete+ :SWF-NAME "SOUND_COMPLETE" :TYPE "String" :VALUE
-      "soundComplete" :STATIC T)
-     (flash:+enter-frame+ :SWF-NAME "ENTER_FRAME" :TYPE "String" :VALUE
+     (flash:+event.unload+ :SWF-NAME "UNLOAD" :TYPE "String" :VALUE "unload"
+      :STATIC T)
+     (flash:+event.sound-complete+ :SWF-NAME "SOUND_COMPLETE" :TYPE "String"
+      :VALUE "soundComplete" :STATIC T)
+     (flash:+event.enter-frame+ :SWF-NAME "ENTER_FRAME" :TYPE "String" :VALUE
       "enterFrame" :STATIC T)
-     (flash:+cancel+ :SWF-NAME "CANCEL" :TYPE "String" :VALUE "cancel" :STATIC
-      T))
+     (flash:+event.cancel+ :SWF-NAME "CANCEL" :TYPE "String" :VALUE "cancel"
+      :STATIC T))
     :properties
     ((flash::type :SWF-NAME "type" :TYPE "String" :STATIC NIL :ACCESSOR
       flash:.type)
@@ -2931,9 +3035,10 @@
   (avm2-compiler::declare-swf-class flash::flash.events.text-event (flash.events.event)
     :swf-name "flash.events::TextEvent"
     :constants
-    ((flash:+link+ :SWF-NAME "LINK" :TYPE "String" :VALUE "link" :STATIC T)
-     (flash:+text-input+ :SWF-NAME "TEXT_INPUT" :TYPE "String" :VALUE
-      "textInput" :STATIC T))
+    ((flash:+text-event.link+ :SWF-NAME "LINK" :TYPE "String" :VALUE "link"
+      :STATIC T)
+     (flash:+text-event.text-input+ :SWF-NAME "TEXT_INPUT" :TYPE "String"
+      :VALUE "textInput" :STATIC T))
     :properties
     ((flash::text :SWF-NAME "text" :TYPE "String" :STATIC NIL :ACCESSOR
       flash:.text))
@@ -2948,7 +3053,8 @@
   (avm2-compiler::declare-swf-class flash::flash.events.error-event (flash.events.text-event)
     :swf-name "flash.events::ErrorEvent"
     :constants
-    ((flash:+error+ :SWF-NAME "ERROR" :TYPE "String" :VALUE "error" :STATIC T))
+    ((flash:+error-event.error+ :SWF-NAME "ERROR" :TYPE "String" :VALUE "error"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -2962,8 +3068,8 @@
   (avm2-compiler::declare-swf-class flash::flash.events.async-error-event (flash.events.error-event)
     :swf-name "flash.events::AsyncErrorEvent"
     :constants
-    ((flash:+async-error+ :SWF-NAME "ASYNC_ERROR" :TYPE "String" :VALUE
-      "asyncError" :STATIC T))
+    ((flash:+async-error-event.async-error+ :SWF-NAME "ASYNC_ERROR" :TYPE
+      "String" :VALUE "asyncError" :STATIC T))
     :properties
     ((flash::error :SWF-NAME "error" :TYPE "Error" :STATIC NIL :ACCESSOR
       flash:.error))
@@ -3088,7 +3194,7 @@
   (avm2-compiler::declare-swf-class flash:error (object)
     :swf-name "Error"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
     :properties
     ((flash::name :SWF-NAME "name" :TYPE "*" :STATIC NIL :ACCESSOR flash:.name)
      (flash::message :SWF-NAME "message" :TYPE "*" :STATIC NIL :ACCESSOR
@@ -3107,7 +3213,8 @@
   (avm2-compiler::declare-swf-class flash:definition-error (error)
     :swf-name "DefinitionError"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+definition-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -3115,7 +3222,8 @@
   (avm2-compiler::declare-swf-class flash:eval-error (error)
     :swf-name "EvalError"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+eval-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -3123,7 +3231,8 @@
   (avm2-compiler::declare-swf-class flash:range-error (error)
     :swf-name "RangeError"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+range-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -3131,7 +3240,8 @@
   (avm2-compiler::declare-swf-class flash:reference-error (error)
     :swf-name "ReferenceError"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+reference-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -3139,7 +3249,8 @@
   (avm2-compiler::declare-swf-class flash:security-error (error)
     :swf-name "SecurityError"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+security-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -3147,7 +3258,8 @@
   (avm2-compiler::declare-swf-class flash:syntax-error (error)
     :swf-name "SyntaxError"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+syntax-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -3155,7 +3267,8 @@
   (avm2-compiler::declare-swf-class flash:type-error (error)
     :swf-name "TypeError"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+type-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -3163,7 +3276,8 @@
   (avm2-compiler::declare-swf-class flash:uri-error (error)
     :swf-name "URIError"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+uri-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -3171,7 +3285,8 @@
   (avm2-compiler::declare-swf-class flash:verify-error (error)
     :swf-name "VerifyError"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+verify-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -3179,7 +3294,8 @@
   (avm2-compiler::declare-swf-class flash:uninitialized-error (error)
     :swf-name "UninitializedError"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+uninitialized-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE
+      "1" :STATIC T))
     :properties
     ()
     :methods
@@ -3187,7 +3303,8 @@
   (avm2-compiler::declare-swf-class flash:argument-error (error)
     :swf-name "ArgumentError"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+argument-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -3198,8 +3315,10 @@
   (avm2-compiler::declare-swf-class flash::flash.display.shader-precision (object)
     :swf-name "flash.display::ShaderPrecision"
     :constants
-    ((flash:+full+ :SWF-NAME "FULL" :TYPE "String" :VALUE "full" :STATIC T)
-     (flash:+fast+ :SWF-NAME "FAST" :TYPE "String" :VALUE "fast" :STATIC T))
+    ((flash:+shader-precision.full+ :SWF-NAME "FULL" :TYPE "String" :VALUE
+      "full" :STATIC T)
+     (flash:+shader-precision.fast+ :SWF-NAME "FAST" :TYPE "String" :VALUE
+      "fast" :STATIC T))
     :properties
     ()
     :methods
@@ -3210,21 +3329,21 @@
   (avm2-compiler::declare-swf-class flash:math (object)
     :swf-name "Math"
     :constants
-    ((flash:+pi+ :SWF-NAME "PI" :TYPE "Number" :VALUE "3.141592653589793d0"
-      :STATIC T)
-     (flash:+log2-e+ :SWF-NAME "LOG2E" :TYPE "Number" :VALUE
+    ((flash:+math.pi+ :SWF-NAME "PI" :TYPE "Number" :VALUE
+      "3.141592653589793d0" :STATIC T)
+     (flash:+math.log2-e+ :SWF-NAME "LOG2E" :TYPE "Number" :VALUE
       "1.4426950408889634d0" :STATIC T)
-     (flash:+ln2+ :SWF-NAME "LN2" :TYPE "Number" :VALUE "0.6931471805599453d0"
-      :STATIC T)
-     (flash:+log10-e+ :SWF-NAME "LOG10E" :TYPE "Number" :VALUE
+     (flash:+math.ln2+ :SWF-NAME "LN2" :TYPE "Number" :VALUE
+      "0.6931471805599453d0" :STATIC T)
+     (flash:+math.log10-e+ :SWF-NAME "LOG10E" :TYPE "Number" :VALUE
       "0.4342944819032518d0" :STATIC T)
-     (flash:+ln10+ :SWF-NAME "LN10" :TYPE "Number" :VALUE "2.302585092994046d0"
-      :STATIC T)
-     (flash:+sqrt2+ :SWF-NAME "SQRT2" :TYPE "Number" :VALUE
+     (flash:+math.ln10+ :SWF-NAME "LN10" :TYPE "Number" :VALUE
+      "2.302585092994046d0" :STATIC T)
+     (flash:+math.sqrt2+ :SWF-NAME "SQRT2" :TYPE "Number" :VALUE
       "1.4142135623730951d0" :STATIC T)
-     (flash:+sqrt1-2+ :SWF-NAME "SQRT1_2" :TYPE "Number" :VALUE
+     (flash:+math.sqrt1-2+ :SWF-NAME "SQRT1_2" :TYPE "Number" :VALUE
       "0.7071067811865476d0" :STATIC T)
-     (flash:+e+ :SWF-NAME "E" :TYPE "Number" :VALUE "2.718281828459045d0"
+     (flash:+math.e+ :SWF-NAME "E" :TYPE "Number" :VALUE "2.718281828459045d0"
       :STATIC T))
     :properties
     ()
@@ -3277,7 +3396,8 @@
   (avm2-compiler::declare-swf-class flash:reg-exp (object)
     :swf-name "RegExp"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+reg-exp.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC
+      T))
     :properties
     ((flash::dotall :SWF-NAME "dotall" :TYPE "Boolean" :STATIC NIL :ACCESSOR
       flash:.dotall)
@@ -3402,8 +3522,8 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.content-element (object)
     :swf-name "flash.text.engine::ContentElement"
     :constants
-    ((flash:+graphic-element+ :SWF-NAME "GRAPHIC_ELEMENT" :TYPE "uint" :VALUE
-      "65007" :STATIC T))
+    ((flash:+content-element.graphic-element+ :SWF-NAME "GRAPHIC_ELEMENT" :TYPE
+      "uint" :VALUE "65007" :STATIC T))
     :properties
     ((flash::group-element :SWF-NAME "groupElement" :TYPE
       "flash.text.engine::GroupElement" :STATIC NIL :ACCESSOR
@@ -3828,7 +3948,7 @@
   (avm2-compiler::declare-swf-class flash:xml (object)
     :swf-name "XML"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "*" :VALUE "1" :STATIC T))
+    ((flash:+xml.length+ :SWF-NAME "length" :TYPE "*" :VALUE "1" :STATIC T))
     :properties
     ((flash::ignore-whitespace :SWF-NAME "ignoreWhitespace" :TYPE "Boolean"
       :STATIC T :ACCESSOR flash:.ignore-whitespace)
@@ -3929,7 +4049,7 @@
   (avm2-compiler::declare-swf-class flash:xml-list (object)
     :swf-name "XMLList"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "*" :VALUE "1" :STATIC T))
+    ((flash:+xml-list.length+ :SWF-NAME "length" :TYPE "*" :VALUE "1" :STATIC T))
     :properties
     ()
     :methods
@@ -4010,7 +4130,7 @@
   (avm2-compiler::declare-swf-class flash:q-name (object)
     :swf-name "QName"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "*" :VALUE "2" :STATIC T))
+    ((flash:+q-name.length+ :SWF-NAME "length" :TYPE "*" :VALUE "2" :STATIC T))
     :properties
     ((flash::local-name :SWF-NAME "localName" :TYPE "String" :STATIC NIL
       :ACCESSOR flash:.local-name)
@@ -4026,18 +4146,22 @@
   (avm2-compiler::declare-swf-class flash::flash.display.stage-align (object)
     :swf-name "flash.display::StageAlign"
     :constants
-    ((flash:+right+ :SWF-NAME "RIGHT" :TYPE "String" :VALUE "R" :STATIC T)
-     (flash:+bottom-left+ :SWF-NAME "BOTTOM_LEFT" :TYPE "String" :VALUE "BL"
+    ((flash:+stage-align.right+ :SWF-NAME "RIGHT" :TYPE "String" :VALUE "R"
       :STATIC T)
-     (flash:+top+ :SWF-NAME "TOP" :TYPE "String" :VALUE "T" :STATIC T)
-     (flash:+top-right+ :SWF-NAME "TOP_RIGHT" :TYPE "String" :VALUE "TR"
-      :STATIC T)
-     (flash:+top-left+ :SWF-NAME "TOP_LEFT" :TYPE "String" :VALUE "TL" :STATIC
+     (flash:+stage-align.bottom-left+ :SWF-NAME "BOTTOM_LEFT" :TYPE "String"
+      :VALUE "BL" :STATIC T)
+     (flash:+stage-align.top+ :SWF-NAME "TOP" :TYPE "String" :VALUE "T" :STATIC
       T)
-     (flash:+bottom+ :SWF-NAME "BOTTOM" :TYPE "String" :VALUE "B" :STATIC T)
-     (flash:+bottom-right+ :SWF-NAME "BOTTOM_RIGHT" :TYPE "String" :VALUE "BR"
+     (flash:+stage-align.top-right+ :SWF-NAME "TOP_RIGHT" :TYPE "String" :VALUE
+      "TR" :STATIC T)
+     (flash:+stage-align.top-left+ :SWF-NAME "TOP_LEFT" :TYPE "String" :VALUE
+      "TL" :STATIC T)
+     (flash:+stage-align.bottom+ :SWF-NAME "BOTTOM" :TYPE "String" :VALUE "B"
       :STATIC T)
-     (flash:+left+ :SWF-NAME "LEFT" :TYPE "String" :VALUE "L" :STATIC T))
+     (flash:+stage-align.bottom-right+ :SWF-NAME "BOTTOM_RIGHT" :TYPE "String"
+      :VALUE "BR" :STATIC T)
+     (flash:+stage-align.left+ :SWF-NAME "LEFT" :TYPE "String" :VALUE "L"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -4055,12 +4179,12 @@
   (avm2-compiler::declare-swf-class flash::flash.display.color-correction-support (object)
     :swf-name "flash.display::ColorCorrectionSupport"
     :constants
-    ((flash:+default-on+ :SWF-NAME "DEFAULT_ON" :TYPE "String" :VALUE
-      "defaultOn" :STATIC T)
-     (flash:+unsupported+ :SWF-NAME "UNSUPPORTED" :TYPE "String" :VALUE
-      "unsupported" :STATIC T)
-     (flash:+default-off+ :SWF-NAME "DEFAULT_OFF" :TYPE "String" :VALUE
-      "defaultOff" :STATIC T))
+    ((flash:+color-correction-support.default-on+ :SWF-NAME "DEFAULT_ON" :TYPE
+      "String" :VALUE "defaultOn" :STATIC T)
+     (flash:+color-correction-support.unsupported+ :SWF-NAME "UNSUPPORTED"
+      :TYPE "String" :VALUE "unsupported" :STATIC T)
+     (flash:+color-correction-support.default-off+ :SWF-NAME "DEFAULT_OFF"
+      :TYPE "String" :VALUE "defaultOff" :STATIC T))
     :properties
     ()
     :methods
@@ -4130,13 +4254,14 @@
   (avm2-compiler::declare-swf-class flash::flash.display.line-scale-mode (object)
     :swf-name "flash.display::LineScaleMode"
     :constants
-    ((flash:+none+ :SWF-NAME "NONE" :TYPE "String" :VALUE "none" :STATIC T)
-     (flash:+normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE "normal" :STATIC
-      T)
-     (flash:+vertical+ :SWF-NAME "VERTICAL" :TYPE "String" :VALUE "vertical"
-      :STATIC T)
-     (flash:+horizontal+ :SWF-NAME "HORIZONTAL" :TYPE "String" :VALUE
-      "horizontal" :STATIC T))
+    ((flash:+line-scale-mode.none+ :SWF-NAME "NONE" :TYPE "String" :VALUE
+      "none" :STATIC T)
+     (flash:+line-scale-mode.normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE
+      "normal" :STATIC T)
+     (flash:+line-scale-mode.vertical+ :SWF-NAME "VERTICAL" :TYPE "String"
+      :VALUE "vertical" :STATIC T)
+     (flash:+line-scale-mode.horizontal+ :SWF-NAME "HORIZONTAL" :TYPE "String"
+      :VALUE "horizontal" :STATIC T))
     :properties
     ()
     :methods
@@ -4147,13 +4272,14 @@
   (avm2-compiler::declare-swf-class flash::flash.text.font-style (object)
     :swf-name "flash.text::FontStyle"
     :constants
-    ((flash:+regular+ :SWF-NAME "REGULAR" :TYPE "String" :VALUE "regular"
+    ((flash:+font-style.regular+ :SWF-NAME "REGULAR" :TYPE "String" :VALUE
+      "regular" :STATIC T)
+     (flash:+font-style.bold+ :SWF-NAME "BOLD" :TYPE "String" :VALUE "bold"
       :STATIC T)
-     (flash:+bold+ :SWF-NAME "BOLD" :TYPE "String" :VALUE "bold" :STATIC T)
-     (flash:+bold-italic+ :SWF-NAME "BOLD_ITALIC" :TYPE "String" :VALUE
-      "boldItalic" :STATIC T)
-     (flash:+italic+ :SWF-NAME "ITALIC" :TYPE "String" :VALUE "italic" :STATIC
-      T))
+     (flash:+font-style.bold-italic+ :SWF-NAME "BOLD_ITALIC" :TYPE "String"
+      :VALUE "boldItalic" :STATIC T)
+     (flash:+font-style.italic+ :SWF-NAME "ITALIC" :TYPE "String" :VALUE
+      "italic" :STATIC T))
     :properties
     ()
     :methods
@@ -4189,18 +4315,20 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.typographic-case (object)
     :swf-name "flash.text.engine::TypographicCase"
     :constants
-    ((flash:+caps-and-small-caps+ :SWF-NAME "CAPS_AND_SMALL_CAPS" :TYPE
-      "String" :VALUE "capsAndSmallCaps" :STATIC T)
-     (flash:+small-caps+ :SWF-NAME "SMALL_CAPS" :TYPE "String" :VALUE
-      "smallCaps" :STATIC T)
-     (flash:+title+ :SWF-NAME "TITLE" :TYPE "String" :VALUE "title" :STATIC T)
-     (flash:+uppercase+ :SWF-NAME "UPPERCASE" :TYPE "String" :VALUE "uppercase"
-      :STATIC T)
-     (flash:+default+ :SWF-NAME "DEFAULT" :TYPE "String" :VALUE "default"
-      :STATIC T)
-     (flash:+caps+ :SWF-NAME "CAPS" :TYPE "String" :VALUE "caps" :STATIC T)
-     (flash:+lowercase+ :SWF-NAME "LOWERCASE" :TYPE "String" :VALUE "lowercase"
-      :STATIC T))
+    ((flash:+typographic-case.caps-and-small-caps+ :SWF-NAME
+      "CAPS_AND_SMALL_CAPS" :TYPE "String" :VALUE "capsAndSmallCaps" :STATIC T)
+     (flash:+typographic-case.small-caps+ :SWF-NAME "SMALL_CAPS" :TYPE "String"
+      :VALUE "smallCaps" :STATIC T)
+     (flash:+typographic-case.title+ :SWF-NAME "TITLE" :TYPE "String" :VALUE
+      "title" :STATIC T)
+     (flash:+typographic-case.uppercase+ :SWF-NAME "UPPERCASE" :TYPE "String"
+      :VALUE "uppercase" :STATIC T)
+     (flash:+typographic-case.default+ :SWF-NAME "DEFAULT" :TYPE "String"
+      :VALUE "default" :STATIC T)
+     (flash:+typographic-case.caps+ :SWF-NAME "CAPS" :TYPE "String" :VALUE
+      "caps" :STATIC T)
+     (flash:+typographic-case.lowercase+ :SWF-NAME "LOWERCASE" :TYPE "String"
+      :VALUE "lowercase" :STATIC T))
     :properties
     ()
     :methods
@@ -4211,12 +4339,14 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.tab-alignment (object)
     :swf-name "flash.text.engine::TabAlignment"
     :constants
-    ((flash:+end+ :SWF-NAME "END" :TYPE "String" :VALUE "end" :STATIC T)
-     (flash:+center+ :SWF-NAME "CENTER" :TYPE "String" :VALUE "center" :STATIC
-      T)
-     (flash:+start+ :SWF-NAME "START" :TYPE "String" :VALUE "start" :STATIC T)
-     (flash:+decimal+ :SWF-NAME "DECIMAL" :TYPE "String" :VALUE "decimal"
-      :STATIC T))
+    ((flash:+tab-alignment.end+ :SWF-NAME "END" :TYPE "String" :VALUE "end"
+      :STATIC T)
+     (flash:+tab-alignment.center+ :SWF-NAME "CENTER" :TYPE "String" :VALUE
+      "center" :STATIC T)
+     (flash:+tab-alignment.start+ :SWF-NAME "START" :TYPE "String" :VALUE
+      "start" :STATIC T)
+     (flash:+tab-alignment.decimal+ :SWF-NAME "DECIMAL" :TYPE "String" :VALUE
+      "decimal" :STATIC T))
     :properties
     ()
     :methods
@@ -4227,22 +4357,24 @@
   (avm2-compiler::declare-swf-class flash::flash.system.i-me-conversion-mode (object)
     :swf-name "flash.system::IMEConversionMode"
     :constants
-    ((flash:+alphanumeric-full+ :SWF-NAME "ALPHANUMERIC_FULL" :TYPE "String"
-      :VALUE "ALPHANUMERIC_FULL" :STATIC T)
-     (flash:+japanese-katakana-half+ :SWF-NAME "JAPANESE_KATAKANA_HALF" :TYPE
-      "String" :VALUE "JAPANESE_KATAKANA_HALF" :STATIC T)
-     (flash:+japanese-katakana-full+ :SWF-NAME "JAPANESE_KATAKANA_FULL" :TYPE
-      "String" :VALUE "JAPANESE_KATAKANA_FULL" :STATIC T)
-     (flash:+chinese+ :SWF-NAME "CHINESE" :TYPE "String" :VALUE "CHINESE"
+    ((flash:+i-me-conversion-mode.alphanumeric-full+ :SWF-NAME
+      "ALPHANUMERIC_FULL" :TYPE "String" :VALUE "ALPHANUMERIC_FULL" :STATIC T)
+     (flash:+i-me-conversion-mode.japanese-katakana-half+ :SWF-NAME
+      "JAPANESE_KATAKANA_HALF" :TYPE "String" :VALUE "JAPANESE_KATAKANA_HALF"
       :STATIC T)
-     (flash:+japanese-hiragana+ :SWF-NAME "JAPANESE_HIRAGANA" :TYPE "String"
-      :VALUE "JAPANESE_HIRAGANA" :STATIC T)
-     (flash:+unknown+ :SWF-NAME "UNKNOWN" :TYPE "String" :VALUE "UNKNOWN"
+     (flash:+i-me-conversion-mode.japanese-katakana-full+ :SWF-NAME
+      "JAPANESE_KATAKANA_FULL" :TYPE "String" :VALUE "JAPANESE_KATAKANA_FULL"
       :STATIC T)
-     (flash:+korean+ :SWF-NAME "KOREAN" :TYPE "String" :VALUE "KOREAN" :STATIC
-      T)
-     (flash:+alphanumeric-half+ :SWF-NAME "ALPHANUMERIC_HALF" :TYPE "String"
-      :VALUE "ALPHANUMERIC_HALF" :STATIC T))
+     (flash:+i-me-conversion-mode.chinese+ :SWF-NAME "CHINESE" :TYPE "String"
+      :VALUE "CHINESE" :STATIC T)
+     (flash:+i-me-conversion-mode.japanese-hiragana+ :SWF-NAME
+      "JAPANESE_HIRAGANA" :TYPE "String" :VALUE "JAPANESE_HIRAGANA" :STATIC T)
+     (flash:+i-me-conversion-mode.unknown+ :SWF-NAME "UNKNOWN" :TYPE "String"
+      :VALUE "UNKNOWN" :STATIC T)
+     (flash:+i-me-conversion-mode.korean+ :SWF-NAME "KOREAN" :TYPE "String"
+      :VALUE "KOREAN" :STATIC T)
+     (flash:+i-me-conversion-mode.alphanumeric-half+ :SWF-NAME
+      "ALPHANUMERIC_HALF" :TYPE "String" :VALUE "ALPHANUMERIC_HALF" :STATIC T))
     :properties
     ()
     :methods
@@ -4360,10 +4492,10 @@
   (avm2-compiler::declare-swf-class flash::flash.net.net-stream (flash.events.event-dispatcher)
     :swf-name "flash.net::NetStream"
     :constants
-    ((flash:+direct-connections+ :SWF-NAME "DIRECT_CONNECTIONS" :TYPE "String"
-      :VALUE "directConnections" :STATIC T)
-     (flash:+connect-to-fms+ :SWF-NAME "CONNECT_TO_FMS" :TYPE "String" :VALUE
-      "connectToFMS" :STATIC T))
+    ((flash:+net-stream.direct-connections+ :SWF-NAME "DIRECT_CONNECTIONS"
+      :TYPE "String" :VALUE "directConnections" :STATIC T)
+     (flash:+net-stream.connect-to-fms+ :SWF-NAME "CONNECT_TO_FMS" :TYPE
+      "String" :VALUE "connectToFMS" :STATIC T))
     :properties
     ((flash::check-policy-file :SWF-NAME "checkPolicyFile" :TYPE "Boolean"
       :STATIC NIL :ACCESSOR flash:.check-policy-file)
@@ -4441,19 +4573,20 @@
   (avm2-compiler::declare-swf-class flash::flash.xml.xml-node-type (object)
     :swf-name "flash.xml::XMLNodeType"
     :constants
-    ((flash:+processing-instruction-node+ :SWF-NAME
+    ((flash:+xml-node-type.processing-instruction-node+ :SWF-NAME
       "PROCESSING_INSTRUCTION_NODE" :TYPE "uint" :VALUE "7" :STATIC T)
-     (flash:+text-node+ :SWF-NAME "TEXT_NODE" :TYPE "uint" :VALUE "3" :STATIC T)
-     (flash:+cdata-node+ :SWF-NAME "CDATA_NODE" :TYPE "uint" :VALUE "4" :STATIC
-      T)
-     (flash:+xml-declaration+ :SWF-NAME "XML_DECLARATION" :TYPE "uint" :VALUE
-      "13" :STATIC T)
-     (flash:+comment-node+ :SWF-NAME "COMMENT_NODE" :TYPE "uint" :VALUE "8"
-      :STATIC T)
-     (flash:+element-node+ :SWF-NAME "ELEMENT_NODE" :TYPE "uint" :VALUE "1"
-      :STATIC T)
-     (flash:+document-type-node+ :SWF-NAME "DOCUMENT_TYPE_NODE" :TYPE "uint"
-      :VALUE "10" :STATIC T))
+     (flash:+xml-node-type.text-node+ :SWF-NAME "TEXT_NODE" :TYPE "uint" :VALUE
+      "3" :STATIC T)
+     (flash:+xml-node-type.cdata-node+ :SWF-NAME "CDATA_NODE" :TYPE "uint"
+      :VALUE "4" :STATIC T)
+     (flash:+xml-node-type.xml-declaration+ :SWF-NAME "XML_DECLARATION" :TYPE
+      "uint" :VALUE "13" :STATIC T)
+     (flash:+xml-node-type.comment-node+ :SWF-NAME "COMMENT_NODE" :TYPE "uint"
+      :VALUE "8" :STATIC T)
+     (flash:+xml-node-type.element-node+ :SWF-NAME "ELEMENT_NODE" :TYPE "uint"
+      :VALUE "1" :STATIC T)
+     (flash:+xml-node-type.document-type-node+ :SWF-NAME "DOCUMENT_TYPE_NODE"
+      :TYPE "uint" :VALUE "10" :STATIC T))
     :properties
     ()
     :methods
@@ -4464,8 +4597,8 @@
   (avm2-compiler::declare-swf-class flash::flash.events.i-me-event (flash.events.text-event)
     :swf-name "flash.events::IMEEvent"
     :constants
-    ((flash:+ime-composition+ :SWF-NAME "IME_COMPOSITION" :TYPE "String" :VALUE
-      "imeComposition" :STATIC T))
+    ((flash:+i-me-event.ime-composition+ :SWF-NAME "IME_COMPOSITION" :TYPE
+      "String" :VALUE "imeComposition" :STATIC T))
     :properties
     ()
     :methods
@@ -4568,63 +4701,83 @@
   (avm2-compiler::declare-swf-class flash::flash.ui.keyboard (object)
     :swf-name "flash.ui::Keyboard"
     :constants
-    ((flash:+numpad-multiply+ :SWF-NAME "NUMPAD_MULTIPLY" :TYPE "uint" :VALUE
-      "106" :STATIC T)
-     (flash:+f11+ :SWF-NAME "F11" :TYPE "uint" :VALUE "122" :STATIC T)
-     (flash:+numpad-subtract+ :SWF-NAME "NUMPAD_SUBTRACT" :TYPE "uint" :VALUE
-      "109" :STATIC T)
-     (flash:+shift+ :SWF-NAME "SHIFT" :TYPE "uint" :VALUE "16" :STATIC T)
-     (flash:+f15+ :SWF-NAME "F15" :TYPE "uint" :VALUE "126" :STATIC T)
-     (flash:+f14+ :SWF-NAME "F14" :TYPE "uint" :VALUE "125" :STATIC T)
-     (flash:+f13+ :SWF-NAME "F13" :TYPE "uint" :VALUE "124" :STATIC T)
-     (flash:+f12+ :SWF-NAME "F12" :TYPE "uint" :VALUE "123" :STATIC T)
-     (flash:+home+ :SWF-NAME "HOME" :TYPE "uint" :VALUE "36" :STATIC T)
-     (flash:+f10+ :SWF-NAME "F10" :TYPE "uint" :VALUE "121" :STATIC T)
-     (flash:+page-up+ :SWF-NAME "PAGE_UP" :TYPE "uint" :VALUE "33" :STATIC T)
-     (flash:+page-down+ :SWF-NAME "PAGE_DOWN" :TYPE "uint" :VALUE "34" :STATIC
+    ((flash:+keyboard.numpad-multiply+ :SWF-NAME "NUMPAD_MULTIPLY" :TYPE "uint"
+      :VALUE "106" :STATIC T)
+     (flash:+keyboard.f11+ :SWF-NAME "F11" :TYPE "uint" :VALUE "122" :STATIC T)
+     (flash:+keyboard.numpad-subtract+ :SWF-NAME "NUMPAD_SUBTRACT" :TYPE "uint"
+      :VALUE "109" :STATIC T)
+     (flash:+keyboard.shift+ :SWF-NAME "SHIFT" :TYPE "uint" :VALUE "16" :STATIC
       T)
-     (flash:+backspace+ :SWF-NAME "BACKSPACE" :TYPE "uint" :VALUE "8" :STATIC T)
-     (flash:+numpad-decimal+ :SWF-NAME "NUMPAD_DECIMAL" :TYPE "uint" :VALUE
-      "110" :STATIC T)
-     (flash:+numpad-enter+ :SWF-NAME "NUMPAD_ENTER" :TYPE "uint" :VALUE "108"
+     (flash:+keyboard.f15+ :SWF-NAME "F15" :TYPE "uint" :VALUE "126" :STATIC T)
+     (flash:+keyboard.f14+ :SWF-NAME "F14" :TYPE "uint" :VALUE "125" :STATIC T)
+     (flash:+keyboard.f13+ :SWF-NAME "F13" :TYPE "uint" :VALUE "124" :STATIC T)
+     (flash:+keyboard.f12+ :SWF-NAME "F12" :TYPE "uint" :VALUE "123" :STATIC T)
+     (flash:+keyboard.home+ :SWF-NAME "HOME" :TYPE "uint" :VALUE "36" :STATIC T)
+     (flash:+keyboard.f10+ :SWF-NAME "F10" :TYPE "uint" :VALUE "121" :STATIC T)
+     (flash:+keyboard.page-up+ :SWF-NAME "PAGE_UP" :TYPE "uint" :VALUE "33"
       :STATIC T)
-     (flash:+numpad-0+ :SWF-NAME "NUMPAD_0" :TYPE "uint" :VALUE "96" :STATIC T)
-     (flash:+numpad-6+ :SWF-NAME "NUMPAD_6" :TYPE "uint" :VALUE "102" :STATIC T)
-     (flash:+caps-lock+ :SWF-NAME "CAPS_LOCK" :TYPE "uint" :VALUE "20" :STATIC
+     (flash:+keyboard.page-down+ :SWF-NAME "PAGE_DOWN" :TYPE "uint" :VALUE "34"
+      :STATIC T)
+     (flash:+keyboard.backspace+ :SWF-NAME "BACKSPACE" :TYPE "uint" :VALUE "8"
+      :STATIC T)
+     (flash:+keyboard.numpad-decimal+ :SWF-NAME "NUMPAD_DECIMAL" :TYPE "uint"
+      :VALUE "110" :STATIC T)
+     (flash:+keyboard.numpad-enter+ :SWF-NAME "NUMPAD_ENTER" :TYPE "uint"
+      :VALUE "108" :STATIC T)
+     (flash:+keyboard.numpad-0+ :SWF-NAME "NUMPAD_0" :TYPE "uint" :VALUE "96"
+      :STATIC T)
+     (flash:+keyboard.numpad-6+ :SWF-NAME "NUMPAD_6" :TYPE "uint" :VALUE "102"
+      :STATIC T)
+     (flash:+keyboard.caps-lock+ :SWF-NAME "CAPS_LOCK" :TYPE "uint" :VALUE "20"
+      :STATIC T)
+     (flash:+keyboard.numpad-3+ :SWF-NAME "NUMPAD_3" :TYPE "uint" :VALUE "99"
+      :STATIC T)
+     (flash:+keyboard.numpad-9+ :SWF-NAME "NUMPAD_9" :TYPE "uint" :VALUE "105"
+      :STATIC T)
+     (flash:+keyboard.numpad-8+ :SWF-NAME "NUMPAD_8" :TYPE "uint" :VALUE "104"
+      :STATIC T)
+     (flash:+keyboard.numpad-5+ :SWF-NAME "NUMPAD_5" :TYPE "uint" :VALUE "101"
+      :STATIC T)
+     (flash:+keyboard.numpad-4+ :SWF-NAME "NUMPAD_4" :TYPE "uint" :VALUE "100"
+      :STATIC T)
+     (flash:+keyboard.f8+ :SWF-NAME "F8" :TYPE "uint" :VALUE "119" :STATIC T)
+     (flash:+keyboard.numpad-2+ :SWF-NAME "NUMPAD_2" :TYPE "uint" :VALUE "98"
+      :STATIC T)
+     (flash:+keyboard.numpad-1+ :SWF-NAME "NUMPAD_1" :TYPE "uint" :VALUE "97"
+      :STATIC T)
+     (flash:+keyboard.control+ :SWF-NAME "CONTROL" :TYPE "uint" :VALUE "17"
+      :STATIC T)
+     (flash:+keyboard.end+ :SWF-NAME "END" :TYPE "uint" :VALUE "35" :STATIC T)
+     (flash:+keyboard.numpad-divide+ :SWF-NAME "NUMPAD_DIVIDE" :TYPE "uint"
+      :VALUE "111" :STATIC T)
+     (flash:+keyboard.insert+ :SWF-NAME "INSERT" :TYPE "uint" :VALUE "45"
+      :STATIC T)
+     (flash:+keyboard.enter+ :SWF-NAME "ENTER" :TYPE "uint" :VALUE "13" :STATIC
       T)
-     (flash:+numpad-3+ :SWF-NAME "NUMPAD_3" :TYPE "uint" :VALUE "99" :STATIC T)
-     (flash:+numpad-9+ :SWF-NAME "NUMPAD_9" :TYPE "uint" :VALUE "105" :STATIC T)
-     (flash:+numpad-8+ :SWF-NAME "NUMPAD_8" :TYPE "uint" :VALUE "104" :STATIC T)
-     (flash:+numpad-5+ :SWF-NAME "NUMPAD_5" :TYPE "uint" :VALUE "101" :STATIC T)
-     (flash:+numpad-4+ :SWF-NAME "NUMPAD_4" :TYPE "uint" :VALUE "100" :STATIC T)
-     (flash:+f8+ :SWF-NAME "F8" :TYPE "uint" :VALUE "119" :STATIC T)
-     (flash:+numpad-2+ :SWF-NAME "NUMPAD_2" :TYPE "uint" :VALUE "98" :STATIC T)
-     (flash:+numpad-1+ :SWF-NAME "NUMPAD_1" :TYPE "uint" :VALUE "97" :STATIC T)
-     (flash:+control+ :SWF-NAME "CONTROL" :TYPE "uint" :VALUE "17" :STATIC T)
-     (flash:+end+ :SWF-NAME "END" :TYPE "uint" :VALUE "35" :STATIC T)
-     (flash:+numpad-divide+ :SWF-NAME "NUMPAD_DIVIDE" :TYPE "uint" :VALUE "111"
+     (flash:+keyboard.f9+ :SWF-NAME "F9" :TYPE "uint" :VALUE "120" :STATIC T)
+     (flash:+keyboard.delete+ :SWF-NAME "DELETE" :TYPE "uint" :VALUE "46"
       :STATIC T)
-     (flash:+insert+ :SWF-NAME "INSERT" :TYPE "uint" :VALUE "45" :STATIC T)
-     (flash:+enter+ :SWF-NAME "ENTER" :TYPE "uint" :VALUE "13" :STATIC T)
-     (flash:+f9+ :SWF-NAME "F9" :TYPE "uint" :VALUE "120" :STATIC T)
-     (flash:+delete+ :SWF-NAME "DELETE" :TYPE "uint" :VALUE "46" :STATIC T)
-     (flash:+f7+ :SWF-NAME "F7" :TYPE "uint" :VALUE "118" :STATIC T)
-     (flash:+f6+ :SWF-NAME "F6" :TYPE "uint" :VALUE "117" :STATIC T)
-     (flash:+f5+ :SWF-NAME "F5" :TYPE "uint" :VALUE "116" :STATIC T)
-     (flash:+f4+ :SWF-NAME "F4" :TYPE "uint" :VALUE "115" :STATIC T)
-     (flash:+f3+ :SWF-NAME "F3" :TYPE "uint" :VALUE "114" :STATIC T)
-     (flash:+f2+ :SWF-NAME "F2" :TYPE "uint" :VALUE "113" :STATIC T)
-     (flash:+f1+ :SWF-NAME "F1" :TYPE "uint" :VALUE "112" :STATIC T)
-     (flash:+up+ :SWF-NAME "UP" :TYPE "uint" :VALUE "38" :STATIC T)
-     (flash:+down+ :SWF-NAME "DOWN" :TYPE "uint" :VALUE "40" :STATIC T)
-     (flash:+space+ :SWF-NAME "SPACE" :TYPE "uint" :VALUE "32" :STATIC T)
-     (flash:+numpad-add+ :SWF-NAME "NUMPAD_ADD" :TYPE "uint" :VALUE "107"
+     (flash:+keyboard.f7+ :SWF-NAME "F7" :TYPE "uint" :VALUE "118" :STATIC T)
+     (flash:+keyboard.f6+ :SWF-NAME "F6" :TYPE "uint" :VALUE "117" :STATIC T)
+     (flash:+keyboard.f5+ :SWF-NAME "F5" :TYPE "uint" :VALUE "116" :STATIC T)
+     (flash:+keyboard.f4+ :SWF-NAME "F4" :TYPE "uint" :VALUE "115" :STATIC T)
+     (flash:+keyboard.f3+ :SWF-NAME "F3" :TYPE "uint" :VALUE "114" :STATIC T)
+     (flash:+keyboard.f2+ :SWF-NAME "F2" :TYPE "uint" :VALUE "113" :STATIC T)
+     (flash:+keyboard.f1+ :SWF-NAME "F1" :TYPE "uint" :VALUE "112" :STATIC T)
+     (flash:+keyboard.up+ :SWF-NAME "UP" :TYPE "uint" :VALUE "38" :STATIC T)
+     (flash:+keyboard.down+ :SWF-NAME "DOWN" :TYPE "uint" :VALUE "40" :STATIC T)
+     (flash:+keyboard.space+ :SWF-NAME "SPACE" :TYPE "uint" :VALUE "32" :STATIC
+      T)
+     (flash:+keyboard.numpad-add+ :SWF-NAME "NUMPAD_ADD" :TYPE "uint" :VALUE
+      "107" :STATIC T)
+     (flash:+keyboard.tab+ :SWF-NAME "TAB" :TYPE "uint" :VALUE "9" :STATIC T)
+     (flash:+keyboard.numpad-7+ :SWF-NAME "NUMPAD_7" :TYPE "uint" :VALUE "103"
       :STATIC T)
-     (flash:+tab+ :SWF-NAME "TAB" :TYPE "uint" :VALUE "9" :STATIC T)
-     (flash:+numpad-7+ :SWF-NAME "NUMPAD_7" :TYPE "uint" :VALUE "103" :STATIC T)
-     (flash:+left+ :SWF-NAME "LEFT" :TYPE "uint" :VALUE "37" :STATIC T)
-     (flash:+right+ :SWF-NAME "RIGHT" :TYPE "uint" :VALUE "39" :STATIC T)
-     (flash:+escape+ :SWF-NAME "ESCAPE" :TYPE "uint" :VALUE "27" :STATIC T))
+     (flash:+keyboard.left+ :SWF-NAME "LEFT" :TYPE "uint" :VALUE "37" :STATIC T)
+     (flash:+keyboard.right+ :SWF-NAME "RIGHT" :TYPE "uint" :VALUE "39" :STATIC
+      T)
+     (flash:+keyboard.escape+ :SWF-NAME "ESCAPE" :TYPE "uint" :VALUE "27"
+      :STATIC T))
     :properties
     ((flash::num-lock :SWF-NAME "numLock" :TYPE "Boolean" :STATIC T :ACCESSOR
       flash:.num-lock)
@@ -4808,9 +4961,10 @@
   (avm2-compiler::declare-swf-class flash::flash.text.text-field-type (object)
     :swf-name "flash.text::TextFieldType"
     :constants
-    ((flash:+dynamic+ :SWF-NAME "DYNAMIC" :TYPE "String" :VALUE "dynamic"
-      :STATIC T)
-     (flash:+input+ :SWF-NAME "INPUT" :TYPE "String" :VALUE "input" :STATIC T))
+    ((flash:+text-field-type.dynamic+ :SWF-NAME "DYNAMIC" :TYPE "String" :VALUE
+      "dynamic" :STATIC T)
+     (flash:+text-field-type.input+ :SWF-NAME "INPUT" :TYPE "String" :VALUE
+      "input" :STATIC T))
     :properties
     ()
     :methods
@@ -4867,10 +5021,10 @@
   (avm2-compiler::declare-swf-class flash::flash.display.gradient-type (object)
     :swf-name "flash.display::GradientType"
     :constants
-    ((flash:+radial+ :SWF-NAME "RADIAL" :TYPE "String" :VALUE "radial" :STATIC
-      T)
-     (flash:+linear+ :SWF-NAME "LINEAR" :TYPE "String" :VALUE "linear" :STATIC
-      T))
+    ((flash:+gradient-type.radial+ :SWF-NAME "RADIAL" :TYPE "String" :VALUE
+      "radial" :STATIC T)
+     (flash:+gradient-type.linear+ :SWF-NAME "LINEAR" :TYPE "String" :VALUE
+      "linear" :STATIC T))
     :properties
     ()
     :methods
@@ -4881,8 +5035,10 @@
   (avm2-compiler::declare-swf-class flash::flash.net.url-request-method (object)
     :swf-name "flash.net::URLRequestMethod"
     :constants
-    ((flash:+get+ :SWF-NAME "GET" :TYPE "String" :VALUE "GET" :STATIC T)
-     (flash:+post+ :SWF-NAME "POST" :TYPE "String" :VALUE "POST" :STATIC T))
+    ((flash:+url-request-method.get+ :SWF-NAME "GET" :TYPE "String" :VALUE
+      "GET" :STATIC T)
+     (flash:+url-request-method.post+ :SWF-NAME "POST" :TYPE "String" :VALUE
+      "POST" :STATIC T))
     :properties
     ()
     :methods
@@ -5073,11 +5229,14 @@
   (avm2-compiler::declare-swf-class flash::flash.filters.displacement-map-filter-mode (object)
     :swf-name "flash.filters::DisplacementMapFilterMode"
     :constants
-    ((flash:+clamp+ :SWF-NAME "CLAMP" :TYPE "String" :VALUE "clamp" :STATIC T)
-     (flash:+wrap+ :SWF-NAME "WRAP" :TYPE "String" :VALUE "wrap" :STATIC T)
-     (flash:+ignore+ :SWF-NAME "IGNORE" :TYPE "String" :VALUE "ignore" :STATIC
-      T)
-     (flash:+color+ :SWF-NAME "COLOR" :TYPE "String" :VALUE "color" :STATIC T))
+    ((flash:+displacement-map-filter-mode.clamp+ :SWF-NAME "CLAMP" :TYPE
+      "String" :VALUE "clamp" :STATIC T)
+     (flash:+displacement-map-filter-mode.wrap+ :SWF-NAME "WRAP" :TYPE "String"
+      :VALUE "wrap" :STATIC T)
+     (flash:+displacement-map-filter-mode.ignore+ :SWF-NAME "IGNORE" :TYPE
+      "String" :VALUE "ignore" :STATIC T)
+     (flash:+displacement-map-filter-mode.color+ :SWF-NAME "COLOR" :TYPE
+      "String" :VALUE "color" :STATIC T))
     :properties
     ()
     :methods
@@ -5140,9 +5299,12 @@
   (avm2-compiler::declare-swf-class flash::flash.display.joint-style (object)
     :swf-name "flash.display::JointStyle"
     :constants
-    ((flash:+round+ :SWF-NAME "ROUND" :TYPE "String" :VALUE "round" :STATIC T)
-     (flash:+bevel+ :SWF-NAME "BEVEL" :TYPE "String" :VALUE "bevel" :STATIC T)
-     (flash:+miter+ :SWF-NAME "MITER" :TYPE "String" :VALUE "miter" :STATIC T))
+    ((flash:+joint-style.round+ :SWF-NAME "ROUND" :TYPE "String" :VALUE "round"
+      :STATIC T)
+     (flash:+joint-style.bevel+ :SWF-NAME "BEVEL" :TYPE "String" :VALUE "bevel"
+      :STATIC T)
+     (flash:+joint-style.miter+ :SWF-NAME "MITER" :TYPE "String" :VALUE "miter"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -5175,9 +5337,10 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.font-weight (object)
     :swf-name "flash.text.engine::FontWeight"
     :constants
-    ((flash:+normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE "normal" :STATIC
-      T)
-     (flash:+bold+ :SWF-NAME "BOLD" :TYPE "String" :VALUE "bold" :STATIC T))
+    ((flash:+font-weight.normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE
+      "normal" :STATIC T)
+     (flash:+font-weight.bold+ :SWF-NAME "BOLD" :TYPE "String" :VALUE "bold"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -5263,14 +5426,14 @@
   (avm2-compiler::declare-swf-class flash::flash.events.i-o-error-event (flash.events.error-event)
     :swf-name "flash.events::IOErrorEvent"
     :constants
-    ((flash:+io-error+ :SWF-NAME "IO_ERROR" :TYPE "String" :VALUE "ioError"
-      :STATIC T)
-     (flash:+verify-error+ :SWF-NAME "VERIFY_ERROR" :TYPE "String" :VALUE
-      "verifyError" :STATIC T)
-     (flash:+network-error+ :SWF-NAME "NETWORK_ERROR" :TYPE "String" :VALUE
-      "networkError" :STATIC T)
-     (flash:+disk-error+ :SWF-NAME "DISK_ERROR" :TYPE "String" :VALUE
-      "diskError" :STATIC T))
+    ((flash:+i-o-error-event.io-error+ :SWF-NAME "IO_ERROR" :TYPE "String"
+      :VALUE "ioError" :STATIC T)
+     (flash:+i-o-error-event.verify-error+ :SWF-NAME "VERIFY_ERROR" :TYPE
+      "String" :VALUE "verifyError" :STATIC T)
+     (flash:+i-o-error-event.network-error+ :SWF-NAME "NETWORK_ERROR" :TYPE
+      "String" :VALUE "networkError" :STATIC T)
+     (flash:+i-o-error-event.disk-error+ :SWF-NAME "DISK_ERROR" :TYPE "String"
+      :VALUE "diskError" :STATIC T))
     :properties
     ()
     :methods
@@ -5300,27 +5463,28 @@
   (avm2-compiler::declare-swf-class flash::flash.desktop.clipboard-formats (object)
     :swf-name "flash.desktop::ClipboardFormats"
     :constants
-    ((flash:+url-format+ :SWF-NAME "URL_FORMAT" :TYPE "String" :VALUE "air:url"
-      :STATIC T)
-     (flash:+file-list-format+ :SWF-NAME "FILE_LIST_FORMAT" :TYPE "String"
-      :VALUE "air:file list" :STATIC T)
-     (flash:+bitmap-format+ :SWF-NAME "BITMAP_FORMAT" :TYPE "String" :VALUE
-      "air:bitmap" :STATIC T)
-     (flash:+rich-text-format+ :SWF-NAME "RICH_TEXT_FORMAT" :TYPE "String"
-      :VALUE "air:rtf" :STATIC T)
-     (flash:+html-format+ :SWF-NAME "HTML_FORMAT" :TYPE "String" :VALUE
-      "air:html" :STATIC T)
-     (flash:+text-format+ :SWF-NAME "TEXT_FORMAT" :TYPE "String" :VALUE
-      "air:text" :STATIC T)
-     (flash:+serialization-prefix+ :SWF-NAME
+    ((flash:+clipboard-formats.url-format+ :SWF-NAME "URL_FORMAT" :TYPE
+      "String" :VALUE "air:url" :STATIC T)
+     (flash:+clipboard-formats.file-list-format+ :SWF-NAME "FILE_LIST_FORMAT"
+      :TYPE "String" :VALUE "air:file list" :STATIC T)
+     (flash:+clipboard-formats.bitmap-format+ :SWF-NAME "BITMAP_FORMAT" :TYPE
+      "String" :VALUE "air:bitmap" :STATIC T)
+     (flash:+clipboard-formats.rich-text-format+ :SWF-NAME "RICH_TEXT_FORMAT"
+      :TYPE "String" :VALUE "air:rtf" :STATIC T)
+     (flash:+clipboard-formats.html-format+ :SWF-NAME "HTML_FORMAT" :TYPE
+      "String" :VALUE "air:html" :STATIC T)
+     (flash:+clipboard-formats.text-format+ :SWF-NAME "TEXT_FORMAT" :TYPE
+      "String" :VALUE "air:text" :STATIC T)
+     (flash:+clipboard-formats.serialization-prefix+ :SWF-NAME
       "flash.desktop::SERIALIZATION_PREFIX" :TYPE "String" :VALUE
       "air:serialization:" :STATIC T)
-     (flash:+air-prefix+ :SWF-NAME "flash.desktop::AIR_PREFIX" :TYPE "String"
-      :VALUE "air:" :STATIC T)
-     (flash:+reference-prefix+ :SWF-NAME "flash.desktop::REFERENCE_PREFIX"
-      :TYPE "String" :VALUE "air:reference:" :STATIC T)
-     (flash:+flash-prefix+ :SWF-NAME "flash.desktop::FLASH_PREFIX" :TYPE
-      "String" :VALUE "flash:" :STATIC T))
+     (flash:+clipboard-formats.air-prefix+ :SWF-NAME
+      "flash.desktop::AIR_PREFIX" :TYPE "String" :VALUE "air:" :STATIC T)
+     (flash:+clipboard-formats.reference-prefix+ :SWF-NAME
+      "flash.desktop::REFERENCE_PREFIX" :TYPE "String" :VALUE "air:reference:"
+      :STATIC T)
+     (flash:+clipboard-formats.flash-prefix+ :SWF-NAME
+      "flash.desktop::FLASH_PREFIX" :TYPE "String" :VALUE "flash:" :STATIC T))
     :properties
     ()
     :methods
@@ -5328,14 +5492,14 @@
   (avm2-compiler::declare-swf-class flash::flash.desktop.clipboard-transfer-mode (object)
     :swf-name "flash.desktop::ClipboardTransferMode"
     :constants
-    ((flash:+clone-preferred+ :SWF-NAME "CLONE_PREFERRED" :TYPE "String" :VALUE
-      "clonePreferred" :STATIC T)
-     (flash:+original-only+ :SWF-NAME "ORIGINAL_ONLY" :TYPE "String" :VALUE
-      "originalOnly" :STATIC T)
-     (flash:+clone-only+ :SWF-NAME "CLONE_ONLY" :TYPE "String" :VALUE
-      "cloneOnly" :STATIC T)
-     (flash:+original-preferred+ :SWF-NAME "ORIGINAL_PREFERRED" :TYPE "String"
-      :VALUE "originalPreferred" :STATIC T))
+    ((flash:+clipboard-transfer-mode.clone-preferred+ :SWF-NAME
+      "CLONE_PREFERRED" :TYPE "String" :VALUE "clonePreferred" :STATIC T)
+     (flash:+clipboard-transfer-mode.original-only+ :SWF-NAME "ORIGINAL_ONLY"
+      :TYPE "String" :VALUE "originalOnly" :STATIC T)
+     (flash:+clipboard-transfer-mode.clone-only+ :SWF-NAME "CLONE_ONLY" :TYPE
+      "String" :VALUE "cloneOnly" :STATIC T)
+     (flash:+clipboard-transfer-mode.original-preferred+ :SWF-NAME
+      "ORIGINAL_PREFERRED" :TYPE "String" :VALUE "originalPreferred" :STATIC T))
     :properties
     ()
     :methods
@@ -5374,10 +5538,14 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.break-opportunity (object)
     :swf-name "flash.text.engine::BreakOpportunity"
     :constants
-    ((flash:+none+ :SWF-NAME "NONE" :TYPE "String" :VALUE "none" :STATIC T)
-     (flash:+any+ :SWF-NAME "ANY" :TYPE "String" :VALUE "any" :STATIC T)
-     (flash:+auto+ :SWF-NAME "AUTO" :TYPE "String" :VALUE "auto" :STATIC T)
-     (flash:+all+ :SWF-NAME "ALL" :TYPE "String" :VALUE "all" :STATIC T))
+    ((flash:+break-opportunity.none+ :SWF-NAME "NONE" :TYPE "String" :VALUE
+      "none" :STATIC T)
+     (flash:+break-opportunity.any+ :SWF-NAME "ANY" :TYPE "String" :VALUE "any"
+      :STATIC T)
+     (flash:+break-opportunity.auto+ :SWF-NAME "AUTO" :TYPE "String" :VALUE
+      "auto" :STATIC T)
+     (flash:+break-opportunity.all+ :SWF-NAME "ALL" :TYPE "String" :VALUE "all"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -5421,14 +5589,18 @@
   (avm2-compiler::declare-swf-class flash::flash.display.graphics-path-command (object)
     :swf-name "flash.display::GraphicsPathCommand"
     :constants
-    ((flash:+no-op+ :SWF-NAME "NO_OP" :TYPE "int" :VALUE "0" :STATIC T)
-     (flash:+wide-move-to+ :SWF-NAME "WIDE_MOVE_TO" :TYPE "int" :VALUE "4"
-      :STATIC T)
-     (flash:+wide-line-to+ :SWF-NAME "WIDE_LINE_TO" :TYPE "int" :VALUE "5"
-      :STATIC T)
-     (flash:+curve-to+ :SWF-NAME "CURVE_TO" :TYPE "int" :VALUE "3" :STATIC T)
-     (flash:+move-to+ :SWF-NAME "MOVE_TO" :TYPE "int" :VALUE "1" :STATIC T)
-     (flash:+line-to+ :SWF-NAME "LINE_TO" :TYPE "int" :VALUE "2" :STATIC T))
+    ((flash:+graphics-path-command.no-op+ :SWF-NAME "NO_OP" :TYPE "int" :VALUE
+      "0" :STATIC T)
+     (flash:+graphics-path-command.wide-move-to+ :SWF-NAME "WIDE_MOVE_TO" :TYPE
+      "int" :VALUE "4" :STATIC T)
+     (flash:+graphics-path-command.wide-line-to+ :SWF-NAME "WIDE_LINE_TO" :TYPE
+      "int" :VALUE "5" :STATIC T)
+     (flash:+graphics-path-command.curve-to+ :SWF-NAME "CURVE_TO" :TYPE "int"
+      :VALUE "3" :STATIC T)
+     (flash:+graphics-path-command.move-to+ :SWF-NAME "MOVE_TO" :TYPE "int"
+      :VALUE "1" :STATIC T)
+     (flash:+graphics-path-command.line-to+ :SWF-NAME "LINE_TO" :TYPE "int"
+      :VALUE "2" :STATIC T))
     :properties
     ()
     :methods
@@ -5439,14 +5611,14 @@
   (avm2-compiler::declare-swf-class flash::flash.events.focus-event (flash.events.event)
     :swf-name "flash.events::FocusEvent"
     :constants
-    ((flash:+focus-in+ :SWF-NAME "FOCUS_IN" :TYPE "String" :VALUE "focusIn"
-      :STATIC T)
-     (flash:+key-focus-change+ :SWF-NAME "KEY_FOCUS_CHANGE" :TYPE "String"
-      :VALUE "keyFocusChange" :STATIC T)
-     (flash:+focus-out+ :SWF-NAME "FOCUS_OUT" :TYPE "String" :VALUE "focusOut"
-      :STATIC T)
-     (flash:+mouse-focus-change+ :SWF-NAME "MOUSE_FOCUS_CHANGE" :TYPE "String"
-      :VALUE "mouseFocusChange" :STATIC T))
+    ((flash:+focus-event.focus-in+ :SWF-NAME "FOCUS_IN" :TYPE "String" :VALUE
+      "focusIn" :STATIC T)
+     (flash:+focus-event.key-focus-change+ :SWF-NAME "KEY_FOCUS_CHANGE" :TYPE
+      "String" :VALUE "keyFocusChange" :STATIC T)
+     (flash:+focus-event.focus-out+ :SWF-NAME "FOCUS_OUT" :TYPE "String" :VALUE
+      "focusOut" :STATIC T)
+     (flash:+focus-event.mouse-focus-change+ :SWF-NAME "MOUSE_FOCUS_CHANGE"
+      :TYPE "String" :VALUE "mouseFocusChange" :STATIC T))
     :properties
     ((flash::key-code :SWF-NAME "keyCode" :TYPE "uint" :STATIC NIL :ACCESSOR
       flash:.key-code)
@@ -5542,15 +5714,16 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.text-rotation (object)
     :swf-name "flash.text.engine::TextRotation"
     :constants
-    ((flash:+auto+ :SWF-NAME "AUTO" :TYPE "String" :VALUE "auto" :STATIC T)
-     (flash:+rotate-0+ :SWF-NAME "ROTATE_0" :TYPE "String" :VALUE "rotate0"
+    ((flash:+text-rotation.auto+ :SWF-NAME "AUTO" :TYPE "String" :VALUE "auto"
       :STATIC T)
-     (flash:+rotate-90+ :SWF-NAME "ROTATE_90" :TYPE "String" :VALUE "rotate90"
-      :STATIC T)
-     (flash:+rotate-270+ :SWF-NAME "ROTATE_270" :TYPE "String" :VALUE
-      "rotate270" :STATIC T)
-     (flash:+rotate-180+ :SWF-NAME "ROTATE_180" :TYPE "String" :VALUE
-      "rotate180" :STATIC T))
+     (flash:+text-rotation.rotate-0+ :SWF-NAME "ROTATE_0" :TYPE "String" :VALUE
+      "rotate0" :STATIC T)
+     (flash:+text-rotation.rotate-90+ :SWF-NAME "ROTATE_90" :TYPE "String"
+      :VALUE "rotate90" :STATIC T)
+     (flash:+text-rotation.rotate-270+ :SWF-NAME "ROTATE_270" :TYPE "String"
+      :VALUE "rotate270" :STATIC T)
+     (flash:+text-rotation.rotate-180+ :SWF-NAME "ROTATE_180" :TYPE "String"
+      :VALUE "rotate180" :STATIC T))
     :properties
     ()
     :methods
@@ -5561,8 +5734,8 @@
   (avm2-compiler::declare-swf-class flash::flash.events.sample-data-event (flash.events.event)
     :swf-name "flash.events::SampleDataEvent"
     :constants
-    ((flash:+sample-data+ :SWF-NAME "SAMPLE_DATA" :TYPE "String" :VALUE
-      "sampleData" :STATIC T))
+    ((flash:+sample-data-event.sample-data+ :SWF-NAME "SAMPLE_DATA" :TYPE
+      "String" :VALUE "sampleData" :STATIC T))
     :properties
     ((flash::data :SWF-NAME "data" :TYPE "flash.utils::ByteArray" :STATIC NIL
       :ACCESSOR flash:.data)
@@ -5579,10 +5752,14 @@
   (avm2-compiler::declare-swf-class flash::flash.display.bitmap-data-channel (object)
     :swf-name "flash.display::BitmapDataChannel"
     :constants
-    ((flash:+alpha+ :SWF-NAME "ALPHA" :TYPE "uint" :VALUE "8" :STATIC T)
-     (flash:+blue+ :SWF-NAME "BLUE" :TYPE "uint" :VALUE "4" :STATIC T)
-     (flash:+green+ :SWF-NAME "GREEN" :TYPE "uint" :VALUE "2" :STATIC T)
-     (flash:+red+ :SWF-NAME "RED" :TYPE "uint" :VALUE "1" :STATIC T))
+    ((flash:+bitmap-data-channel.alpha+ :SWF-NAME "ALPHA" :TYPE "uint" :VALUE
+      "8" :STATIC T)
+     (flash:+bitmap-data-channel.blue+ :SWF-NAME "BLUE" :TYPE "uint" :VALUE "4"
+      :STATIC T)
+     (flash:+bitmap-data-channel.green+ :SWF-NAME "GREEN" :TYPE "uint" :VALUE
+      "2" :STATIC T)
+     (flash:+bitmap-data-channel.red+ :SWF-NAME "RED" :TYPE "uint" :VALUE "1"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -5593,12 +5770,12 @@
   (avm2-compiler::declare-swf-class flash::flash.geom.vector3-d (object)
     :swf-name "flash.geom::Vector3D"
     :constants
-    ((flash:+x-axis+ :SWF-NAME "X_AXIS" :TYPE "flash.geom::Vector3D" :VALUE
-      "NIL" :STATIC T)
-     (flash:+y-axis+ :SWF-NAME "Y_AXIS" :TYPE "flash.geom::Vector3D" :VALUE
-      "NIL" :STATIC T)
-     (flash:+z-axis+ :SWF-NAME "Z_AXIS" :TYPE "flash.geom::Vector3D" :VALUE
-      "NIL" :STATIC T))
+    ((flash:+vector3-d.x-axis+ :SWF-NAME "X_AXIS" :TYPE "flash.geom::Vector3D"
+      :VALUE "NIL" :STATIC T)
+     (flash:+vector3-d.y-axis+ :SWF-NAME "Y_AXIS" :TYPE "flash.geom::Vector3D"
+      :VALUE "NIL" :STATIC T)
+     (flash:+vector3-d.z-axis+ :SWF-NAME "Z_AXIS" :TYPE "flash.geom::Vector3D"
+      :VALUE "NIL" :STATIC T))
     :properties
     ((flash::z :SWF-NAME "z" :TYPE "Number" :STATIC NIL :ACCESSOR flash:.z)
      (flash::y :SWF-NAME "y" :TYPE "Number" :STATIC NIL :ACCESSOR flash:.y)
@@ -5703,9 +5880,10 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.kerning (object)
     :swf-name "flash.text.engine::Kerning"
     :constants
-    ((flash:+off+ :SWF-NAME "OFF" :TYPE "String" :VALUE "off" :STATIC T)
-     (flash:+on+ :SWF-NAME "ON" :TYPE "String" :VALUE "on" :STATIC T)
-     (flash:+auto+ :SWF-NAME "AUTO" :TYPE "String" :VALUE "auto" :STATIC T))
+    ((flash:+kerning.off+ :SWF-NAME "OFF" :TYPE "String" :VALUE "off" :STATIC T)
+     (flash:+kerning.on+ :SWF-NAME "ON" :TYPE "String" :VALUE "on" :STATIC T)
+     (flash:+kerning.auto+ :SWF-NAME "AUTO" :TYPE "String" :VALUE "auto"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -5782,7 +5960,8 @@
   (avm2-compiler::declare-swf-class flash::flash.events.sync-event (flash.events.event)
     :swf-name "flash.events::SyncEvent"
     :constants
-    ((flash:+sync+ :SWF-NAME "SYNC" :TYPE "String" :VALUE "sync" :STATIC T))
+    ((flash:+sync-event.sync+ :SWF-NAME "SYNC" :TYPE "String" :VALUE "sync"
+      :STATIC T))
     :properties
     ((flash::change-list :SWF-NAME "changeList" :TYPE "Array" :STATIC NIL
       :ACCESSOR flash:.change-list))
@@ -5912,16 +6091,26 @@
   (avm2-compiler::declare-swf-class flash::flash.display.swf-version (object)
     :swf-name "flash.display::SWFVersion"
     :constants
-    ((flash:+flash9+ :SWF-NAME "FLASH9" :TYPE "uint" :VALUE "9" :STATIC T)
-     (flash:+flash10+ :SWF-NAME "FLASH10" :TYPE "uint" :VALUE "10" :STATIC T)
-     (flash:+flash2+ :SWF-NAME "FLASH2" :TYPE "uint" :VALUE "2" :STATIC T)
-     (flash:+flash8+ :SWF-NAME "FLASH8" :TYPE "uint" :VALUE "8" :STATIC T)
-     (flash:+flash6+ :SWF-NAME "FLASH6" :TYPE "uint" :VALUE "6" :STATIC T)
-     (flash:+flash4+ :SWF-NAME "FLASH4" :TYPE "uint" :VALUE "4" :STATIC T)
-     (flash:+flash7+ :SWF-NAME "FLASH7" :TYPE "uint" :VALUE "7" :STATIC T)
-     (flash:+flash5+ :SWF-NAME "FLASH5" :TYPE "uint" :VALUE "5" :STATIC T)
-     (flash:+flash3+ :SWF-NAME "FLASH3" :TYPE "uint" :VALUE "3" :STATIC T)
-     (flash:+flash1+ :SWF-NAME "FLASH1" :TYPE "uint" :VALUE "1" :STATIC T))
+    ((flash:+swf-version.flash9+ :SWF-NAME "FLASH9" :TYPE "uint" :VALUE "9"
+      :STATIC T)
+     (flash:+swf-version.flash10+ :SWF-NAME "FLASH10" :TYPE "uint" :VALUE "10"
+      :STATIC T)
+     (flash:+swf-version.flash2+ :SWF-NAME "FLASH2" :TYPE "uint" :VALUE "2"
+      :STATIC T)
+     (flash:+swf-version.flash8+ :SWF-NAME "FLASH8" :TYPE "uint" :VALUE "8"
+      :STATIC T)
+     (flash:+swf-version.flash6+ :SWF-NAME "FLASH6" :TYPE "uint" :VALUE "6"
+      :STATIC T)
+     (flash:+swf-version.flash4+ :SWF-NAME "FLASH4" :TYPE "uint" :VALUE "4"
+      :STATIC T)
+     (flash:+swf-version.flash7+ :SWF-NAME "FLASH7" :TYPE "uint" :VALUE "7"
+      :STATIC T)
+     (flash:+swf-version.flash5+ :SWF-NAME "FLASH5" :TYPE "uint" :VALUE "5"
+      :STATIC T)
+     (flash:+swf-version.flash3+ :SWF-NAME "FLASH3" :TYPE "uint" :VALUE "3"
+      :STATIC T)
+     (flash:+swf-version.flash1+ :SWF-NAME "FLASH1" :TYPE "uint" :VALUE "1"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -6085,13 +6274,13 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.justification-style (object)
     :swf-name "flash.text.engine::JustificationStyle"
     :constants
-    ((flash:+push-out-only+ :SWF-NAME "PUSH_OUT_ONLY" :TYPE "String" :VALUE
-      "pushOutOnly" :STATIC T)
-     (flash:+prioritize-least-adjustment+ :SWF-NAME
+    ((flash:+justification-style.push-out-only+ :SWF-NAME "PUSH_OUT_ONLY" :TYPE
+      "String" :VALUE "pushOutOnly" :STATIC T)
+     (flash:+justification-style.prioritize-least-adjustment+ :SWF-NAME
       "PRIORITIZE_LEAST_ADJUSTMENT" :TYPE "String" :VALUE
       "prioritizeLeastAdjustment" :STATIC T)
-     (flash:+push-in-kinsoku+ :SWF-NAME "PUSH_IN_KINSOKU" :TYPE "String" :VALUE
-      "pushInKinsoku" :STATIC T))
+     (flash:+justification-style.push-in-kinsoku+ :SWF-NAME "PUSH_IN_KINSOKU"
+      :TYPE "String" :VALUE "pushInKinsoku" :STATIC T))
     :properties
     ()
     :methods
@@ -6102,10 +6291,10 @@
   (avm2-compiler::declare-swf-class flash::flash.display.stage-display-state (object)
     :swf-name "flash.display::StageDisplayState"
     :constants
-    ((flash:+normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE "normal" :STATIC
-      T)
-     (flash:+full-screen+ :SWF-NAME "FULL_SCREEN" :TYPE "String" :VALUE
-      "fullScreen" :STATIC T))
+    ((flash:+stage-display-state.normal+ :SWF-NAME "NORMAL" :TYPE "String"
+      :VALUE "normal" :STATIC T)
+     (flash:+stage-display-state.full-screen+ :SWF-NAME "FULL_SCREEN" :TYPE
+      "String" :VALUE "fullScreen" :STATIC T))
     :properties
     ()
     :methods
@@ -6239,10 +6428,12 @@
   (avm2-compiler::declare-swf-class flash::flash.display.color-correction (object)
     :swf-name "flash.display::ColorCorrection"
     :constants
-    ((flash:+off+ :SWF-NAME "OFF" :TYPE "String" :VALUE "off" :STATIC T)
-     (flash:+on+ :SWF-NAME "ON" :TYPE "String" :VALUE "on" :STATIC T)
-     (flash:+default+ :SWF-NAME "DEFAULT" :TYPE "String" :VALUE "default"
-      :STATIC T))
+    ((flash:+color-correction.off+ :SWF-NAME "OFF" :TYPE "String" :VALUE "off"
+      :STATIC T)
+     (flash:+color-correction.on+ :SWF-NAME "ON" :TYPE "String" :VALUE "on"
+      :STATIC T)
+     (flash:+color-correction.default+ :SWF-NAME "DEFAULT" :TYPE "String"
+      :VALUE "default" :STATIC T))
     :properties
     ()
     :methods
@@ -6253,12 +6444,14 @@
   (avm2-compiler::declare-swf-class flash::flash.text.text-format-align (object)
     :swf-name "flash.text::TextFormatAlign"
     :constants
-    ((flash:+right+ :SWF-NAME "RIGHT" :TYPE "String" :VALUE "right" :STATIC T)
-     (flash:+left+ :SWF-NAME "LEFT" :TYPE "String" :VALUE "left" :STATIC T)
-     (flash:+center+ :SWF-NAME "CENTER" :TYPE "String" :VALUE "center" :STATIC
-      T)
-     (flash:+justify+ :SWF-NAME "JUSTIFY" :TYPE "String" :VALUE "justify"
-      :STATIC T))
+    ((flash:+text-format-align.right+ :SWF-NAME "RIGHT" :TYPE "String" :VALUE
+      "right" :STATIC T)
+     (flash:+text-format-align.left+ :SWF-NAME "LEFT" :TYPE "String" :VALUE
+      "left" :STATIC T)
+     (flash:+text-format-align.center+ :SWF-NAME "CENTER" :TYPE "String" :VALUE
+      "center" :STATIC T)
+     (flash:+text-format-align.justify+ :SWF-NAME "JUSTIFY" :TYPE "String"
+      :VALUE "justify" :STATIC T))
     :properties
     ()
     :methods
@@ -6418,9 +6611,12 @@
   (avm2-compiler::declare-swf-class flash::flash.filters.bitmap-filter-type (object)
     :swf-name "flash.filters::BitmapFilterType"
     :constants
-    ((flash:+full+ :SWF-NAME "FULL" :TYPE "String" :VALUE "full" :STATIC T)
-     (flash:+inner+ :SWF-NAME "INNER" :TYPE "String" :VALUE "inner" :STATIC T)
-     (flash:+outer+ :SWF-NAME "OUTER" :TYPE "String" :VALUE "outer" :STATIC T))
+    ((flash:+bitmap-filter-type.full+ :SWF-NAME "FULL" :TYPE "String" :VALUE
+      "full" :STATIC T)
+     (flash:+bitmap-filter-type.inner+ :SWF-NAME "INNER" :TYPE "String" :VALUE
+      "inner" :STATIC T)
+     (flash:+bitmap-filter-type.outer+ :SWF-NAME "OUTER" :TYPE "String" :VALUE
+      "outer" :STATIC T))
     :properties
     ()
     :methods
@@ -6431,10 +6627,10 @@
   (avm2-compiler::declare-swf-class flash::flash.text.text-color-type (object)
     :swf-name "flash.text::TextColorType"
     :constants
-    ((flash:+light-color+ :SWF-NAME "LIGHT_COLOR" :TYPE "String" :VALUE "light"
-      :STATIC T)
-     (flash:+dark-color+ :SWF-NAME "DARK_COLOR" :TYPE "String" :VALUE "dark"
-      :STATIC T))
+    ((flash:+text-color-type.light-color+ :SWF-NAME "LIGHT_COLOR" :TYPE
+      "String" :VALUE "light" :STATIC T)
+     (flash:+text-color-type.dark-color+ :SWF-NAME "DARK_COLOR" :TYPE "String"
+      :VALUE "dark" :STATIC T))
     :properties
     ()
     :methods
@@ -6474,10 +6670,10 @@
   (avm2-compiler::declare-swf-class flash::flash.display.graphics-path-winding (object)
     :swf-name "flash.display::GraphicsPathWinding"
     :constants
-    ((flash:+non-zero+ :SWF-NAME "NON_ZERO" :TYPE "String" :VALUE "nonZero"
-      :STATIC T)
-     (flash:+even-odd+ :SWF-NAME "EVEN_ODD" :TYPE "String" :VALUE "evenOdd"
-      :STATIC T))
+    ((flash:+graphics-path-winding.non-zero+ :SWF-NAME "NON_ZERO" :TYPE
+      "String" :VALUE "nonZero" :STATIC T)
+     (flash:+graphics-path-winding.even-odd+ :SWF-NAME "EVEN_ODD" :TYPE
+      "String" :VALUE "evenOdd" :STATIC T))
     :properties
     ()
     :methods
@@ -6571,9 +6767,10 @@
   (avm2-compiler::declare-swf-class flash::flash.text.text-format-display (object)
     :swf-name "flash.text::TextFormatDisplay"
     :constants
-    ((flash:+block+ :SWF-NAME "BLOCK" :TYPE "String" :VALUE "block" :STATIC T)
-     (flash:+inline+ :SWF-NAME "INLINE" :TYPE "String" :VALUE "inline" :STATIC
-      T))
+    ((flash:+text-format-display.block+ :SWF-NAME "BLOCK" :TYPE "String" :VALUE
+      "block" :STATIC T)
+     (flash:+text-format-display.inline+ :SWF-NAME "INLINE" :TYPE "String"
+      :VALUE "inline" :STATIC T))
     :properties
     ()
     :methods
@@ -6630,15 +6827,17 @@
   (avm2-compiler::declare-swf-class flash::flash.trace.trace (object)
     :swf-name "flash.trace::Trace"
     :constants
-    ((flash:+file+ :SWF-NAME "FILE" :TYPE "*" :VALUE "1" :STATIC T)
-     (flash:+listener+ :SWF-NAME "LISTENER" :TYPE "*" :VALUE "2" :STATIC T)
-     (flash:+methods+ :SWF-NAME "METHODS" :TYPE "int" :VALUE "1" :STATIC T)
-     (flash:+methods-with-args+ :SWF-NAME "METHODS_WITH_ARGS" :TYPE "int"
+    ((flash:+trace.file+ :SWF-NAME "FILE" :TYPE "*" :VALUE "1" :STATIC T)
+     (flash:+trace.listener+ :SWF-NAME "LISTENER" :TYPE "*" :VALUE "2" :STATIC
+      T)
+     (flash:+trace.methods+ :SWF-NAME "METHODS" :TYPE "int" :VALUE "1" :STATIC
+      T)
+     (flash:+trace.methods-with-args+ :SWF-NAME "METHODS_WITH_ARGS" :TYPE "int"
       :VALUE "2" :STATIC T)
-     (flash:+off+ :SWF-NAME "OFF" :TYPE "int" :VALUE "0" :STATIC T)
-     (flash:+methods-and-lines+ :SWF-NAME "METHODS_AND_LINES" :TYPE "int"
+     (flash:+trace.off+ :SWF-NAME "OFF" :TYPE "int" :VALUE "0" :STATIC T)
+     (flash:+trace.methods-and-lines+ :SWF-NAME "METHODS_AND_LINES" :TYPE "int"
       :VALUE "3" :STATIC T)
-     (flash:+methods-and-lines-with-args+ :SWF-NAME
+     (flash:+trace.methods-and-lines-with-args+ :SWF-NAME
       "METHODS_AND_LINES_WITH_ARGS" :TYPE "int" :VALUE "4" :STATIC T))
     :properties
     ()
@@ -6691,9 +6890,10 @@
   (avm2-compiler::declare-swf-class flash::flash.display.interpolation-method (object)
     :swf-name "flash.display::InterpolationMethod"
     :constants
-    ((flash:+rgb+ :SWF-NAME "RGB" :TYPE "String" :VALUE "rgb" :STATIC T)
-     (flash:+linear-rgb+ :SWF-NAME "LINEAR_RGB" :TYPE "String" :VALUE
-      "linearRGB" :STATIC T))
+    ((flash:+interpolation-method.rgb+ :SWF-NAME "RGB" :TYPE "String" :VALUE
+      "rgb" :STATIC T)
+     (flash:+interpolation-method.linear-rgb+ :SWF-NAME "LINEAR_RGB" :TYPE
+      "String" :VALUE "linearRGB" :STATIC T))
     :properties
     ()
     :methods
@@ -6753,9 +6953,10 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.cff-hinting (object)
     :swf-name "flash.text.engine::CFFHinting"
     :constants
-    ((flash:+horizontal-stem+ :SWF-NAME "HORIZONTAL_STEM" :TYPE "String" :VALUE
-      "horizontalStem" :STATIC T)
-     (flash:+none+ :SWF-NAME "NONE" :TYPE "String" :VALUE "none" :STATIC T))
+    ((flash:+cff-hinting.horizontal-stem+ :SWF-NAME "HORIZONTAL_STEM" :TYPE
+      "String" :VALUE "horizontalStem" :STATIC T)
+     (flash:+cff-hinting.none+ :SWF-NAME "NONE" :TYPE "String" :VALUE "none"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -6778,7 +6979,7 @@
   (avm2-compiler::declare-swf-class flash:date (object)
     :swf-name "Date"
     :constants
-    ((flash:+length+ :SWF-NAME "length" :TYPE "int" :VALUE "7" :STATIC T))
+    ((flash:+date.length+ :SWF-NAME "length" :TYPE "int" :VALUE "7" :STATIC T))
     :properties
     ((flash::seconds :SWF-NAME "seconds" :TYPE "Number" :STATIC NIL :ACCESSOR
       flash:.seconds)
@@ -6983,8 +7184,8 @@
   (avm2-compiler::declare-swf-class flash::flash.events.status-event (flash.events.event)
     :swf-name "flash.events::StatusEvent"
     :constants
-    ((flash:+status+ :SWF-NAME "STATUS" :TYPE "String" :VALUE "status" :STATIC
-      T))
+    ((flash:+status-event.status+ :SWF-NAME "STATUS" :TYPE "String" :VALUE
+      "status" :STATIC T))
     :properties
     ((flash::level :SWF-NAME "level" :TYPE "String" :STATIC NIL :ACCESSOR
       flash:.level)
@@ -7001,12 +7202,12 @@
   (avm2-compiler::declare-swf-class flash::flash.geom.orientation3-d (object)
     :swf-name "flash.geom::Orientation3D"
     :constants
-    ((flash:+quaternion+ :SWF-NAME "QUATERNION" :TYPE "String" :VALUE
-      "quaternion" :STATIC T)
-     (flash:+euler-angles+ :SWF-NAME "EULER_ANGLES" :TYPE "String" :VALUE
-      "eulerAngles" :STATIC T)
-     (flash:+axis-angle+ :SWF-NAME "AXIS_ANGLE" :TYPE "String" :VALUE
-      "axisAngle" :STATIC T))
+    ((flash:+orientation3-d.quaternion+ :SWF-NAME "QUATERNION" :TYPE "String"
+      :VALUE "quaternion" :STATIC T)
+     (flash:+orientation3-d.euler-angles+ :SWF-NAME "EULER_ANGLES" :TYPE
+      "String" :VALUE "eulerAngles" :STATIC T)
+     (flash:+orientation3-d.axis-angle+ :SWF-NAME "AXIS_ANGLE" :TYPE "String"
+      :VALUE "axisAngle" :STATIC T))
     :properties
     ()
     :methods
@@ -7127,8 +7328,8 @@
   (avm2-compiler::declare-swf-class flash::flash.events.security-error-event (flash.events.error-event)
     :swf-name "flash.events::SecurityErrorEvent"
     :constants
-    ((flash:+security-error+ :SWF-NAME "SECURITY_ERROR" :TYPE "String" :VALUE
-      "securityError" :STATIC T))
+    ((flash:+security-error-event.security-error+ :SWF-NAME "SECURITY_ERROR"
+      :TYPE "String" :VALUE "securityError" :STATIC T))
     :properties
     ()
     :methods
@@ -7142,15 +7343,16 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.ligature-level (object)
     :swf-name "flash.text.engine::LigatureLevel"
     :constants
-    ((flash:+minimum+ :SWF-NAME "MINIMUM" :TYPE "String" :VALUE "minimum"
+    ((flash:+ligature-level.minimum+ :SWF-NAME "MINIMUM" :TYPE "String" :VALUE
+      "minimum" :STATIC T)
+     (flash:+ligature-level.common+ :SWF-NAME "COMMON" :TYPE "String" :VALUE
+      "common" :STATIC T)
+     (flash:+ligature-level.exotic+ :SWF-NAME "EXOTIC" :TYPE "String" :VALUE
+      "exotic" :STATIC T)
+     (flash:+ligature-level.none+ :SWF-NAME "NONE" :TYPE "String" :VALUE "none"
       :STATIC T)
-     (flash:+common+ :SWF-NAME "COMMON" :TYPE "String" :VALUE "common" :STATIC
-      T)
-     (flash:+exotic+ :SWF-NAME "EXOTIC" :TYPE "String" :VALUE "exotic" :STATIC
-      T)
-     (flash:+none+ :SWF-NAME "NONE" :TYPE "String" :VALUE "none" :STATIC T)
-     (flash:+uncommon+ :SWF-NAME "UNCOMMON" :TYPE "String" :VALUE "uncommon"
-      :STATIC T))
+     (flash:+ligature-level.uncommon+ :SWF-NAME "UNCOMMON" :TYPE "String"
+      :VALUE "uncommon" :STATIC T))
     :properties
     ()
     :methods
@@ -7172,10 +7374,10 @@
   (avm2-compiler::declare-swf-class flash::flash.text.anti-alias-type (object)
     :swf-name "flash.text::AntiAliasType"
     :constants
-    ((flash:+normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE "normal" :STATIC
-      T)
-     (flash:+advanced+ :SWF-NAME "ADVANCED" :TYPE "String" :VALUE "advanced"
-      :STATIC T))
+    ((flash:+anti-alias-type.normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE
+      "normal" :STATIC T)
+     (flash:+anti-alias-type.advanced+ :SWF-NAME "ADVANCED" :TYPE "String"
+      :VALUE "advanced" :STATIC T))
     :properties
     ()
     :methods
@@ -7234,11 +7436,12 @@
   (avm2-compiler::declare-swf-class flash::flash.net.url-loader-data-format (object)
     :swf-name "flash.net::URLLoaderDataFormat"
     :constants
-    ((flash:+text+ :SWF-NAME "TEXT" :TYPE "String" :VALUE "text" :STATIC T)
-     (flash:+variables+ :SWF-NAME "VARIABLES" :TYPE "String" :VALUE "variables"
-      :STATIC T)
-     (flash:+binary+ :SWF-NAME "BINARY" :TYPE "String" :VALUE "binary" :STATIC
-      T))
+    ((flash:+url-loader-data-format.text+ :SWF-NAME "TEXT" :TYPE "String"
+      :VALUE "text" :STATIC T)
+     (flash:+url-loader-data-format.variables+ :SWF-NAME "VARIABLES" :TYPE
+      "String" :VALUE "variables" :STATIC T)
+     (flash:+url-loader-data-format.binary+ :SWF-NAME "BINARY" :TYPE "String"
+      :VALUE "binary" :STATIC T))
     :properties
     ()
     :methods
@@ -7268,10 +7471,10 @@
   (avm2-compiler::declare-swf-class flash::flash.events.progress-event (flash.events.event)
     :swf-name "flash.events::ProgressEvent"
     :constants
-    ((flash:+socket-data+ :SWF-NAME "SOCKET_DATA" :TYPE "String" :VALUE
-      "socketData" :STATIC T)
-     (flash:+progress+ :SWF-NAME "PROGRESS" :TYPE "String" :VALUE "progress"
-      :STATIC T))
+    ((flash:+progress-event.socket-data+ :SWF-NAME "SOCKET_DATA" :TYPE "String"
+      :VALUE "socketData" :STATIC T)
+     (flash:+progress-event.progress+ :SWF-NAME "PROGRESS" :TYPE "String"
+      :VALUE "progress" :STATIC T))
     :properties
     ((flash::bytes-total :SWF-NAME "bytesTotal" :TYPE "uint" :STATIC NIL
       :ACCESSOR flash:.bytes-total)
@@ -7288,10 +7491,10 @@
   (avm2-compiler::declare-swf-class flash::flash.events.context-menu-event (flash.events.event)
     :swf-name "flash.events::ContextMenuEvent"
     :constants
-    ((flash:+menu-select+ :SWF-NAME "MENU_SELECT" :TYPE "String" :VALUE
-      "menuSelect" :STATIC T)
-     (flash:+menu-item-select+ :SWF-NAME "MENU_ITEM_SELECT" :TYPE "String"
-      :VALUE "menuItemSelect" :STATIC T))
+    ((flash:+context-menu-event.menu-select+ :SWF-NAME "MENU_SELECT" :TYPE
+      "String" :VALUE "menuSelect" :STATIC T)
+     (flash:+context-menu-event.menu-item-select+ :SWF-NAME "MENU_ITEM_SELECT"
+      :TYPE "String" :VALUE "menuItemSelect" :STATIC T))
     :properties
     ((flash::mouse-target :SWF-NAME "mouseTarget" :TYPE
       "flash.display::InteractiveObject" :STATIC NIL :ACCESSOR
@@ -7504,8 +7707,8 @@
   (avm2-compiler::declare-swf-class flash::flash.events.activity-event (flash.events.event)
     :swf-name "flash.events::ActivityEvent"
     :constants
-    ((flash:+activity+ :SWF-NAME "ACTIVITY" :TYPE "String" :VALUE "activity"
-      :STATIC T))
+    ((flash:+activity-event.activity+ :SWF-NAME "ACTIVITY" :TYPE "String"
+      :VALUE "activity" :STATIC T))
     :properties
     ((flash::activating :SWF-NAME "activating" :TYPE "Boolean" :STATIC NIL
       :ACCESSOR flash:.activating))
@@ -7544,9 +7747,12 @@
   (avm2-compiler::declare-swf-class flash::flash.net.object-encoding (object)
     :swf-name "flash.net::ObjectEncoding"
     :constants
-    ((flash:+amf3+ :SWF-NAME "AMF3" :TYPE "uint" :VALUE "3" :STATIC T)
-     (flash:+amf0+ :SWF-NAME "AMF0" :TYPE "uint" :VALUE "0" :STATIC T)
-     (flash:+default+ :SWF-NAME "DEFAULT" :TYPE "uint" :VALUE "3" :STATIC T))
+    ((flash:+object-encoding.amf3+ :SWF-NAME "AMF3" :TYPE "uint" :VALUE "3"
+      :STATIC T)
+     (flash:+object-encoding.amf0+ :SWF-NAME "AMF0" :TYPE "uint" :VALUE "0"
+      :STATIC T)
+     (flash:+object-encoding.default+ :SWF-NAME "DEFAULT" :TYPE "uint" :VALUE
+      "3" :STATIC T))
     :properties
     ((flash::dynamic-property-writer :SWF-NAME "dynamicPropertyWriter" :TYPE
       "flash.net::IDynamicPropertyWriter" :STATIC T :ACCESSOR
@@ -7559,9 +7765,10 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.rendering-mode (object)
     :swf-name "flash.text.engine::RenderingMode"
     :constants
-    ((flash:+normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE "normal" :STATIC
-      T)
-     (flash:+cff+ :SWF-NAME "CFF" :TYPE "String" :VALUE "cff" :STATIC T))
+    ((flash:+rendering-mode.normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE
+      "normal" :STATIC T)
+     (flash:+rendering-mode.cff+ :SWF-NAME "CFF" :TYPE "String" :VALUE "cff"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -7584,12 +7791,16 @@
   (avm2-compiler::declare-swf-class flash::flash.ui.mouse-cursor (object)
     :swf-name "flash.ui::MouseCursor"
     :constants
-    ((flash:+auto+ :SWF-NAME "AUTO" :TYPE "String" :VALUE "auto" :STATIC T)
-     (flash:+arrow+ :SWF-NAME "ARROW" :TYPE "String" :VALUE "arrow" :STATIC T)
-     (flash:+ibeam+ :SWF-NAME "IBEAM" :TYPE "String" :VALUE "ibeam" :STATIC T)
-     (flash:+hand+ :SWF-NAME "HAND" :TYPE "String" :VALUE "hand" :STATIC T)
-     (flash:+button+ :SWF-NAME "BUTTON" :TYPE "String" :VALUE "button" :STATIC
-      T))
+    ((flash:+mouse-cursor.auto+ :SWF-NAME "AUTO" :TYPE "String" :VALUE "auto"
+      :STATIC T)
+     (flash:+mouse-cursor.arrow+ :SWF-NAME "ARROW" :TYPE "String" :VALUE
+      "arrow" :STATIC T)
+     (flash:+mouse-cursor.ibeam+ :SWF-NAME "IBEAM" :TYPE "String" :VALUE
+      "ibeam" :STATIC T)
+     (flash:+mouse-cursor.hand+ :SWF-NAME "HAND" :TYPE "String" :VALUE "hand"
+      :STATIC T)
+     (flash:+mouse-cursor.button+ :SWF-NAME "BUTTON" :TYPE "String" :VALUE
+      "button" :STATIC T))
     :properties
     ()
     :methods
@@ -7600,14 +7811,14 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.text-line-creation-result (object)
     :swf-name "flash.text.engine::TextLineCreationResult"
     :constants
-    ((flash:+insufficient-width+ :SWF-NAME "INSUFFICIENT_WIDTH" :TYPE "String"
-      :VALUE "insufficientWidth" :STATIC T)
-     (flash:+complete+ :SWF-NAME "COMPLETE" :TYPE "String" :VALUE "complete"
-      :STATIC T)
-     (flash:+success+ :SWF-NAME "SUCCESS" :TYPE "String" :VALUE "success"
-      :STATIC T)
-     (flash:+emergency+ :SWF-NAME "EMERGENCY" :TYPE "String" :VALUE "emergency"
-      :STATIC T))
+    ((flash:+text-line-creation-result.insufficient-width+ :SWF-NAME
+      "INSUFFICIENT_WIDTH" :TYPE "String" :VALUE "insufficientWidth" :STATIC T)
+     (flash:+text-line-creation-result.complete+ :SWF-NAME "COMPLETE" :TYPE
+      "String" :VALUE "complete" :STATIC T)
+     (flash:+text-line-creation-result.success+ :SWF-NAME "SUCCESS" :TYPE
+      "String" :VALUE "success" :STATIC T)
+     (flash:+text-line-creation-result.emergency+ :SWF-NAME "EMERGENCY" :TYPE
+      "String" :VALUE "emergency" :STATIC T))
     :properties
     ()
     :methods
@@ -7618,9 +7829,10 @@
   (avm2-compiler::declare-swf-class flash::flash.events.data-event (flash.events.text-event)
     :swf-name "flash.events::DataEvent"
     :constants
-    ((flash:+upload-complete-data+ :SWF-NAME "UPLOAD_COMPLETE_DATA" :TYPE
-      "String" :VALUE "uploadCompleteData" :STATIC T)
-     (flash:+data+ :SWF-NAME "DATA" :TYPE "String" :VALUE "data" :STATIC T))
+    ((flash:+data-event.upload-complete-data+ :SWF-NAME "UPLOAD_COMPLETE_DATA"
+      :TYPE "String" :VALUE "uploadCompleteData" :STATIC T)
+     (flash:+data-event.data+ :SWF-NAME "DATA" :TYPE "String" :VALUE "data"
+      :STATIC T))
     :properties
     ((flash::data :SWF-NAME "data" :TYPE "String" :STATIC NIL :ACCESSOR
       flash:.data))
@@ -7635,11 +7847,14 @@
   (avm2-compiler::declare-swf-class flash::flash.display.stage-quality (object)
     :swf-name "flash.display::StageQuality"
     :constants
-    ((flash:+high+ :SWF-NAME "HIGH" :TYPE "String" :VALUE "high" :STATIC T)
-     (flash:+medium+ :SWF-NAME "MEDIUM" :TYPE "String" :VALUE "medium" :STATIC
-      T)
-     (flash:+low+ :SWF-NAME "LOW" :TYPE "String" :VALUE "low" :STATIC T)
-     (flash:+best+ :SWF-NAME "BEST" :TYPE "String" :VALUE "best" :STATIC T))
+    ((flash:+stage-quality.high+ :SWF-NAME "HIGH" :TYPE "String" :VALUE "high"
+      :STATIC T)
+     (flash:+stage-quality.medium+ :SWF-NAME "MEDIUM" :TYPE "String" :VALUE
+      "medium" :STATIC T)
+     (flash:+stage-quality.low+ :SWF-NAME "LOW" :TYPE "String" :VALUE "low"
+      :STATIC T)
+     (flash:+stage-quality.best+ :SWF-NAME "BEST" :TYPE "String" :VALUE "best"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -7754,10 +7969,10 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.font-posture (object)
     :swf-name "flash.text.engine::FontPosture"
     :constants
-    ((flash:+normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE "normal" :STATIC
-      T)
-     (flash:+italic+ :SWF-NAME "ITALIC" :TYPE "String" :VALUE "italic" :STATIC
-      T))
+    ((flash:+font-posture.normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE
+      "normal" :STATIC T)
+     (flash:+font-posture.italic+ :SWF-NAME "ITALIC" :TYPE "String" :VALUE
+      "italic" :STATIC T))
     :properties
     ()
     :methods
@@ -8009,8 +8224,8 @@
   (avm2-compiler::declare-swf-class flash::flash.events.net-status-event (flash.events.event)
     :swf-name "flash.events::NetStatusEvent"
     :constants
-    ((flash:+net-status+ :SWF-NAME "NET_STATUS" :TYPE "String" :VALUE
-      "netStatus" :STATIC T))
+    ((flash:+net-status-event.net-status+ :SWF-NAME "NET_STATUS" :TYPE "String"
+      :VALUE "netStatus" :STATIC T))
     :properties
     ((flash::info :SWF-NAME "info" :TYPE "Object" :STATIC NIL :ACCESSOR
       flash:.info))
@@ -8025,10 +8240,12 @@
   (avm2-compiler::declare-swf-class flash::flash.text.grid-fit-type (object)
     :swf-name "flash.text::GridFitType"
     :constants
-    ((flash:+pixel+ :SWF-NAME "PIXEL" :TYPE "String" :VALUE "pixel" :STATIC T)
-     (flash:+none+ :SWF-NAME "NONE" :TYPE "String" :VALUE "none" :STATIC T)
-     (flash:+subpixel+ :SWF-NAME "SUBPIXEL" :TYPE "String" :VALUE "subpixel"
-      :STATIC T))
+    ((flash:+grid-fit-type.pixel+ :SWF-NAME "PIXEL" :TYPE "String" :VALUE
+      "pixel" :STATIC T)
+     (flash:+grid-fit-type.none+ :SWF-NAME "NONE" :TYPE "String" :VALUE "none"
+      :STATIC T)
+     (flash:+grid-fit-type.subpixel+ :SWF-NAME "SUBPIXEL" :TYPE "String" :VALUE
+      "subpixel" :STATIC T))
     :properties
     ()
     :methods
@@ -8039,10 +8256,12 @@
   (avm2-compiler::declare-swf-class flash::flash.display.caps-style (object)
     :swf-name "flash.display::CapsStyle"
     :constants
-    ((flash:+round+ :SWF-NAME "ROUND" :TYPE "String" :VALUE "round" :STATIC T)
-     (flash:+square+ :SWF-NAME "SQUARE" :TYPE "String" :VALUE "square" :STATIC
-      T)
-     (flash:+none+ :SWF-NAME "NONE" :TYPE "String" :VALUE "none" :STATIC T))
+    ((flash:+caps-style.round+ :SWF-NAME "ROUND" :TYPE "String" :VALUE "round"
+      :STATIC T)
+     (flash:+caps-style.square+ :SWF-NAME "SQUARE" :TYPE "String" :VALUE
+      "square" :STATIC T)
+     (flash:+caps-style.none+ :SWF-NAME "NONE" :TYPE "String" :VALUE "none"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -8069,10 +8288,10 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.font-lookup (object)
     :swf-name "flash.text.engine::FontLookup"
     :constants
-    ((flash:+device+ :SWF-NAME "DEVICE" :TYPE "String" :VALUE "device" :STATIC
-      T)
-     (flash:+embedded-cff+ :SWF-NAME "EMBEDDED_CFF" :TYPE "String" :VALUE
-      "embeddedCFF" :STATIC T))
+    ((flash:+font-lookup.device+ :SWF-NAME "DEVICE" :TYPE "String" :VALUE
+      "device" :STATIC T)
+     (flash:+font-lookup.embedded-cff+ :SWF-NAME "EMBEDDED_CFF" :TYPE "String"
+      :VALUE "embeddedCFF" :STATIC T))
     :properties
     ()
     :methods
@@ -8097,10 +8316,12 @@
   (avm2-compiler::declare-swf-class flash::flash.text.text-display-mode (object)
     :swf-name "flash.text::TextDisplayMode"
     :constants
-    ((flash:+lcd+ :SWF-NAME "LCD" :TYPE "String" :VALUE "lcd" :STATIC T)
-     (flash:+crt+ :SWF-NAME "CRT" :TYPE "String" :VALUE "crt" :STATIC T)
-     (flash:+default+ :SWF-NAME "DEFAULT" :TYPE "String" :VALUE "default"
-      :STATIC T))
+    ((flash:+text-display-mode.lcd+ :SWF-NAME "LCD" :TYPE "String" :VALUE "lcd"
+      :STATIC T)
+     (flash:+text-display-mode.crt+ :SWF-NAME "CRT" :TYPE "String" :VALUE "crt"
+      :STATIC T)
+     (flash:+text-display-mode.default+ :SWF-NAME "DEFAULT" :TYPE "String"
+      :VALUE "default" :STATIC T))
     :properties
     ()
     :methods
@@ -8127,9 +8348,9 @@
   (avm2-compiler::declare-swf-class flash::flash.utils.endian (object)
     :swf-name "flash.utils::Endian"
     :constants
-    ((flash:+little-endian+ :SWF-NAME "LITTLE_ENDIAN" :TYPE "String" :VALUE
-      "littleEndian" :STATIC T)
-     (flash:+big-endian+ :SWF-NAME "BIG_ENDIAN" :TYPE "String" :VALUE
+    ((flash:+endian.little-endian+ :SWF-NAME "LITTLE_ENDIAN" :TYPE "String"
+      :VALUE "littleEndian" :STATIC T)
+     (flash:+endian.big-endian+ :SWF-NAME "BIG_ENDIAN" :TYPE "String" :VALUE
       "bigEndian" :STATIC T))
     :properties
     ()
@@ -8141,12 +8362,12 @@
   (avm2-compiler::declare-swf-class flash::flash.text.font-type (object)
     :swf-name "flash.text::FontType"
     :constants
-    ((flash:+embedded-cff+ :SWF-NAME "EMBEDDED_CFF" :TYPE "String" :VALUE
-      "embeddedCFF" :STATIC T)
-     (flash:+embedded+ :SWF-NAME "EMBEDDED" :TYPE "String" :VALUE "embedded"
-      :STATIC T)
-     (flash:+device+ :SWF-NAME "DEVICE" :TYPE "String" :VALUE "device" :STATIC
-      T))
+    ((flash:+font-type.embedded-cff+ :SWF-NAME "EMBEDDED_CFF" :TYPE "String"
+      :VALUE "embeddedCFF" :STATIC T)
+     (flash:+font-type.embedded+ :SWF-NAME "EMBEDDED" :TYPE "String" :VALUE
+      "embedded" :STATIC T)
+     (flash:+font-type.device+ :SWF-NAME "DEVICE" :TYPE "String" :VALUE
+      "device" :STATIC T))
     :properties
     ()
     :methods
@@ -8216,20 +8437,20 @@
   (avm2-compiler::declare-swf-class flash::flash.system.security-panel (object)
     :swf-name "flash.system::SecurityPanel"
     :constants
-    ((flash:+display+ :SWF-NAME "DISPLAY" :TYPE "String" :VALUE "display"
-      :STATIC T)
-     (flash:+settings-manager+ :SWF-NAME "SETTINGS_MANAGER" :TYPE "String"
-      :VALUE "settingsManager" :STATIC T)
-     (flash:+microphone+ :SWF-NAME "MICROPHONE" :TYPE "String" :VALUE
-      "microphone" :STATIC T)
-     (flash:+privacy+ :SWF-NAME "PRIVACY" :TYPE "String" :VALUE "privacy"
-      :STATIC T)
-     (flash:+local-storage+ :SWF-NAME "LOCAL_STORAGE" :TYPE "String" :VALUE
-      "localStorage" :STATIC T)
-     (flash:+camera+ :SWF-NAME "CAMERA" :TYPE "String" :VALUE "camera" :STATIC
-      T)
-     (flash:+default+ :SWF-NAME "DEFAULT" :TYPE "String" :VALUE "default"
-      :STATIC T))
+    ((flash:+security-panel.display+ :SWF-NAME "DISPLAY" :TYPE "String" :VALUE
+      "display" :STATIC T)
+     (flash:+security-panel.settings-manager+ :SWF-NAME "SETTINGS_MANAGER"
+      :TYPE "String" :VALUE "settingsManager" :STATIC T)
+     (flash:+security-panel.microphone+ :SWF-NAME "MICROPHONE" :TYPE "String"
+      :VALUE "microphone" :STATIC T)
+     (flash:+security-panel.privacy+ :SWF-NAME "PRIVACY" :TYPE "String" :VALUE
+      "privacy" :STATIC T)
+     (flash:+security-panel.local-storage+ :SWF-NAME "LOCAL_STORAGE" :TYPE
+      "String" :VALUE "localStorage" :STATIC T)
+     (flash:+security-panel.camera+ :SWF-NAME "CAMERA" :TYPE "String" :VALUE
+      "camera" :STATIC T)
+     (flash:+security-panel.default+ :SWF-NAME "DEFAULT" :TYPE "String" :VALUE
+      "default" :STATIC T))
     :properties
     ()
     :methods
@@ -8286,8 +8507,8 @@
   (avm2-compiler::declare-swf-class flash::flash.events.full-screen-event (flash.events.activity-event)
     :swf-name "flash.events::FullScreenEvent"
     :constants
-    ((flash:+full-screen+ :SWF-NAME "FULL_SCREEN" :TYPE "String" :VALUE
-      "fullScreen" :STATIC T))
+    ((flash:+full-screen-event.full-screen+ :SWF-NAME "FULL_SCREEN" :TYPE
+      "String" :VALUE "fullScreen" :STATIC T))
     :properties
     ((flash::full-screen :SWF-NAME "fullScreen" :TYPE "Boolean" :STATIC NIL
       :ACCESSOR flash:.full-screen))
@@ -8302,11 +8523,16 @@
   (avm2-compiler::declare-swf-class flash::flash.net.net-stream-play-transitions (object)
     :swf-name "flash.net::NetStreamPlayTransitions"
     :constants
-    ((flash:+reset+ :SWF-NAME "RESET" :TYPE "*" :VALUE "reset" :STATIC T)
-     (flash:+append+ :SWF-NAME "APPEND" :TYPE "*" :VALUE "append" :STATIC T)
-     (flash:+stop+ :SWF-NAME "STOP" :TYPE "*" :VALUE "stop" :STATIC T)
-     (flash:+switch+ :SWF-NAME "SWITCH" :TYPE "*" :VALUE "switch" :STATIC T)
-     (flash:+swap+ :SWF-NAME "SWAP" :TYPE "*" :VALUE "swap" :STATIC T))
+    ((flash:+net-stream-play-transitions.reset+ :SWF-NAME "RESET" :TYPE "*"
+      :VALUE "reset" :STATIC T)
+     (flash:+net-stream-play-transitions.append+ :SWF-NAME "APPEND" :TYPE "*"
+      :VALUE "append" :STATIC T)
+     (flash:+net-stream-play-transitions.stop+ :SWF-NAME "STOP" :TYPE "*"
+      :VALUE "stop" :STATIC T)
+     (flash:+net-stream-play-transitions.switch+ :SWF-NAME "SWITCH" :TYPE "*"
+      :VALUE "switch" :STATIC T)
+     (flash:+net-stream-play-transitions.swap+ :SWF-NAME "SWAP" :TYPE "*"
+      :VALUE "swap" :STATIC T))
     :properties
     ()
     :methods
@@ -8317,12 +8543,12 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.digit-case (object)
     :swf-name "flash.text.engine::DigitCase"
     :constants
-    ((flash:+old-style+ :SWF-NAME "OLD_STYLE" :TYPE "String" :VALUE "oldStyle"
-      :STATIC T)
-     (flash:+default+ :SWF-NAME "DEFAULT" :TYPE "String" :VALUE "default"
-      :STATIC T)
-     (flash:+lining+ :SWF-NAME "LINING" :TYPE "String" :VALUE "lining" :STATIC
-      T))
+    ((flash:+digit-case.old-style+ :SWF-NAME "OLD_STYLE" :TYPE "String" :VALUE
+      "oldStyle" :STATIC T)
+     (flash:+digit-case.default+ :SWF-NAME "DEFAULT" :TYPE "String" :VALUE
+      "default" :STATIC T)
+     (flash:+digit-case.lining+ :SWF-NAME "LINING" :TYPE "String" :VALUE
+      "lining" :STATIC T))
     :properties
     ()
     :methods
@@ -8360,8 +8586,8 @@
   (avm2-compiler::declare-swf-class flash::flash.events.shader-event (flash.events.event)
     :swf-name "flash.events::ShaderEvent"
     :constants
-    ((flash:+complete+ :SWF-NAME "COMPLETE" :TYPE "String" :VALUE "complete"
-      :STATIC T))
+    ((flash:+shader-event.complete+ :SWF-NAME "COMPLETE" :TYPE "String" :VALUE
+      "complete" :STATIC T))
     :properties
     ((flash::bitmap-data :SWF-NAME "bitmapData" :TYPE
       "flash.display::BitmapData" :STATIC NIL :ACCESSOR flash:.bitmap-data)
@@ -8404,9 +8630,12 @@
   (avm2-compiler::declare-swf-class flash::flash.filters.bitmap-filter-quality (object)
     :swf-name "flash.filters::BitmapFilterQuality"
     :constants
-    ((flash:+high+ :SWF-NAME "HIGH" :TYPE "int" :VALUE "3" :STATIC T)
-     (flash:+medium+ :SWF-NAME "MEDIUM" :TYPE "int" :VALUE "2" :STATIC T)
-     (flash:+low+ :SWF-NAME "LOW" :TYPE "int" :VALUE "1" :STATIC T))
+    ((flash:+bitmap-filter-quality.high+ :SWF-NAME "HIGH" :TYPE "int" :VALUE
+      "3" :STATIC T)
+     (flash:+bitmap-filter-quality.medium+ :SWF-NAME "MEDIUM" :TYPE "int"
+      :VALUE "2" :STATIC T)
+     (flash:+bitmap-filter-quality.low+ :SWF-NAME "LOW" :TYPE "int" :VALUE "1"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -8565,9 +8794,10 @@
   (avm2-compiler::declare-swf-class flash::flash.events.timer-event (flash.events.event)
     :swf-name "flash.events::TimerEvent"
     :constants
-    ((flash:+timer+ :SWF-NAME "TIMER" :TYPE "String" :VALUE "timer" :STATIC T)
-     (flash:+timer-complete+ :SWF-NAME "TIMER_COMPLETE" :TYPE "String" :VALUE
-      "timerComplete" :STATIC T))
+    ((flash:+timer-event.timer+ :SWF-NAME "TIMER" :TYPE "String" :VALUE "timer"
+      :STATIC T)
+     (flash:+timer-event.timer-complete+ :SWF-NAME "TIMER_COMPLETE" :TYPE
+      "String" :VALUE "timerComplete" :STATIC T))
     :properties
     ()
     :methods
@@ -8688,12 +8918,12 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.line-justification (object)
     :swf-name "flash.text.engine::LineJustification"
     :constants
-    ((flash:+all-including-last+ :SWF-NAME "ALL_INCLUDING_LAST" :TYPE "String"
-      :VALUE "allIncludingLast" :STATIC T)
-     (flash:+unjustified+ :SWF-NAME "UNJUSTIFIED" :TYPE "String" :VALUE
-      "unjustified" :STATIC T)
-     (flash:+all-but-last+ :SWF-NAME "ALL_BUT_LAST" :TYPE "String" :VALUE
-      "allButLast" :STATIC T))
+    ((flash:+line-justification.all-including-last+ :SWF-NAME
+      "ALL_INCLUDING_LAST" :TYPE "String" :VALUE "allIncludingLast" :STATIC T)
+     (flash:+line-justification.unjustified+ :SWF-NAME "UNJUSTIFIED" :TYPE
+      "String" :VALUE "unjustified" :STATIC T)
+     (flash:+line-justification.all-but-last+ :SWF-NAME "ALL_BUT_LAST" :TYPE
+      "String" :VALUE "allButLast" :STATIC T))
     :properties
     ()
     :methods
@@ -8704,13 +8934,14 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.text-line-validity (object)
     :swf-name "flash.text.engine::TextLineValidity"
     :constants
-    ((flash:+possibly-invalid+ :SWF-NAME "POSSIBLY_INVALID" :TYPE "String"
-      :VALUE "possiblyInvalid" :STATIC T)
-     (flash:+valid+ :SWF-NAME "VALID" :TYPE "String" :VALUE "valid" :STATIC T)
-     (flash:+invalid+ :SWF-NAME "INVALID" :TYPE "String" :VALUE "invalid"
-      :STATIC T)
-     (flash:+static+ :SWF-NAME "STATIC" :TYPE "String" :VALUE "static" :STATIC
-      T))
+    ((flash:+text-line-validity.possibly-invalid+ :SWF-NAME "POSSIBLY_INVALID"
+      :TYPE "String" :VALUE "possiblyInvalid" :STATIC T)
+     (flash:+text-line-validity.valid+ :SWF-NAME "VALID" :TYPE "String" :VALUE
+      "valid" :STATIC T)
+     (flash:+text-line-validity.invalid+ :SWF-NAME "INVALID" :TYPE "String"
+      :VALUE "invalid" :STATIC T)
+     (flash:+text-line-validity.static+ :SWF-NAME "STATIC" :TYPE "String"
+      :VALUE "static" :STATIC T))
     :properties
     ()
     :methods
@@ -8760,32 +8991,36 @@
   (avm2-compiler::declare-swf-class flash::flash.display.blend-mode (object)
     :swf-name "flash.display::BlendMode"
     :constants
-    ((flash:+difference+ :SWF-NAME "DIFFERENCE" :TYPE "String" :VALUE
-      "difference" :STATIC T)
-     (flash:+layer+ :SWF-NAME "LAYER" :TYPE "String" :VALUE "layer" :STATIC T)
-     (flash:+overlay+ :SWF-NAME "OVERLAY" :TYPE "String" :VALUE "overlay"
+    ((flash:+blend-mode.difference+ :SWF-NAME "DIFFERENCE" :TYPE "String"
+      :VALUE "difference" :STATIC T)
+     (flash:+blend-mode.layer+ :SWF-NAME "LAYER" :TYPE "String" :VALUE "layer"
       :STATIC T)
-     (flash:+screen+ :SWF-NAME "SCREEN" :TYPE "String" :VALUE "screen" :STATIC
-      T)
-     (flash:+hardlight+ :SWF-NAME "HARDLIGHT" :TYPE "String" :VALUE "hardlight"
+     (flash:+blend-mode.overlay+ :SWF-NAME "OVERLAY" :TYPE "String" :VALUE
+      "overlay" :STATIC T)
+     (flash:+blend-mode.screen+ :SWF-NAME "SCREEN" :TYPE "String" :VALUE
+      "screen" :STATIC T)
+     (flash:+blend-mode.hardlight+ :SWF-NAME "HARDLIGHT" :TYPE "String" :VALUE
+      "hardlight" :STATIC T)
+     (flash:+blend-mode.normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE
+      "normal" :STATIC T)
+     (flash:+blend-mode.darken+ :SWF-NAME "DARKEN" :TYPE "String" :VALUE
+      "darken" :STATIC T)
+     (flash:+blend-mode.shader+ :SWF-NAME "SHADER" :TYPE "String" :VALUE
+      "shader" :STATIC T)
+     (flash:+blend-mode.multiply+ :SWF-NAME "MULTIPLY" :TYPE "String" :VALUE
+      "multiply" :STATIC T)
+     (flash:+blend-mode.lighten+ :SWF-NAME "LIGHTEN" :TYPE "String" :VALUE
+      "lighten" :STATIC T)
+     (flash:+blend-mode.invert+ :SWF-NAME "INVERT" :TYPE "String" :VALUE
+      "invert" :STATIC T)
+     (flash:+blend-mode.subtract+ :SWF-NAME "SUBTRACT" :TYPE "String" :VALUE
+      "subtract" :STATIC T)
+     (flash:+blend-mode.alpha+ :SWF-NAME "ALPHA" :TYPE "String" :VALUE "alpha"
       :STATIC T)
-     (flash:+normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE "normal" :STATIC
-      T)
-     (flash:+darken+ :SWF-NAME "DARKEN" :TYPE "String" :VALUE "darken" :STATIC
-      T)
-     (flash:+shader+ :SWF-NAME "SHADER" :TYPE "String" :VALUE "shader" :STATIC
-      T)
-     (flash:+multiply+ :SWF-NAME "MULTIPLY" :TYPE "String" :VALUE "multiply"
+     (flash:+blend-mode.erase+ :SWF-NAME "ERASE" :TYPE "String" :VALUE "erase"
       :STATIC T)
-     (flash:+lighten+ :SWF-NAME "LIGHTEN" :TYPE "String" :VALUE "lighten"
-      :STATIC T)
-     (flash:+invert+ :SWF-NAME "INVERT" :TYPE "String" :VALUE "invert" :STATIC
-      T)
-     (flash:+subtract+ :SWF-NAME "SUBTRACT" :TYPE "String" :VALUE "subtract"
-      :STATIC T)
-     (flash:+alpha+ :SWF-NAME "ALPHA" :TYPE "String" :VALUE "alpha" :STATIC T)
-     (flash:+erase+ :SWF-NAME "ERASE" :TYPE "String" :VALUE "erase" :STATIC T)
-     (flash:+add+ :SWF-NAME "ADD" :TYPE "String" :VALUE "add" :STATIC T))
+     (flash:+blend-mode.add+ :SWF-NAME "ADD" :TYPE "String" :VALUE "add"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -8861,25 +9096,26 @@
   (avm2-compiler::declare-swf-class flash::flash.events.mouse-event (flash.events.event)
     :swf-name "flash.events::MouseEvent"
     :constants
-    ((flash:+roll-over+ :SWF-NAME "ROLL_OVER" :TYPE "String" :VALUE "rollOver"
+    ((flash:+mouse-event.roll-over+ :SWF-NAME "ROLL_OVER" :TYPE "String" :VALUE
+      "rollOver" :STATIC T)
+     (flash:+mouse-event.mouse-down+ :SWF-NAME "MOUSE_DOWN" :TYPE "String"
+      :VALUE "mouseDown" :STATIC T)
+     (flash:+mouse-event.double-click+ :SWF-NAME "DOUBLE_CLICK" :TYPE "String"
+      :VALUE "doubleClick" :STATIC T)
+     (flash:+mouse-event.mouse-up+ :SWF-NAME "MOUSE_UP" :TYPE "String" :VALUE
+      "mouseUp" :STATIC T)
+     (flash:+mouse-event.mouse-out+ :SWF-NAME "MOUSE_OUT" :TYPE "String" :VALUE
+      "mouseOut" :STATIC T)
+     (flash:+mouse-event.click+ :SWF-NAME "CLICK" :TYPE "String" :VALUE "click"
       :STATIC T)
-     (flash:+mouse-down+ :SWF-NAME "MOUSE_DOWN" :TYPE "String" :VALUE
-      "mouseDown" :STATIC T)
-     (flash:+double-click+ :SWF-NAME "DOUBLE_CLICK" :TYPE "String" :VALUE
-      "doubleClick" :STATIC T)
-     (flash:+mouse-up+ :SWF-NAME "MOUSE_UP" :TYPE "String" :VALUE "mouseUp"
-      :STATIC T)
-     (flash:+mouse-out+ :SWF-NAME "MOUSE_OUT" :TYPE "String" :VALUE "mouseOut"
-      :STATIC T)
-     (flash:+click+ :SWF-NAME "CLICK" :TYPE "String" :VALUE "click" :STATIC T)
-     (flash:+mouse-over+ :SWF-NAME "MOUSE_OVER" :TYPE "String" :VALUE
-      "mouseOver" :STATIC T)
-     (flash:+roll-out+ :SWF-NAME "ROLL_OUT" :TYPE "String" :VALUE "rollOut"
-      :STATIC T)
-     (flash:+mouse-move+ :SWF-NAME "MOUSE_MOVE" :TYPE "String" :VALUE
-      "mouseMove" :STATIC T)
-     (flash:+mouse-wheel+ :SWF-NAME "MOUSE_WHEEL" :TYPE "String" :VALUE
-      "mouseWheel" :STATIC T))
+     (flash:+mouse-event.mouse-over+ :SWF-NAME "MOUSE_OVER" :TYPE "String"
+      :VALUE "mouseOver" :STATIC T)
+     (flash:+mouse-event.roll-out+ :SWF-NAME "ROLL_OUT" :TYPE "String" :VALUE
+      "rollOut" :STATIC T)
+     (flash:+mouse-event.mouse-move+ :SWF-NAME "MOUSE_MOVE" :TYPE "String"
+      :VALUE "mouseMove" :STATIC T)
+     (flash:+mouse-event.mouse-wheel+ :SWF-NAME "MOUSE_WHEEL" :TYPE "String"
+      :VALUE "mouseWheel" :STATIC T))
     :properties
     ((flash::delta :SWF-NAME "delta" :TYPE "int" :STATIC NIL :ACCESSOR
       flash:.delta)
@@ -8940,19 +9176,21 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.text-baseline (object)
     :swf-name "flash.text.engine::TextBaseline"
     :constants
-    ((flash:+roman+ :SWF-NAME "ROMAN" :TYPE "String" :VALUE "roman" :STATIC T)
-     (flash:+ascent+ :SWF-NAME "ASCENT" :TYPE "String" :VALUE "ascent" :STATIC
-      T)
-     (flash:+ideographic-top+ :SWF-NAME "IDEOGRAPHIC_TOP" :TYPE "String" :VALUE
-      "ideographicTop" :STATIC T)
-     (flash:+ideographic-center+ :SWF-NAME "IDEOGRAPHIC_CENTER" :TYPE "String"
-      :VALUE "ideographicCenter" :STATIC T)
-     (flash:+use-dominant-baseline+ :SWF-NAME "USE_DOMINANT_BASELINE" :TYPE
-      "String" :VALUE "useDominantBaseline" :STATIC T)
-     (flash:+ideographic-bottom+ :SWF-NAME "IDEOGRAPHIC_BOTTOM" :TYPE "String"
-      :VALUE "ideographicBottom" :STATIC T)
-     (flash:+descent+ :SWF-NAME "DESCENT" :TYPE "String" :VALUE "descent"
-      :STATIC T))
+    ((flash:+text-baseline.roman+ :SWF-NAME "ROMAN" :TYPE "String" :VALUE
+      "roman" :STATIC T)
+     (flash:+text-baseline.ascent+ :SWF-NAME "ASCENT" :TYPE "String" :VALUE
+      "ascent" :STATIC T)
+     (flash:+text-baseline.ideographic-top+ :SWF-NAME "IDEOGRAPHIC_TOP" :TYPE
+      "String" :VALUE "ideographicTop" :STATIC T)
+     (flash:+text-baseline.ideographic-center+ :SWF-NAME "IDEOGRAPHIC_CENTER"
+      :TYPE "String" :VALUE "ideographicCenter" :STATIC T)
+     (flash:+text-baseline.use-dominant-baseline+ :SWF-NAME
+      "USE_DOMINANT_BASELINE" :TYPE "String" :VALUE "useDominantBaseline"
+      :STATIC T)
+     (flash:+text-baseline.ideographic-bottom+ :SWF-NAME "IDEOGRAPHIC_BOTTOM"
+      :TYPE "String" :VALUE "ideographicBottom" :STATIC T)
+     (flash:+text-baseline.descent+ :SWF-NAME "DESCENT" :TYPE "String" :VALUE
+      "descent" :STATIC T))
     :properties
     ()
     :methods
@@ -9106,14 +9344,14 @@
   (avm2-compiler::declare-swf-class flash::flash.system.security (object)
     :swf-name "flash.system::Security"
     :constants
-    ((flash:+local-with-network+ :SWF-NAME "LOCAL_WITH_NETWORK" :TYPE "String"
-      :VALUE "localWithNetwork" :STATIC T)
-     (flash:+local-with-file+ :SWF-NAME "LOCAL_WITH_FILE" :TYPE "String" :VALUE
-      "localWithFile" :STATIC T)
-     (flash:+remote+ :SWF-NAME "REMOTE" :TYPE "String" :VALUE "remote" :STATIC
-      T)
-     (flash:+local-trusted+ :SWF-NAME "LOCAL_TRUSTED" :TYPE "String" :VALUE
-      "localTrusted" :STATIC T))
+    ((flash:+security.local-with-network+ :SWF-NAME "LOCAL_WITH_NETWORK" :TYPE
+      "String" :VALUE "localWithNetwork" :STATIC T)
+     (flash:+security.local-with-file+ :SWF-NAME "LOCAL_WITH_FILE" :TYPE
+      "String" :VALUE "localWithFile" :STATIC T)
+     (flash:+security.remote+ :SWF-NAME "REMOTE" :TYPE "String" :VALUE "remote"
+      :STATIC T)
+     (flash:+security.local-trusted+ :SWF-NAME "LOCAL_TRUSTED" :TYPE "String"
+      :VALUE "localTrusted" :STATIC T))
     :properties
     ((flash::disable-avm1-loading :SWF-NAME "disableAVM1Loading" :TYPE
       "Boolean" :STATIC T :ACCESSOR flash:.disable-avm1-loading)
@@ -9136,9 +9374,10 @@
   (avm2-compiler::declare-swf-class flash::flash.events.keyboard-event (flash.events.event)
     :swf-name "flash.events::KeyboardEvent"
     :constants
-    ((flash:+key-up+ :SWF-NAME "KEY_UP" :TYPE "String" :VALUE "keyUp" :STATIC T)
-     (flash:+key-down+ :SWF-NAME "KEY_DOWN" :TYPE "String" :VALUE "keyDown"
-      :STATIC T))
+    ((flash:+keyboard-event.key-up+ :SWF-NAME "KEY_UP" :TYPE "String" :VALUE
+      "keyUp" :STATIC T)
+     (flash:+keyboard-event.key-down+ :SWF-NAME "KEY_DOWN" :TYPE "String"
+      :VALUE "keyDown" :STATIC T))
     :properties
     ((flash::shift-key :SWF-NAME "shiftKey" :TYPE "Boolean" :STATIC NIL
       :ACCESSOR flash:.shift-key)
@@ -9165,11 +9404,12 @@
   (avm2-compiler::declare-swf-class flash::flash.display.spread-method (object)
     :swf-name "flash.display::SpreadMethod"
     :constants
-    ((flash:+reflect+ :SWF-NAME "REFLECT" :TYPE "String" :VALUE "reflect"
-      :STATIC T)
-     (flash:+repeat+ :SWF-NAME "REPEAT" :TYPE "String" :VALUE "repeat" :STATIC
-      T)
-     (flash:+pad+ :SWF-NAME "PAD" :TYPE "String" :VALUE "pad" :STATIC T))
+    ((flash:+spread-method.reflect+ :SWF-NAME "REFLECT" :TYPE "String" :VALUE
+      "reflect" :STATIC T)
+     (flash:+spread-method.repeat+ :SWF-NAME "REPEAT" :TYPE "String" :VALUE
+      "repeat" :STATIC T)
+     (flash:+spread-method.pad+ :SWF-NAME "PAD" :TYPE "String" :VALUE "pad"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -9200,27 +9440,36 @@
   (avm2-compiler::declare-swf-class flash::flash.display.shader-parameter-type (object)
     :swf-name "flash.display::ShaderParameterType"
     :constants
-    ((flash:+float4+ :SWF-NAME "FLOAT4" :TYPE "String" :VALUE "float4" :STATIC
-      T)
-     (flash:+float+ :SWF-NAME "FLOAT" :TYPE "String" :VALUE "float" :STATIC T)
-     (flash:+float3+ :SWF-NAME "FLOAT3" :TYPE "String" :VALUE "float3" :STATIC
-      T)
-     (flash:+float2+ :SWF-NAME "FLOAT2" :TYPE "String" :VALUE "float2" :STATIC
-      T)
-     (flash:+matrix4-x4+ :SWF-NAME "MATRIX4X4" :TYPE "String" :VALUE
-      "matrix4x4" :STATIC T)
-     (flash:+matrix3-x3+ :SWF-NAME "MATRIX3X3" :TYPE "String" :VALUE
-      "matrix3x3" :STATIC T)
-     (flash:+matrix2-x2+ :SWF-NAME "MATRIX2X2" :TYPE "String" :VALUE
-      "matrix2x2" :STATIC T)
-     (flash:+bool+ :SWF-NAME "BOOL" :TYPE "String" :VALUE "bool" :STATIC T)
-     (flash:+int+ :SWF-NAME "INT" :TYPE "String" :VALUE "int" :STATIC T)
-     (flash:+bool4+ :SWF-NAME "BOOL4" :TYPE "String" :VALUE "bool4" :STATIC T)
-     (flash:+bool3+ :SWF-NAME "BOOL3" :TYPE "String" :VALUE "bool3" :STATIC T)
-     (flash:+bool2+ :SWF-NAME "BOOL2" :TYPE "String" :VALUE "bool2" :STATIC T)
-     (flash:+int4+ :SWF-NAME "INT4" :TYPE "String" :VALUE "int4" :STATIC T)
-     (flash:+int3+ :SWF-NAME "INT3" :TYPE "String" :VALUE "int3" :STATIC T)
-     (flash:+int2+ :SWF-NAME "INT2" :TYPE "String" :VALUE "int2" :STATIC T))
+    ((flash:+shader-parameter-type.float4+ :SWF-NAME "FLOAT4" :TYPE "String"
+      :VALUE "float4" :STATIC T)
+     (flash:+shader-parameter-type.float+ :SWF-NAME "FLOAT" :TYPE "String"
+      :VALUE "float" :STATIC T)
+     (flash:+shader-parameter-type.float3+ :SWF-NAME "FLOAT3" :TYPE "String"
+      :VALUE "float3" :STATIC T)
+     (flash:+shader-parameter-type.float2+ :SWF-NAME "FLOAT2" :TYPE "String"
+      :VALUE "float2" :STATIC T)
+     (flash:+shader-parameter-type.matrix4-x4+ :SWF-NAME "MATRIX4X4" :TYPE
+      "String" :VALUE "matrix4x4" :STATIC T)
+     (flash:+shader-parameter-type.matrix3-x3+ :SWF-NAME "MATRIX3X3" :TYPE
+      "String" :VALUE "matrix3x3" :STATIC T)
+     (flash:+shader-parameter-type.matrix2-x2+ :SWF-NAME "MATRIX2X2" :TYPE
+      "String" :VALUE "matrix2x2" :STATIC T)
+     (flash:+shader-parameter-type.bool+ :SWF-NAME "BOOL" :TYPE "String" :VALUE
+      "bool" :STATIC T)
+     (flash:+shader-parameter-type.int+ :SWF-NAME "INT" :TYPE "String" :VALUE
+      "int" :STATIC T)
+     (flash:+shader-parameter-type.bool4+ :SWF-NAME "BOOL4" :TYPE "String"
+      :VALUE "bool4" :STATIC T)
+     (flash:+shader-parameter-type.bool3+ :SWF-NAME "BOOL3" :TYPE "String"
+      :VALUE "bool3" :STATIC T)
+     (flash:+shader-parameter-type.bool2+ :SWF-NAME "BOOL2" :TYPE "String"
+      :VALUE "bool2" :STATIC T)
+     (flash:+shader-parameter-type.int4+ :SWF-NAME "INT4" :TYPE "String" :VALUE
+      "int4" :STATIC T)
+     (flash:+shader-parameter-type.int3+ :SWF-NAME "INT3" :TYPE "String" :VALUE
+      "int3" :STATIC T)
+     (flash:+shader-parameter-type.int2+ :SWF-NAME "INT2" :TYPE "String" :VALUE
+      "int2" :STATIC T))
     :properties
     ()
     :methods
@@ -9231,11 +9480,12 @@
   (avm2-compiler::declare-swf-class flash::flash.events.event-phase (object)
     :swf-name "flash.events::EventPhase"
     :constants
-    ((flash:+capturing-phase+ :SWF-NAME "CAPTURING_PHASE" :TYPE "uint" :VALUE
-      "1" :STATIC T)
-     (flash:+at-target+ :SWF-NAME "AT_TARGET" :TYPE "uint" :VALUE "2" :STATIC T)
-     (flash:+bubbling-phase+ :SWF-NAME "BUBBLING_PHASE" :TYPE "uint" :VALUE "3"
-      :STATIC T))
+    ((flash:+event-phase.capturing-phase+ :SWF-NAME "CAPTURING_PHASE" :TYPE
+      "uint" :VALUE "1" :STATIC T)
+     (flash:+event-phase.at-target+ :SWF-NAME "AT_TARGET" :TYPE "uint" :VALUE
+      "2" :STATIC T)
+     (flash:+event-phase.bubbling-phase+ :SWF-NAME "BUBBLING_PHASE" :TYPE
+      "uint" :VALUE "3" :STATIC T))
     :properties
     ()
     :methods
@@ -9246,8 +9496,8 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.text-line (flash.display.display-object-container)
     :swf-name "flash.text.engine::TextLine"
     :constants
-    ((flash:+max-line-width+ :SWF-NAME "MAX_LINE_WIDTH" :TYPE "int" :VALUE
-      "1000000" :STATIC T))
+    ((flash:+text-line.max-line-width+ :SWF-NAME "MAX_LINE_WIDTH" :TYPE "int"
+      :VALUE "1000000" :STATIC T))
     :properties
     ((flash::atom-count :SWF-NAME "atomCount" :TYPE "int" :STATIC NIL :ACCESSOR
       flash:.atom-count)
@@ -9320,10 +9570,12 @@
   (avm2-compiler::declare-swf-class flash::flash.display.pixel-snapping (object)
     :swf-name "flash.display::PixelSnapping"
     :constants
-    ((flash:+auto+ :SWF-NAME "AUTO" :TYPE "String" :VALUE "auto" :STATIC T)
-     (flash:+never+ :SWF-NAME "NEVER" :TYPE "String" :VALUE "never" :STATIC T)
-     (flash:+always+ :SWF-NAME "ALWAYS" :TYPE "String" :VALUE "always" :STATIC
-      T))
+    ((flash:+pixel-snapping.auto+ :SWF-NAME "AUTO" :TYPE "String" :VALUE "auto"
+      :STATIC T)
+     (flash:+pixel-snapping.never+ :SWF-NAME "NEVER" :TYPE "String" :VALUE
+      "never" :STATIC T)
+     (flash:+pixel-snapping.always+ :SWF-NAME "ALWAYS" :TYPE "String" :VALUE
+      "always" :STATIC T))
     :properties
     ()
     :methods
@@ -9393,14 +9645,14 @@
   (avm2-compiler::declare-swf-class flash::flash.display.stage-scale-mode (object)
     :swf-name "flash.display::StageScaleMode"
     :constants
-    ((flash:+show-all+ :SWF-NAME "SHOW_ALL" :TYPE "String" :VALUE "showAll"
-      :STATIC T)
-     (flash:+no-scale+ :SWF-NAME "NO_SCALE" :TYPE "String" :VALUE "noScale"
-      :STATIC T)
-     (flash:+no-border+ :SWF-NAME "NO_BORDER" :TYPE "String" :VALUE "noBorder"
-      :STATIC T)
-     (flash:+exact-fit+ :SWF-NAME "EXACT_FIT" :TYPE "String" :VALUE "exactFit"
-      :STATIC T))
+    ((flash:+stage-scale-mode.show-all+ :SWF-NAME "SHOW_ALL" :TYPE "String"
+      :VALUE "showAll" :STATIC T)
+     (flash:+stage-scale-mode.no-scale+ :SWF-NAME "NO_SCALE" :TYPE "String"
+      :VALUE "noScale" :STATIC T)
+     (flash:+stage-scale-mode.no-border+ :SWF-NAME "NO_BORDER" :TYPE "String"
+      :VALUE "noBorder" :STATIC T)
+     (flash:+stage-scale-mode.exact-fit+ :SWF-NAME "EXACT_FIT" :TYPE "String"
+      :VALUE "exactFit" :STATIC T))
     :properties
     ()
     :methods
@@ -9411,10 +9663,10 @@
   (avm2-compiler::declare-swf-class flash::flash.net.shared-object-flush-status (object)
     :swf-name "flash.net::SharedObjectFlushStatus"
     :constants
-    ((flash:+pending+ :SWF-NAME "PENDING" :TYPE "String" :VALUE "pending"
-      :STATIC T)
-     (flash:+flushed+ :SWF-NAME "FLUSHED" :TYPE "String" :VALUE "flushed"
-      :STATIC T))
+    ((flash:+shared-object-flush-status.pending+ :SWF-NAME "PENDING" :TYPE
+      "String" :VALUE "pending" :STATIC T)
+     (flash:+shared-object-flush-status.flushed+ :SWF-NAME "FLUSHED" :TYPE
+      "String" :VALUE "flushed" :STATIC T))
     :properties
     ()
     :methods
@@ -9425,11 +9677,14 @@
   (avm2-compiler::declare-swf-class flash::flash.text.text-field-auto-size (object)
     :swf-name "flash.text::TextFieldAutoSize"
     :constants
-    ((flash:+right+ :SWF-NAME "RIGHT" :TYPE "String" :VALUE "right" :STATIC T)
-     (flash:+none+ :SWF-NAME "NONE" :TYPE "String" :VALUE "none" :STATIC T)
-     (flash:+left+ :SWF-NAME "LEFT" :TYPE "String" :VALUE "left" :STATIC T)
-     (flash:+center+ :SWF-NAME "CENTER" :TYPE "String" :VALUE "center" :STATIC
-      T))
+    ((flash:+text-field-auto-size.right+ :SWF-NAME "RIGHT" :TYPE "String"
+      :VALUE "right" :STATIC T)
+     (flash:+text-field-auto-size.none+ :SWF-NAME "NONE" :TYPE "String" :VALUE
+      "none" :STATIC T)
+     (flash:+text-field-auto-size.left+ :SWF-NAME "LEFT" :TYPE "String" :VALUE
+      "left" :STATIC T)
+     (flash:+text-field-auto-size.center+ :SWF-NAME "CENTER" :TYPE "String"
+      :VALUE "center" :STATIC T))
     :properties
     ()
     :methods
@@ -9440,10 +9695,10 @@
   (avm2-compiler::declare-swf-class flash::flash.printing.print-job-orientation (object)
     :swf-name "flash.printing::PrintJobOrientation"
     :constants
-    ((flash:+portrait+ :SWF-NAME "PORTRAIT" :TYPE "String" :VALUE "portrait"
-      :STATIC T)
-     (flash:+landscape+ :SWF-NAME "LANDSCAPE" :TYPE "String" :VALUE "landscape"
-      :STATIC T))
+    ((flash:+print-job-orientation.portrait+ :SWF-NAME "PORTRAIT" :TYPE
+      "String" :VALUE "portrait" :STATIC T)
+     (flash:+print-job-orientation.landscape+ :SWF-NAME "LANDSCAPE" :TYPE
+      "String" :VALUE "landscape" :STATIC T))
     :properties
     ()
     :methods
@@ -9454,8 +9709,8 @@
   (avm2-compiler::declare-swf-class flash::flash.events.http-status-event (flash.events.event)
     :swf-name "flash.events::HTTPStatusEvent"
     :constants
-    ((flash:+http-status+ :SWF-NAME "HTTP_STATUS" :TYPE "String" :VALUE
-      "httpStatus" :STATIC T))
+    ((flash:+http-status-event.http-status+ :SWF-NAME "HTTP_STATUS" :TYPE
+      "String" :VALUE "httpStatus" :STATIC T))
     :properties
     ((flash::status :SWF-NAME "status" :TYPE "int" :STATIC NIL :ACCESSOR
       flash:.status))
@@ -9499,10 +9754,14 @@
   (avm2-compiler::declare-swf-class flash::flash.ui.key-location (object)
     :swf-name "flash.ui::KeyLocation"
     :constants
-    ((flash:+standard+ :SWF-NAME "STANDARD" :TYPE "uint" :VALUE "0" :STATIC T)
-     (flash:+right+ :SWF-NAME "RIGHT" :TYPE "uint" :VALUE "2" :STATIC T)
-     (flash:+left+ :SWF-NAME "LEFT" :TYPE "uint" :VALUE "1" :STATIC T)
-     (flash:+num-pad+ :SWF-NAME "NUM_PAD" :TYPE "uint" :VALUE "3" :STATIC T))
+    ((flash:+key-location.standard+ :SWF-NAME "STANDARD" :TYPE "uint" :VALUE
+      "0" :STATIC T)
+     (flash:+key-location.right+ :SWF-NAME "RIGHT" :TYPE "uint" :VALUE "2"
+      :STATIC T)
+     (flash:+key-location.left+ :SWF-NAME "LEFT" :TYPE "uint" :VALUE "1"
+      :STATIC T)
+     (flash:+key-location.num-pad+ :SWF-NAME "NUM_PAD" :TYPE "uint" :VALUE "3"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -9548,10 +9807,10 @@
   (avm2-compiler::declare-swf-class flash::flash.display.action-script-version (object)
     :swf-name "flash.display::ActionScriptVersion"
     :constants
-    ((flash:+actionscript3+ :SWF-NAME "ACTIONSCRIPT3" :TYPE "uint" :VALUE "3"
-      :STATIC T)
-     (flash:+actionscript2+ :SWF-NAME "ACTIONSCRIPT2" :TYPE "uint" :VALUE "2"
-      :STATIC T))
+    ((flash:+action-script-version.actionscript3+ :SWF-NAME "ACTIONSCRIPT3"
+      :TYPE "uint" :VALUE "3" :STATIC T)
+     (flash:+action-script-version.actionscript2+ :SWF-NAME "ACTIONSCRIPT2"
+      :TYPE "uint" :VALUE "2" :STATIC T))
     :properties
     ()
     :methods
@@ -9582,9 +9841,10 @@
   (avm2-compiler::declare-swf-class flash::flash.media.sound-codec (object)
     :swf-name "flash.media::SoundCodec"
     :constants
-    ((flash:+nellymoser+ :SWF-NAME "NELLYMOSER" :TYPE "String" :VALUE
-      "NellyMoser" :STATIC T)
-     (flash:+speex+ :SWF-NAME "SPEEX" :TYPE "String" :VALUE "Speex" :STATIC T))
+    ((flash:+sound-codec.nellymoser+ :SWF-NAME "NELLYMOSER" :TYPE "String"
+      :VALUE "NellyMoser" :STATIC T)
+     (flash:+sound-codec.speex+ :SWF-NAME "SPEEX" :TYPE "String" :VALUE "Speex"
+      :STATIC T))
     :properties
     ()
     :methods
@@ -9595,11 +9855,12 @@
   (avm2-compiler::declare-swf-class flash::flash.display.triangle-culling (object)
     :swf-name "flash.display::TriangleCulling"
     :constants
-    ((flash:+positive+ :SWF-NAME "POSITIVE" :TYPE "String" :VALUE "positive"
-      :STATIC T)
-     (flash:+none+ :SWF-NAME "NONE" :TYPE "String" :VALUE "none" :STATIC T)
-     (flash:+negative+ :SWF-NAME "NEGATIVE" :TYPE "String" :VALUE "negative"
-      :STATIC T))
+    ((flash:+triangle-culling.positive+ :SWF-NAME "POSITIVE" :TYPE "String"
+      :VALUE "positive" :STATIC T)
+     (flash:+triangle-culling.none+ :SWF-NAME "NONE" :TYPE "String" :VALUE
+      "none" :STATIC T)
+     (flash:+triangle-culling.negative+ :SWF-NAME "NEGATIVE" :TYPE "String"
+      :VALUE "negative" :STATIC T))
     :properties
     ()
     :methods
@@ -9610,12 +9871,12 @@
   (avm2-compiler::declare-swf-class flash::flash.text.engine.digit-width (object)
     :swf-name "flash.text.engine::DigitWidth"
     :constants
-    ((flash:+tabular+ :SWF-NAME "TABULAR" :TYPE "String" :VALUE "tabular"
-      :STATIC T)
-     (flash:+proportional+ :SWF-NAME "PROPORTIONAL" :TYPE "String" :VALUE
-      "proportional" :STATIC T)
-     (flash:+default+ :SWF-NAME "DEFAULT" :TYPE "String" :VALUE "default"
-      :STATIC T))
+    ((flash:+digit-width.tabular+ :SWF-NAME "TABULAR" :TYPE "String" :VALUE
+      "tabular" :STATIC T)
+     (flash:+digit-width.proportional+ :SWF-NAME "PROPORTIONAL" :TYPE "String"
+      :VALUE "proportional" :STATIC T)
+     (flash:+digit-width.default+ :SWF-NAME "DEFAULT" :TYPE "String" :VALUE
+      "default" :STATIC T))
     :properties
     ()
     :methods

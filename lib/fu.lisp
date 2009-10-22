@@ -72,7 +72,9 @@
                         (border nil borderp) (border-color 0 bcp)
                         (mouse-wheel-enabled nil mwep)
                         (text "" tp) (font "" fp)
+                        (color 0 cp)
                         (size 0 sp)
+                        (selectable t selp)
                         &allow-other-keys)
           (let ((o (gensym))
                 (tf (gensym)))
@@ -83,12 +85,13 @@
                 (display ,o ,@args)
                 ,@ (when (or fp sp)
                      (loop for f in '(flash:.font
-                                      flash:.size)
-                        for v in (list font size)
-                        for p in (list fp sp)
+                                      flash:.size
+                                      flash:.color)
+                        for v in (list font size color)
+                        for p in (list fp sp cp)
                         when p
                         collect `(setf (,f ,tf) ,v)))
-                ,@ (when (or fp sp)
+                ,@ (when (or fp sp cp)
                      `((setf (flash:.default-text-format ,o) ,tf)))
 
                 ,@(loop for f in '(flash:.auto-size
@@ -99,12 +102,15 @@
                                    flash:.border
                                    flash:.border-color
                                    flash:.mouse-wheel-enabled
-                                   flash:.text)
+                                   flash:.text
+                                   flash:.selectable)
                      for v in (list auto-size text-color word-wrap
                                     background background-color
                                     border border-color mouse-wheel-enabled
-                                    text)
-                     for p in (list asp tcp wwp bgp bgcp borderp bcp mwep tp)
+                                    text
+                                    selectable)
+                     for p in (list asp tcp wwp bgp bgcp borderp bcp mwep tp
+                                    selp)
                      when p
                      collect `(setf (,f ,o) ,v))
                 ,o))))
@@ -165,7 +171,7 @@
 
 
     (defun radians (a)
-      (/ (* a flash:+pi+) 180.0))
+      (/ (* a flash:+math.pi+) 180.0))
 
     (defun i255 (a)
       (max (min (floor (* a 256)) 255) 0))

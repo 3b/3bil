@@ -356,7 +356,8 @@ work)"
 
      (list
       (abc-tag-from-contexts avm2-asm::*assembler-context* *compiler-context*
-                             (list *cl-symbol-table* *symbol-table*))
+                             (list ,@(if inherit inherit '(*cl-symbol-table*))
+                                   *symbol-table*))
       (symbol-class* ',exports))))
 
 

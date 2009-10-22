@@ -280,7 +280,10 @@
        when (typep trait '%3b-swf:abc-trait-info-constant)
        do (push (list #+nil(make-name name renamer :wrap "+"
                                       :default-package package)
-                      (format nil "~a:+~a+" package (funcall renamer (first name)))
+                      (format nil "~a:+~@[~a.~]~a+" package
+                              (unless (string= (first class-name) "")
+                                (funcall renamer (first class-name)))
+                              (funcall renamer (first name)))
                       :swf-name (qq (apply 'flash-name name))
                       :type (qq (type-string (%3b-swf:type-name trait) pool))
                       :value (qq (constant-value (%3b-swf:value trait) pool))
@@ -578,7 +581,9 @@
                                         ; fixme: not sure if +foo+ is really
                                         ; right for these, since they aren't
                                         ; really globally constant
-                        (format nil "+~a+" (funcall renamer (first name))))
+                        (format nil "+~a.~a+"
+                                (funcall renamer (first class-name))
+                                (funcall renamer (first name))))
                        ((typep trait '%3b-swf:abc-trait-info-method)
                         (funcall renamer (first name)))
                        (t
@@ -595,7 +600,9 @@
                                         ; fixme: not sure if +foo+ is really
                                         ; right for these, since they aren't
                                         ; really globally constant
-                          (format nil "+~a+" (funcall renamer (first name))))
+                          (format nil "+~a.~a+"
+                                  (funcall renamer (first class-name))
+                                  (funcall renamer (first name))))
                          ((typep trait '%3b-swf:abc-trait-info-method)
                           (qualified-name name class-name nil renamer :static t)
                           #++(format nil "~a.~a"

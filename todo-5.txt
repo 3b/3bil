@@ -1,11 +1,32 @@
+port libs to new compiler
+clean up old junk
+remove old compiler
+update tests
+(testing lib? (run on host and target and compare results?))
+document ffi gen?
+clean up line endings
+documentation?
+more libs?
 
+--
+specials
+conditions/restarts/etc
+async conditions?
+types
+release stuff
+  tree shaker
+  obfuscation?
+some way to switch between blob and expanded tags
+\optimize bitmap writing
+  (compile to blob tag and store that instead of recompiling every time)
+
+
+---------------------------------------------------------
 #'(on-enter-frame ship) ?
 
 ~accessors for ffi
 
 make sure setf is using the macro instead of property hack?
-
-optimize bitmap writing
 
 package stuff
   make sure ffi classes inherit proper symbols (so stuff from superclasses

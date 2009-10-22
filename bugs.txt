@@ -1,3 +1,5 @@
+(IF foo bar) doesn't compile...
+
 need to figure out stuff like Array() in new ffi generator
 
 LOOP WHEN tends to cause type conflicts?
