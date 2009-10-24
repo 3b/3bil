@@ -1,6 +1,6 @@
 
 (asdf:defsystem :avm2-compile
-           :depends-on ("avm2-asm")
+           :depends-on ("avm2-asm" alexandria)
            :components ((:module
                          "compile"
                          :serial t
@@ -18,6 +18,7 @@
                           ;; new stuff in progress...
                           (:file "walker")
                           (:file "environment")
+                          (:file "lambda-list")
                           (:file "ir0")
                           (:file "ir1")
                           (:file "ir2-simple")

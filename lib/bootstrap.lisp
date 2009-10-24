@@ -18,23 +18,59 @@
                     ,@body)) 'function)))
     nil)
 
+  ;; helper for defmacro/define-compiler-macro, adds a var to the beginning
+  ;; of the arglist, but after &whole arg if any, so we can use
+  ;; destructuring-bind to extract args from the macro form
+  (defun add-op-var-to-macro-lambda-list (op-var lambda-list)
+    (if (eq (car lambda-list) '&whole)
+        (list* '&whole (second lambda-list) op-var (cddr lambda-list))
+        (cons op-var lambda-list)))
+
   ;; defmacro
   (add-swf-macro-function
    'defmacro
    (lambda (form environment)
      (declare (ignore environment))
      (destructuring-bind (name args &body body) (cdr form)
-       (let ((bform (gensym))
-             (benvironment (gensym)))
+       (let* ((bform (gensym))
+              (benvironment (gensym))
+              (op-var (gensym))
+              (lambda-list (add-op-var-to-macro-lambda-list op-var args)))
          (add-swf-macro-function
           name
           (coerce `(lambda (,bform ,benvironment)
                      (declare (ignore ,benvironment))
-                     (destructuring-bind ,args (cdr ,bform)
+                     (destructuring-bind ,lambda-list ,bform
+                       (declare (ignore ,op-var))
+                       ,@body)) 'function))))
+     nil))
+
+  (add-swf-macro-function
+   'define-compiler-macro
+   (lambda (form environment)
+     (declare (ignore environment))
+     (destructuring-bind (name args &body body) (cdr form)
+       (let* ((bform (gensym))
+              (benvironment (gensym))
+              (op-var (gensym))
+              (lambda-list (add-op-var-to-macro-lambda-list op-var args)))
+         (format t "lambda-list -> ~s~%" lambda-list)
+         (add-swf-cmacro-function
+          name
+          (coerce `(lambda (,bform ,benvironment)
+                     (declare (ignore ,benvironment))
+                     (destructuring-bind ,lambda-list ,bform
+                       (declare (ignore ,op-var))
                        ,@body)) 'function))))
      nil))
 
   (c3* (gensym)
+
+    (defmacro %destructuring-bind-* ((&key optional key aux allow-other-keys) arg-form &body body)
+      (error "got complex lambda list, ignoring opt=~s key=~s aux=~s~%"
+             optional key aux)
+      nil)
+
 
    (defmacro %typep (object type)
      `(%asm
@@ -68,6 +104,45 @@
 
       (defmacro %setf-1 (place value)
         `(%setf ,place ,value))
+
+
+      ;; handle 0-2 arg + so we can use incf to implement dotimes and +
+      ;; fixme: genearlize this to more args, other ops
+      (define-compiler-macro + (&whole w &rest x)
+        (cond
+          ((zerop (length x)) `(quote 0))
+          ((= 1 (length x)) (car x))
+          ;; todo: optimize +1 case, or adding 2 literal numbers
+          ((= 2 (length x)) `(%asm
+                              (:@ ,(first x)) ;; types?
+                              (:@ ,(second x)) ;; types?
+                              (:add)))
+          (t w)))
+
+      (defmacro define-compare-binops (&body ops)
+        (let ((i (gensym))
+              (j (gensym)))
+          `(progn
+             ,@(loop for (op opcode) in ops
+                  collect
+                  `(define-compiler-macro ,op (&whole w a &rest x)
+                     (case (length x)
+                       (0 t)
+                       (1 `(%asm
+                            (:@ ,a)       ;; types?
+                            (:@ ,(first x)) ;; types?
+                            (,',opcode)))
+                       (t
+                        ;; fixme: expand inline for reasonable arglist lengths?
+                        w)))))))
+
+      (define-compare-binops
+        (< :less-than)
+        (<= :less-equals)
+        (= :equals)
+        (>= :greater-equals)
+        (> :greater-than))
+
 
       #++
       (defmacro defun-setf (name args  body)

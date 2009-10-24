@@ -131,36 +131,6 @@
           (t
            `(,(car whole) ,@(recur-all (cdr whole))))))
 
-(defun lambda-list-vars (llist)
-  (loop for i in llist
-        when (member i '(&optional &key &rest &arest &aux &allow-other-keys))
-          do (error "lambda-list keywords not supported yet, got ~s" i))
-  llist)
-(defun alphatize-lambda-list (lambda-list alphatized-names)
-  ;; fixme: probably will need a version that handles destructuring at some point, possibly should parse lambda list enough to only substitue in valid llists?
-  (loop for i in lambda-list
-        for alpha = (assoc i alphatized-names)
-        ;; normal var or keyword, replace with alphatized version if any
-        when alpha collect (cadr alpha)
-        ;; defaulted vars
-        else when (consp i)
-        collect (cons
-                 ;; var name, possibly with explicit keyword (not alphatized)
-                 (if (consp (car i))
-                     (list (caar i)
-                           (or (cdr (assoc (cadar i) alphatized-names))
-                               (cadar i)))
-                     (or (cadr (assoc (car i) alphatized-names))
-                         (car i)))
-                 ;; default and supplied-p var
-                 (if (= 1 (length (cdr i)))
-                     (cdr i) ;; no supplied var
-                     (list (second i)
-                           (or (cadr (assoc (third i) alphatized-names))
-                               (third i)))))
-        else collect i))
-;;(alphatize-lambda-list '(v1 &optional v2 (v3 3) (v4 4 v4p) ((v5k v5) 5 v5p)) '((v1 . v1a) (v2 . v2a) (v3 . v3a) (v4 . v4a) (v4p . v4pa) (v5 . v5a) (v5p . v5pa) (v5k . v5ka)))
-
 ;;;; minimal compilation pass:
 ;;; expand macros, compiler macros, macrolets, ?
 ;;; (symbol-macros? need to convert setq -> setf at same time if so)
@@ -171,9 +141,60 @@
 ;;      alphatize local vars/args/functions, go tags, block names, etc
 ;;      convert let/let* to %bind, with bindings evaluated in order, and
 ;;      scoping determined by alphatization
+;;    expand lambda list keywords aside from &optional and &arest into
+;;      &arest + %destructuring-bind
+;;      -- at least some &optional need to be handled by d-s-b, so we can
+;;         have arbitrary defaults, and check for supplied-p, etc
+;;         (possibly also to get the NIL default correct, instead of
+;;          the UNDEFINED provided by the vm)
+;;         so might just do all &optional that way to start with?
 ;;;cleanup: might be simpler to just do the environment as a few specials
 ;;         instead of using the existing code, but not worth reimplementing
 ;;         until stuff stabilizes
+
+(defun expand-lambda (block-name lambda-name flags lambda-list body recur)
+  (multiple-value-bind  (required optional rest keys
+                                  allow-other-keys aux arest)
+      (parse-lambda-list lambda-list)
+    #++(locals required-args arest-var dsb-list)
+    #++(alphatize-and-split-lambda-list lambda-list)
+    ;; fixme: we add the arest arg to the required arglist, so that
+    ;; later passes don't think it is a free var (and don't have to
+    ;; parse flags to handle it explicitly, but then we have to drop
+    ;; it from the count in the final assembly, possibly should pass
+    ;; the count of required args as a flag or something instead?
+    (let* ((arest (when arest (alphatize-var-names (list arest))))
+           (required (append (alphatize-var-names required)
+                             arest)))
+      (when arest
+        (format t "arest = ~s = ~s~%" arest (cadar arest))
+        (format t "args = ~s = ~s~%" required  (append required arest)))
+      (print
+       `(%named-lambda ,lambda-name
+              (,@flags ,@(if arest `(:arest ,(cadar arest))))
+            ,(mapcar 'cadr required)
+          ,(if (or optional rest keys aux)
+               (with-local-vars required
+                 (funcall recur
+                          ;; expanding to a macro call from special
+                          ;; forms is a bit ugly, but better than
+                          ;; adding special forms for no reason, and
+                          ;; we can avoid it easily enough to
+                          ;; bootstrap that far
+                          `(%destructuring-bind-*
+                            (:optional ,optional :key ,keys :aux ,aux
+                                       :allow-other-keys ,allow-other-keys)
+                            ,(cadr arest)
+                            ;; fixme: probably should just add the block/progn in
+                            ;; the caller instead of here?
+                            (,@(if block-name `(block ,block-name) '(progn))
+                               ,@body))))
+               (with-local-vars required
+                 (funcall recur `(,@(if block-name
+                                        `(block ,block-name)
+                                        '(progn))
+                                    ,@body)))))))))
+
 (define-walker ir0-minimal-compilation-etc null-cl-walker
   :atoms (((or number string simple-vector bit-vector (eql t) (eql nil))
            `(quote ,atom))
@@ -233,22 +254,25 @@
 
    ;;fixme: extract the duplicated lambda processing code from flet/labels/function
    ((flet (&rest flets) &rest declarations-and-forms)
-    (let ((names (loop for i in flets
-                       collect (list (car i)
-                                     (alpha-convert-name (car i)))))
-          (lambdas
-           (loop for (n _ll . body) in flets
-                 for ll = (cons 'this _ll)
-                 for args = (alphatize-var-names (lambda-list-vars ll))
-                 collect `(,(alphatize-lambda-list ll args)
-                            ,(with-local-vars args
-                                              (recur `(block ,n ,@body)))))))
+    (let* ((names (loop for i in flets
+                     collect (list (car i)
+                                   (alpha-convert-name (car i)))))
+           (lambdas
+            (loop for (n _ll . body) in flets
+               for (nil label) in names
+               for ll = (cons 'this _ll)
+               ;;for args = (alphatize-var-names (lambda-list-vars ll))
+               ;;collect
+               #++ `(,(alphatize-lambda-list ll args #'recur)
+                      ,(with-local-vars args
+                                        (recur `(block ,n ,@body))))
+               collect (expand-lambda n label '(:anonymous t) ll body #'recur))))
       ;; we only need the flet to delimit the lexical scope,
       ;; so alpha convert and get rid of it completely...
       `(progn
-         ,@(loop for (nil label) in names
-                 for lambda in lambdas
-                 collect `(%named-lambda ,label (:anonymous t) ,@lambda))
+         ,@(loop ; for (nil label) in names
+              for lambda in lambdas
+              collect lambda #++`(%named-lambda ,label (:anonymous t) ,@lambda))
          ,@(with-local-functions names
                                  (recur-all declarations-and-forms)))))
 
@@ -259,17 +283,20 @@
       (with-local-functions names
         (let ((lambdas
                (loop for (n _ll . body) in flets
-                     for ll = (cons 'this _ll)
-                     for args = (alphatize-var-names (lambda-list-vars ll))
-                     collect `(,(alphatize-lambda-list ll args)
+                  for (nil label) in names
+                  for ll = (cons 'this _ll)
+                  ;;for args = (alphatize-var-names (lambda-list-vars ll))
+                  collect #++`(,(alphatize-lambda-list ll args #'recur)
                                 ,(with-local-vars args
-                                                  (recur `(block ,n ,@body)))))))
+                                                  (recur `(block ,n ,@body))))
+                    (expand-lambda n label '(:anonymous t) ll body #'recur))))
           ;; we only need the LABELS to delimit the lexical scope,
           ;; so alpha convert and get rid of it completely...
           `(progn
-             ,@(loop for (nil label) in names
+             ,@(loop ; for (nil label) in names
                      for lambda in lambdas
-                     collect `(%named-lambda ,label (:anonymous t) ,@lambda))
+                     collect lambda
+                    #++`(%named-lambda ,label (:anonymous t) ,@lambda))
              ,@(recur-all declarations-and-forms))))))
 
 
@@ -289,13 +316,15 @@
     (if (and (consp name) (eq (car name) 'lambda))
         (let* ((temp-name (gensym "LAMBDA-"))
                (lambda-list (cons 'this (second name)))
-               (args (alphatize-var-names (lambda-list-vars lambda-list)))
+               ;(args (alphatize-var-names (lambda-list-vars lambda-list)))
                (body (cddr name)))
           `(progn
-             (%named-lambda
+             ,(expand-lambda nil temp-name '(:anonymous t)
+                             lambda-list body #'recur)
+             #++(%named-lambda
               ,temp-name
               (:anonymous t) ;; flags
-              ,(alphatize-lambda-list lambda-list args)
+              ,(alphatize-lambda-list lambda-list args #'recur)
               ,(with-local-vars args
                                 (recur `(progn ,@body))))
              (%local-function ,temp-name)))
@@ -322,8 +351,7 @@
                           (recur `(setf ,(cdr binding) ,val)))
                          ((and (consp binding) (eq (car binding) :local))
                           `(%local-set ,(cdr binding) ,(recur val)))
-                         (t (error "don't know how to setq ~s yet ..." var)))
-               )))
+                         (t (error "don't know how to setq ~s yet ..." var))))))
 
 
    ((tagbody &rest body)
@@ -346,10 +374,11 @@
    ((%named-lambda name flags args &rest body)
     (let* ((this (or (getf flags :this-arg) 'this))
            (args (cons this args))
-           (a-args (alphatize-var-names (lambda-list-vars args))))
-      `(%named-lambda ,name
+           #++(a-args (alphatize-var-names (lambda-list-vars args))))
+      (expand-lambda nil name flags args body #'recur)
+      #++`(%named-lambda ,name
                       ,flags
-                      ,(alphatize-lambda-list args a-args)
+                      ,(alphatize-lambda-list args a-args #'recur)
                       ,(with-local-vars a-args
                                         (recur `(progn ,@body))))))
 
@@ -422,8 +451,8 @@
           ;; compiler macros
           ;; fixme: add an environment param to compile-macro expansion
           ((and cmacro (not (eq (setf temp (funcall cmacro whole nil))
-                                whole))
-                (recur temp)))
+                                whole)))
+           (recur temp))
           ;; normal macros
           ;; fixme: add an environment param to macroexpansion
           (macro

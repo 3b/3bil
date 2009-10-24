@@ -24,13 +24,13 @@
             (%type-error "COPY-LIST" list)
             (do-copy list))))
 
-    #+r(defun list (&arest rest)
+    (defun list (&arest rest)
       (let ((list nil)
             (length (%get-property rest :length)))
         (dotimes (i length list)
           (push (%aref-1 rest (- length i 1)) list))))
 
-    #+r(defun list* (&arest rest)
+    (defun list* (&arest rest)
       (when (zerop (%get-property rest :length))
         (%error "not enough arguments"))
       (let* ((length (%get-property rest :length))
@@ -69,7 +69,7 @@
              (setf list (cdr list)))))
 
     ;; ENDP, NULL in cl-conses
-    #+r(defun nconc (&arest lists)
+    (defun nconc (&arest lists)
       (let* ((a (if (zerop (slot-value lists 'flash:length))
                     nil
                     (%aref-1 lists 0)))

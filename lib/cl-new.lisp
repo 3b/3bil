@@ -31,49 +31,47 @@
 
 
   (c3* (gensym)
-    #+r(defun funcall (x &arest args)
+    (defun funcall (x &arest args)
          (flash:apply x nil args ))
 
-    #+r(defun + (&arest x)
-         (let ((sum 0))
-           (dotimes (i (length x) sum)
-             (incf sum (aref x i)))))
+    ;;; most of these depend on compiler macros in bootstrap.lisp for the
+    ;;; 0-2 arg case
 
-    #+r(defun s+ (&arest x)
+    (defun + (&arest x)
+      (let ((sum 0))
+        (dotimes (i (length x) sum)
+          (incf sum (aref x i)))))
+
+    (defun s+ (&arest x)
          (let ((sum ""))
            (dotimes (i (length x) sum)
              (incf sum (aref x i)))))
 
+    (defun = (a &arest x)
+      (dotimes (i (length x) t)
+        (unless (eq a (aref x i)) ;; eql?
+          (return nil))))
 
-    #+r(defun = (a &arest x)
-         (dotimes (i (length x) t)
-           (unless (eq a (aref x i)) ;; eql?
-             (return nil))))
+    (defun < (a &arest x)
+      (dotimes (i (length x) t)
+        (when (>= a (aref x i)) (return nil))
+        (setf a (aref x i))))
 
-    #+r(defun < (a &arest x)
-         (dotimes (i (length x) t)
-           (when (%2>= a (aref x i)) (return nil))
-           (setf a (aref x i))))
-
-    #+r
     (defun <= (a &arest x)
       (dotimes (i (length x) t)
-        (when (%2> a (aref x i)) (return nil))
+        (when (> a (aref x i)) (return nil))
         (setf a (aref x i))))
 
-    #+r
     (defun > (a &arest x)
       (dotimes (i (length x) t)
-        (when (%2<= a (aref x i)) (return nil))
+        (when (<= a (aref x i)) (return nil))
         (setf a (aref x i))))
 
-    #+r
     (defun >= (a &arest x)
       (dotimes (i (length x) t)
-        (when (%2< a (aref x i)) (return nil))
+        (when (< a (aref x i)) (return nil))
         (setf a (aref x i))))
 
-    #+r
     (defun - (a &arest x)
       (let ((sum a))
         (if (= (length x) 0)
@@ -87,8 +85,8 @@
                       (:subtract)
                       (:coerce-any)
                       (:dup)
-                      (:@! sum)))))))
-    #+r
+                      (:@ (setf sum (%asm-top-of-stack-untyped)) :ignored)
+                      #++(:@! sum)))))))
     (defun / (a &arest x)
       (let ((sum a))
         (if (= (length x) 0)
@@ -103,9 +101,9 @@
                       (:divide)
                       (:coerce-any)
                       (:dup)
-                      (:@! sum)))))))
+                      (:@ (setf sum (%asm-top-of-stack-untyped)) :ignored)
+                      #++(:@! sum)))))))
 
-    #+r
     (defun * (&arest x)
       (let ((sum 1))
         (dotimes (i (length x) sum)
@@ -115,12 +113,12 @@
                   (:multiply)
                   (:coerce-any)
                   (:dup)
-                  (:@! sum))))))
+                  (:@ (setf sum (%asm-top-of-stack-untyped)) :ignored))))))
 
     (defun type-of (o)
       (%type-of o))
 
-    
+
     (defun not (x)
       (%asm
        (:@ x)

@@ -1,12 +1,15 @@
 lambda lists
+~  &arest
   &optional
-  &arest
   &rest,&key?
 
+clean up boostrap.lisp compiler macros for math ops (convert from
+  old math-ops.lisp?)
+
 fix .asd names (combine some of them?)
-port libs to new compiler
+~?port libs to new compiler
 clean up old junk
-remove old compiler
+~?remove old compiler
 update tests
 (testing lib? (run on host and target and compare results?))
 document ffi gen?

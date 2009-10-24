@@ -3,7 +3,7 @@
 ;;;; defun and similar
 #+|?|
 (defun %compile-defun (name args body method constructor &key (nil-block t) debug-filename debug-line-number)
-  ;; fixme: rename method arg, since it applies to normal function stoo?
+  ;; fixme: rename method arg, since it applies to normal functions too?
   ;; fixme: is the nil-block stuff still valid?
   (with-lambda-context (:args args :blocks (when nil-block (list nil)))
     (append

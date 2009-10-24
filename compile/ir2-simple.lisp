@@ -53,6 +53,8 @@
 ;;; if not super-fast for now...
 (defpackage #:uninterned)
 (defparameter *ir1-dest-type* nil)
+;; alist of (block-name . return-type)
+(defparameter *ir1-block-dest-type* nil)
 (defparameter *current-local-index* nil)
 (defparameter *current-closure-scope-index* nil)
 (defparameter *activation-local-name* nil)
@@ -377,10 +379,38 @@
       (ecase type
         (:local `((:new-function ,name)
                   ,@(coerce-type)))
-        ;;fixme: lookup real name in global symbol table...
-        (:normal `((:find-property-strict ,name)
+        (:normal #++`((:find-property-strict ,name)
                    (:get-property ,name)
-                   ,@(coerce-type)))
+                   ,@(coerce-type))
+                 ;; fixme: share code with function calls?
+                 (let (tmp)
+                   (cond
+                     ;; known methods
+                     ((setf tmp (find-swf-method name *symbol-table*))
+                      `((:get-property ,tmp)
+                        ,@(coerce-type)))
+                     ;; known static methods
+                     ((setf tmp (find-swf-static-method name *symbol-table*))
+                      `(;#+nil(:find-property-strict ,(car tmp)) ;;??
+                        (:get-lex ,(if (find-swf-class (car tmp))
+                                       (swf-name (find-swf-class (car tmp)))
+                                       (car tmp)))
+                        (:get-property ,(second tmp))
+                        ,@(coerce-type)))
+                     ;; known functions
+                     ((setf tmp (find-swf-function name *symbol-table*))
+                      ;; :find-property-strict needed for stuff like %flash:trace
+                      `((:find-property-strict ,(car tmp)) ;(:get-global-scope)
+                        (:get-property ,(car tmp))
+                        ,@(coerce-type)))
+                     ;; unknown function... call directly
+                     (t
+                      ;; fixme: is this correct?
+                      `(#+nil(:find-property-strict ,name)
+                             (:get-global-scope)
+                             (:get-property ,name)
+                             ,@(coerce-type)))))
+)
         (:method (error "method calls with object not done yet..."))))
 
      ;; common code for nlx handling in catch/return/tagbody
@@ -445,28 +475,36 @@
           (:%dlabel ,jump2))))
 
      ((block name nlx forms)
-      (if nlx
-          ;; fixme: return to correct dynamic scope corresponding to the entry from which the return-from was created...
-          (recur
-           `(%catch type block-exception-type
-                    tag-property block-exception-tag
-                    body ,(recur-progn forms)
-                    ;; fixme: is this right type? should fix THROW if changed...
-                    tag-code ,(let ((*ir1-dest-type* nil)
-                                    (exit-point (get-tag-info
-                                                 name :exit-point-var)))
-                                   (recur `(%ref type ,(get-var-info
-                                                        exit-point
-                                                        :ref-type :local)
-                                                 var ,exit-point)))
-                    handler-code ((:get-property block-exception-value)
-                                  ,@(coerce-type))))
-          `(,@(recur-progn forms)
-              (:%dlabel ,name))))
+      ;; we need to enforce a common type for all exits from block,
+      ;; so set to T if we don't have anything more specific
+      ;; (we removed blocks without multiple returns in an earlier pass
+      ;;  so hopefully won't slow anything down in the normal case,
+      ;;  and eventually type inference can improve the case where all
+      ;;  branches return a compatible type)
+      (let* ((*ir1-dest-type* (or *ir1-dest-type* t))
+             (*ir1-block-dest-type* (cons (cons name *ir1-dest-type*)
+                                         *ir1-block-dest-type*)))
+        (if nlx
+           ;; fixme: return to correct dynamic scope corresponding to the entry from which the return-from was created...
+           (recur
+            `(%catch type block-exception-type
+                     tag-property block-exception-tag
+                     body ,(recur-progn forms)
+                     ;; fixme: is this right type? should fix THROW if changed...
+                     tag-code ,(let ((*ir1-dest-type* nil)
+                                     (exit-point (get-tag-info
+                                                  name :exit-point-var)))
+                                    (recur `(%ref type ,(get-var-info
+                                                         exit-point
+                                                         :ref-type :local)
+                                                  var ,exit-point)))
+                     handler-code ((:get-property block-exception-value)
+                                   ,@(coerce-type))))
+           `(,@(recur-progn forms)
+               (:%dlabel ,name)))))
      ((return-from name value)
       `((:comment "local return-from" ,name)
-        ;; fixme: store the return type somewhere and propagate to here
-        ,@(let ((*ir1-dest-type* t))
+        ,@(let ((*ir1-dest-type* (cdr (assoc name *ir1-block-dest-type*))))
                (recur value))
         (:jump ,name)))
 
@@ -808,6 +846,15 @@
               (parse-arglist (cdr lambda-list))
             (declare (ignorable optionals))
             (when optionals (error "&optional args not supported yet"))
+            (let ((r (getf flags :arest)))
+              (when r
+                ;; fixme: dump the arglist parsing stuff above, since it
+                ;; should already be done...
+                (when (and r rest-p)
+                  (error "got &arest in arglist in ir2?"))
+                (setf rest-p r)
+                ;; drop &arest arg name from count of required args
+                (decf count)))
             ;;(format t "::::: flags = ~s nas=~s~%" flags (getf flags :no-auto-scope))
             (let* ((asm (with-lambda-context (:args names :blocks nil)
                           `(,@(if (getf flags :no-auto-scope)
@@ -851,8 +898,8 @@
                 (when activation-vars
                   #+nil(format t "activation-vars : ~s~%" activation-vars)
                   (loop for (name index) in activation-vars
-                        ;; no type info for now..
-                        collect `(,name ,index 0))))
+                     ;; no type info for now..
+                     collect `(,name ,index 0))))
                (gethash name (functions *symbol-table*) (list)))))))))
 
 (defun c3 (name form)

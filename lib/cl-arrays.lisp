@@ -57,10 +57,10 @@
           (setf index (* index (%aref-1 dims i)))
           (incf index (%aref-1 subscripts i)))))
 
-    #+r(defun array-row-major-index (array &arest subscripts)
+    (defun array-row-major-index (array &arest subscripts)
       (%array-row-major-index array subscripts))
 
-    #+r(defun %aref-n (array &arest subscripts)
+    (defun %aref-n (array &arest subscripts)
          (%aref-1 (%displaced-to array)
                   (+ (%displaced-offset array)
                      (%array-row-major-index array subscripts))))

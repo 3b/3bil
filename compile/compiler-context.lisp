@@ -58,7 +58,7 @@
 
 #+nil(define-swf-add-foo add-swf-property properties)
 (define-swf-add-foo add-swf-macro-function macro-functions)
-(define-swf-add-foo add-swf-cmacro-functions cmacro-functions)
+(define-swf-add-foo add-swf-cmacro-function cmacro-functions)
 (defun add-swf-property (symbol swf-name &optional (s *symbol-table*))
   (pushnew swf-name
            (gethash symbol (properties s) (list))

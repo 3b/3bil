@@ -81,10 +81,10 @@
       (defun tan (radians)
         (flash:math.tan radians))
 
-      #+r(defun min (&arest numbers)
+      (defun min (&arest numbers)
         (%apply (function flash:math.min) nil numbers))
 
-      #+r(defun max (&arest numbers)
+      (defun max (&arest numbers)
         (%apply (function flash:math.max) nil numbers))
 
       (defun eq (a b)
@@ -134,7 +134,7 @@
       (defun zerop (x)
         (eql x 0))
 
-      #+r(defun vector (&arest objects)
+      (defun vector (&arest objects)
         objects)
 
       ;; fixme: figure out symbol stuff so this can be a function

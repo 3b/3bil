@@ -36,7 +36,10 @@
     `(%set type :local var ,name value ,(recur value)))
 
    ((%named-lambda name flags args &rest body)
-    `(%named-lambda name ,name flags ,flags lambda-list ,args body ,(recur-all body)))
+    `(%named-lambda name ,name
+         flags ,flags
+         lambda-list ,args
+         body ,(recur-all body)))
 
    ((function name)
     `(function type :normal name ,name))
@@ -425,6 +428,10 @@
 ;;; mark block/tagbody with nlx return-from/go
 ;;; (convert all nlx into single op, with flag specifying type?)
 (defparameter *ir1-nlx-tags* nil)
+;; we need to be able to identity blocks with return-from, so we can enforce
+;;  a return type on those to avoid verify errors (and we should
+;;   probably be eliminating unused blocks anyway)
+(defparameter *ir1-lx-tags* nil)
 (defparameter *ir1-local-tags* nil)
 (defparameter *ir1-in-uwp* nil)
 (define-structured-walker ir1-find-nlx-tags null-ir1-walker
@@ -446,14 +453,21 @@
                   (rforms (recur-all forms)))
              #+nil(format t "block : nlx = ~s ~s/~s~%" (member name *ir1-nlx-tags*)
                      name *ir1-nlx-tags*)
-             `(block name ,name
-                     nlx ,(or nlx (member name *ir1-nlx-tags*))
-                     forms ,rforms)))
+             (if (or nlx
+                     (member name *ir1-nlx-tags*)
+                     (member name *ir1-lx-tags*))
+              `(block name ,name
+                      nlx ,(or nlx (member name *ir1-nlx-tags*))
+                      forms ,rforms)
+              ;; we never return-from the block, just dump it completely
+              `(progn body ,rforms))))
 
           ((return-from name value)
            ;;(format t "return-from name=~s/~s~%" name *ir1-local-tags*)
            (if (member name *ir1-local-tags*)
-               (super whole)
+               (progn
+                 (push name *ir1-lx-tags*)
+                 (super whole))
                (progn
                  (setf *ir1-need-another-pass* t)
                  (push name *ir1-nlx-tags*)
@@ -508,6 +522,7 @@
           ((%compilation-unit)
            (let ((*ir1-local-tags* nil)
                  (*ir1-nlx-tags* nil)
+                 (*ir1-lx-tags* nil)
                  (*ir1-need-another-pass* nil))
              (setf whole (super whole))
              (prog1
