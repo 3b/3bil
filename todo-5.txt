@@ -40,7 +40,7 @@ release stuff
 some way to switch between blob and expanded tags
 \optimize bitmap writing
   (compile to blob tag and store that instead of recompiling every time)
-
+reuse locals in code gen
 
 ---------------------------------------------------------
 #'(on-enter-frame ship) ?

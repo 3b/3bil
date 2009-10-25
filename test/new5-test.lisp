@@ -10,33 +10,40 @@
   (let ((abc
          (compile-abc-tag (((nil :test-class)))
 
-          (def-swf-class :test-class "test-class" %flash.display:sprite (blob)
-                         (()
-                          (main this)))
-
-          (swf-defmemfun ftracef (x &arest args)
-            (%flash:trace x)
-            (%flash:trace (+ "=>" (%flash:apply x nil args))))
-
-          (swf-defmemfun baz (&arest x)
-            (if (< (random 2) 1) t nil))
-
-          (swf-defmemfun foo (&arest x)
-            (ftrace (+ "foo called : " x))
-            (aref x 0))
-          (swf-defmemfun hoge (&arest x)
-            (ftrace (+ "hoge called : " x))
-            (aref x 0))
-
-          (swf-defmemfun x (&arest x)
-            (ftrace (+ "global X called : " x))
-            (aref x 0))
-          (swf-defmemfun y (&arest x)
-            (ftrace (+ "global Y called : " x))
-            (aref x 0))
-
-          (c3 :top-level
+           (c3 :top-level
               '(progn
+                (defclass-swf :test-class (flash:flash.display.sprite)
+                  (blob)
+                  (:fake-accessors t)
+                  (:constructor ()
+                    (main this)))
+
+                (defun ftracef (x &arest args)
+                  (flash:trace x)
+                  (flash:trace (+ "=>" (flash:apply x nil args))))
+
+                (defun baz (&arest x)
+                    (if (< (random 2) 1) t nil))
+
+                (defun foo (&arest x)
+                  (ftrace (+ "foo called : " x))
+                  (aref x 0))
+                (defun hoge (&arest x)
+                  (ftrace (+ "hoge called : " x))
+                  (aref x 0))
+
+                (defun x (&arest x)
+                  (ftrace (+ "global X called : " x))
+                  (aref x 0))
+                (defun y (&arest x)
+                  (ftrace (+ "global Y called : " x))
+                  (aref x 0))
+
+
+
+
+
+
                 (ftrace "---------------------------------")
                 (ftrace "---------------------------------")
                 (ftrace '1)
@@ -57,11 +64,13 @@
                 (ftrace (tagbody 1 (go 2) 2))
                 (ftrace (symbol-macrolet ((a 'foo)) a))
                 (ftrace (symbol-macrolet ((a (foo 1231))) (+ a 1)))
-                ;;(ftrace (symbol-macrolet ((a (foo 123))) (setq a 1)))
-                ;;(ftrace (symbol-macrolet ((a (foo 123))) (let ((b 2)) (setq a 1 b 3))))
+                (flet (((setf foo) (v &arest a)
+                         (ftrace (+ "(setf foo) (" a ") = " v)) v))
+                  (ftrace (symbol-macrolet ((a (foo 123))) (setq a 1)))
+                  (ftrace (symbol-macrolet ((a (foo 123 456))) (let ((b 2)) (setq a 1 b 3)))))
                 (ftrace (macrolet ((x (a) `(list ,a))) (x 1232)))
                 (ftrace (macrolet ((x (a) (return-from x (list 'list 234 a)) `(list ,a))) (x 123)))
-                ;;(ftrace (setq))
+                (ftrace (setq))
                 (ftrace (let ((a 2)) (setq a 1)))
                 (ftrace (symbol-macrolet ((x 'foo)) (list x (let ((x 'bar)) x))))
                 (ftrace (block x (return-from x)))
@@ -71,7 +80,8 @@
                 (ftrace (let ((x (+ 1 2 3))) x))
                 (ftrace (let ((x (progn (+ 1 2) (foo 'a) (+ 3 4))) x)))
                 (ftrace (let ((x (progn (+ 1 2) (foo 'b) (+ 3 4)))) x))
-                (ftrace (labels ((x (a) (list a))) (x 1233)))
+                (ftrace "foo")
+                (ftrace (labels ((x1233 (a) (list a))) (x1233 1233)))
                 (ftrace (flet ((x (a) (list a))) (x 1234)))
                 (ftrace :here2)
                 (ftrace (flet ((x (a) (return-from x 1))) (x 123)))
@@ -211,8 +221,9 @@
                 (let ((ababab 1))
                   (flet ((bbbaaa () (incf ababab)))
                     (ftrace (s+ "bb:" (bbbaaa)" " (bbbaaa)" " (bbbaaa)))))
-                #+nil(ftracef (let ((a 2)) (flet ((b () a)) (function b))))
-                (ftrace :done)))
+                (ftracef (let ((a 2)) (flet ((b () a)) (function b))))
+                (ftrace :done)
+                "top level"))
 
           #+nil(swf-defmemfun setf-foo (&arest x)
                  (ftrace (+ "setf-foo called : " x))
@@ -276,10 +287,10 @@
                 (dotimes (i 10)
                   (ftrace (s+ "  i = " i)))
                 (ftrace "...")
-                #+nil(ftrace (bleh))
+                #++(ftrace (bleh))
                 (ftrace (setf (:to-string 1) 4))
                 ;;(ftrace (setf (baz 1) 4))
-                (ftrace (setf (foo 1 2 3) 4))
+                #++(ftrace (setf (foo 1 2 3) 4))
                 (ftrace 'defun)
                 (defun defun-test (a)
                   (ftrace (s+ "defun-test called, arg=" a))
@@ -293,9 +304,10 @@
                   `(defmacro-test-1 ,a1 ,(* a1 10)))
                 (ftrace (defmacro-test 5))
                 (ftrace :defun-setf)
-                (defun-setf hoge (value x y)
+                #++(defun (setf hoge) (value x y)
                  (ftrace (s+ "setf-hoge " value " " x " " y)))
-                (setf (hoge 1 2) 3)))
+                #++(setf (hoge 1 2) 3)
+                "more tests"))
 
           ;; fixme: figure out how to put script-slots and init script calls in other places
           (push '(rand 0) (script-slots *compiler-context*))
@@ -371,7 +383,7 @@
                 (defun num (a)
                   (ftrace a)
                   (ftrace (type-of a)))
-                #+nil(let ((a 1))
+                (let ((a 1))
                        (dotimes (x 35)
                          (num (setf a (* a 2)) )))
                 (ftrace 'foo)
@@ -379,14 +391,16 @@
                  (let ((a 1))
                    (lambda () a)))
 
-                #+nil(ftracef
-                      (let ((a 3))
-                        (flet ((b () a))
-                          (function b))))))
+                (ftracef
+                 (let ((a 3))
+                   (flet ((b () a))
+                     (function b))))
+                "numbers"))
 
           (let ((*ir1-verbose* nil))
             (c3 (gensym)
-                '(defun-asm (empty-fun :no-auto-scope t) ()
+                '(defun empty-fun () 123)
+                #++'(defun-asm (empty-fun :no-auto-scope t) ()
                   (:push-int 123))))
 
           (c3 :rand1
@@ -427,8 +441,8 @@
                 (ftrace :flash.random)
                 (dotimes (x 3)
                   (time
-                   (repeated 2000000 (%flash:random)))
-                  (ftrace (%flash:random)))
+                   (repeated 2000000 (flash:math.random)))
+                  (ftrace (flash:math.random)))
                 (ftrace :rand)
                 (dotimes (x 3)
                   (time
@@ -436,66 +450,67 @@
                   (ftrace (rand)))
 
 
-
+                "rand1"
                 )
               )
-          (swf-defun run-tests ()
-            ;;(+ "| =" (:top-level-init))
-            ;;(+ "| =" (:setf-test))
-            (+ "| =" (:top-level))
-            (+ "| =" (:more-tests))
-            (+ "| =" (:numbers))
-            (+ "| =" (:rand1)))
+          (c3* (gensym)
+            (defun run-tests ()
+              ;;(+ "| =" (:top-level-init))
+              ;;(+ "| =" (:setf-test))
+              (+ (+ "| =" (:top-level))
+                 (+ "| =" (:more-tests))
+                 (+ "| =" (:numbers))
+                 (+ "| =" (:rand1))))
 
-          (swf-defun main (arg)
-            (let ((foo (%new* %flash.text:Text-Field))
-                  (canvas (%new* %flash.display:Sprite)))
-              (setf (%flash.display:width foo) 350)
-              (setf (%flash.text:auto-size foo) "left")
-              (setf (%flash.text:text-color foo) #x30e830)
-              (setf (%flash.text:word-wrap foo) t)
-              (setf (%flash.text:background foo) t)
-              (setf (%flash.text:background-color foo) #x20202020)
-              (let ((str "abc"))
-                (incf str (run-tests))
+            (defun main (arg)
+              (let ((foo (%new- flash:flash.text.Text-Field))
+                    (canvas (%new- flash:flash.display.Sprite)))
+                (setf (flash:.width foo) 350)
+                (setf (flash:.auto-size foo) "left")
+                (setf (flash:.text-color foo) #x30e830)
+                (setf (flash:.word-wrap foo) t)
+                (setf (flash:.background foo) t)
+                (setf (flash:.background-color foo) #x20202020)
+                (let ((str "abc"))
+                  (incf str (run-tests))
 
-                (setf (%flash.text:text foo) str))
+                  (setf (flash:.text foo) str))
 
-              (%flash.display:add-child arg canvas)
-              (%flash.display:add-child arg foo)
+                (flash:add-child arg canvas)
+                (flash:add-child arg foo)
 
-              (%set-property this :canvas canvas)
-              (frame nil)
+                (%set-property this :canvas canvas)
+                (frame nil)
 
-              (%flash.display:add-event-listener canvas "click" (%asm (:get-lex frame)))))
+                (flash:add-event-listener canvas "click" (%asm (:get-lex frame)))))
 
-          (swf-defmacro with-fill (gfx (color alpha &key line-style) &body body)
-            `(progn
-               ,@(when line-style
-                       `((%flash.display:line-style ,gfx ,@line-style)))
-               (%flash.display:begin-fill ,gfx ,color ,alpha)
-               ,@body
-               (%flash.display:end-fill ,gfx)))
+            (defmacro with-fill (gfx (color alpha &key line-style) &body body)
+              `(progn
+                 ,@(when line-style
+                         `((flash:line-style ,gfx ,@line-style)))
+                 (flash:begin-fill ,gfx ,color ,alpha)
+                 ,@body
+                 (flash:end-fill ,gfx)))
 
-          (swf-defmemfun frame (evt)
-            (let* ((canvas (slot-value this :canvas))
-                   (gfx (slot-value canvas '%flash.display:graphics))
-                   (matrix (%new* %flash.geom:Matrix)))
+            (defun frame (evt)
+              (let* ((canvas (slot-value this :canvas))
+                     (gfx (flash:.graphics canvas))
+                     (matrix (%new- flash:flash.geom.Matrix)))
 
-              (setf (%flash.display:opaque-background canvas) #x0d0f00)
-              (%flash.display:clear gfx)
-              (with-fill gfx (#x202600  0.5)
-                         (%flash.display:draw-rect gfx 0 0 400 300 ))
-              (%flash.geom:create-gradient-box matrix
-                                               400 300 0 0 0)
-              (%flash.display:begin-gradient-fill gfx "radial"
-                                                  (vector #x202600 #x0d0f00) ;; colors
-                                                  (vector 1 1) ;; alpha
-                                                  (vector 0 255) ;; ratios
-                                                  matrix)
-              (%flash.display:draw-rect gfx 0 0 400 300 )
-              (%flash:trace "click")
-              (%flash.display:end-fill gfx))))
+                (setf (flash:.opaque-background canvas) #x0d0f00)
+                (flash:clear gfx)
+                (with-fill gfx (#x202600  0.5)
+                           (flash:draw-rect gfx 0 0 400 300 ))
+                (flash:create-gradient-box matrix
+                                           400 300 0 0 0)
+                (flash:begin-gradient-fill gfx "radial"
+                                           (vector #x202600 #x0d0f00) ;; colors
+                                           (vector 1 1) ;; alpha
+                                           (vector 0 255) ;; ratios
+                                           matrix)
+                (flash:draw-rect gfx 0 0 400 300 )
+                (flash:trace "click")
+                (flash:end-fill gfx)))))
           ))
     (3b-swf:write-swf
      s

@@ -65,6 +65,10 @@
                   (+ (%displaced-offset array)
                      (%array-row-major-index array subscripts))))
 
+    (defun arrayp (a)
+      (or (%typep a flash:array)
+          (%typep a not-simple-array-type)))
+
     #+nil(swf-defmemfun make-array (dimensions &key element-type initial-element initial-contents adjustable fill-pointer displaced-to displaced-index-offset)
            (if (or adjustable fill-pointer displaced-index-offset displaced-to (> (list-length dimensions) 1))
                ;; non-simple array

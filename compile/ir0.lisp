@@ -97,7 +97,7 @@
            `(multiple-value-prog1 ,(recur first-form) ,@(recur-all forms)))
           ((throw tag result-form)
            `(throw ,tag ,(recur result-form)))
-          ((if a b c) `(if ,(recur a) ,(recur b) ,(recur c)))
+          ((if a b &optional c) `(if ,(recur a) ,(recur b) ,(recur c)))
           ((progn &body body)
            `(progn ,@(recur-all body)))
           ((unwind-protect protected-form &rest cleanup-forms)

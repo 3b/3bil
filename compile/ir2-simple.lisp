@@ -208,12 +208,22 @@
                (:call ,(length args))
                ,@(coerce-type))
              ;; local functions without free vars can be called directly
-             `((:get-local 0)
+             #++`((:get-local 0)
                ,@(let ((*ir1-dest-type* nil))
                       (loop for a in args
                             append (recur a)))
                (:call-static ,name ,(length args))
-               ,@(coerce-type))))
+               ,@(coerce-type))
+             ;; or not? possibly shouldn't be adding (:anonymous t) to
+             ;; non-closure local functions?
+             `((:new-function ,name)
+               (:get-local 0)
+               ,@(let ((*ir1-dest-type* nil))
+                      (loop for a in args
+                            append (recur a)))
+               (:call ,(length args))
+               ,@(coerce-type))
+))
         (:setf (if (find-swf-property name)
                    ;; hack to autodefine implicit setf functions for known
                    ;; properties
@@ -617,6 +627,7 @@
                       (recur condition))
                ;;(:push-null)
                ;; was :if-strict-eq, but then avm false isn't false in lisp :/
+               ;; unfortunately, this makes 0 and "" false also :/
                (:if-false ,else-label)
                ,@(recur then)
                (:jump ,done-label)

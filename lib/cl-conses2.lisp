@@ -26,14 +26,14 @@
 
     (defun list (&arest rest)
       (let ((list nil)
-            (length (%get-property rest :length)))
+            (length (flash:.length rest)))
         (dotimes (i length list)
           (push (%aref-1 rest (- length i 1)) list))))
 
     (defun list* (&arest rest)
-      (when (zerop (%get-property rest :length))
+      (when (zerop (flash:.length rest))
         (%error "not enough arguments"))
-      (let* ((length (%get-property rest :length))
+      (let* ((length (flash:.length rest))
              (list (%aref-1 rest (1- length))))
         (dotimes (i (1- length) list)
           (push (%aref-1 rest (- length i 2)) list))))

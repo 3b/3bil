@@ -115,6 +115,10 @@
                   (:dup)
                   (:@ (setf sum (%asm-top-of-stack-untyped)) :ignored))))))
 
+    (defmacro %type-of (o)
+      `(%asm (:@ ,o)
+             (:type-of)))
+
     (defun type-of (o)
       (%type-of o))
 
@@ -176,11 +180,10 @@
       (%new- flash:q-name "exit" "point"))
 
     (defclass-swf throw-exception-type (flash:object)
-      (.throw-exception-tag .throw-exception-value)
-      (:fake-accessors t)
+      (throw-exception-tag throw-exception-value)
       (:constructor (a b)
-        (setf (.throw-exception-tag this) a)
-        (setf (.throw-exception-value this) b)))
+        (%set-property this throw-exception-tag a)
+        (%set-property this throw-exception-value b)))
 
     (defclass-swf block-exception-type (flash:object)
       (block-exception-tag block-exception-value)

@@ -31,7 +31,7 @@
       (%typep a cons-type))
 
     (defun atom (object)
-      (not (consp object)))
+      (if (consp object) nil t))
 
     (defun %type-error (fun arg)
       (%error (+ "type-error: unknown type in " fun ":" (%type-of arg))))

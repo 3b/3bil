@@ -17,3 +17,10 @@ class member names conflict with class names in constructor
 
 ++ LABELS doesn't close over env properly?
    (or else nested closrues don't close over outer env properly)
+
+DEFUN closures
+        (let ((a 1))
+          (defun cc (v)
+            (incf a v))
+          a)
+        (cc 1)
