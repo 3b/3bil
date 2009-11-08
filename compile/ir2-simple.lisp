@@ -200,7 +200,9 @@
         (:local
          (if (get-fun-info name :closure)
              ;; closures need to be called specially
-             `((:new-function ,name)
+             `((:comment "local call - closure")
+               ,@(let ((*ir1-dest-type* nil))
+                      (recur name))
                (:get-local 0)
                ,@(let ((*ir1-dest-type* nil))
                       (loop for a in args
@@ -216,7 +218,9 @@
                ,@(coerce-type))
              ;; or not? possibly shouldn't be adding (:anonymous t) to
              ;; non-closure local functions?
-             `((:new-function ,name)
+             `((:comment "local call")
+               ,@ (let ((*ir1-dest-type* nil))
+                    (recur name))
                (:get-local 0)
                ,@(let ((*ir1-dest-type* nil))
                       (loop for a in args
@@ -691,6 +695,13 @@
                 when (eq (car i) :@)
                 append (let ((*ir1-dest-type* (third i)))
                          (recur (second i)))
+                else when (eq (car i) :%restore-scope-stack)
+                append `((:get-local 0)
+                         (:push-scope)
+                         ,@ (when *current-closure-vars*
+                              `((:get-local ,(get-local-index
+                                              *activation-local-name*))
+                                (:push-scope))))
                 else when (eq (car i) :@kill)
                 collect `(:kill ,(get-local-index (second i)))
                 else collect i)
@@ -731,7 +742,7 @@
 (defparameter *ir1-dump-asm* nil)
 (defun c2 (form &optional (top-level-name :top-level))
   (let* ((*new-compiler* t)
-         (form `(%compilation-unit (%named-lambda ,top-level-name () () ,form)))
+         (form `(%compilation-unit (%named-lambda ,top-level-name (:trait ,top-level-name :trait-type :function) () ,form)))
          (assembled
           (passes form (append *ir1-passes* '(mark-activations assemble-ir1)))))
     (when *ir1-dump-asm* (format t "assembly dump:~%~s~%" assembled))
@@ -877,8 +888,6 @@
                                         `((:return-value))))))
                    (activation-p (find :new-activation asm :key 'car))
                    (anonymous (getf flags :anonymous)))
-              (when flags
-                (format t "asm:~%~S~%" asm))
               (when (or (and activation-p (not activation-vars))
                         (and (not activation-p) activation-vars))
                 ;; not completely sure this is an error, but shouldn't be
@@ -905,6 +914,8 @@
                 :anonymous anonymous
                 :class-name (getf flags :class-name)
                 :class-static (getf flags :class-static)
+                :trait (getf flags :trait)
+                :trait-type (getf flags :trait-type)
                 :activation-slots
                 (when activation-vars
                   #+nil(format t "activation-vars : ~s~%" activation-vars)

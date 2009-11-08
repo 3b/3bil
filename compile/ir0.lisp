@@ -269,35 +269,49 @@
                collect (expand-lambda n label '(:anonymous t) ll body #'recur))))
       ;; we only need the flet to delimit the lexical scope,
       ;; so alpha convert and get rid of it completely...
+      #++
       `(progn
          ,@(loop ; for (nil label) in names
               for lambda in lambdas
               collect lambda #++`(%named-lambda ,label (:anonymous t) ,@lambda))
          ,@(with-local-functions names
-                                 (recur-all declarations-and-forms)))))
+                                 (recur-all declarations-and-forms)))
+      ;; calling local functions directly seems to break things, so
+      ;; store them in a variable and funcall for now...
+      (with-local-vars (loop for (nil i) in names
+                          collect (list i i))
+        `(%bind
+          ,(mapcar 'second names)
+          ,(loop for (nil i) in names
+              collect `(%local-function ,i))
+          ((progn
+             ,@(loop
+                  for lambda in lambdas
+                  collect lambda)
+             ,@(with-local-functions names
+                                     (recur-all declarations-and-forms))))))))
 
    ((labels (&rest flets) &rest declarations-and-forms)
     (let ((names (loop for i in flets
                        collect (list (car i)
-                                     (alpha-convert-name (car i))))))
+                                     (alpha-convert-name (car i) "label-")))))
       (with-local-functions names
-        (let ((lambdas
-               (loop for (n _ll . body) in flets
-                  for (nil label) in names
-                  for ll = (cons 'this _ll)
-                  ;;for args = (alphatize-var-names (lambda-list-vars ll))
-                  collect #++`(,(alphatize-lambda-list ll args #'recur)
-                                ,(with-local-vars args
-                                                  (recur `(block ,n ,@body))))
-                    (expand-lambda n label '(:anonymous t) ll body #'recur))))
-          ;; we only need the LABELS to delimit the lexical scope,
-          ;; so alpha convert and get rid of it completely...
-          `(progn
-             ,@(loop ; for (nil label) in names
-                     for lambda in lambdas
-                     collect lambda
-                    #++`(%named-lambda ,label (:anonymous t) ,@lambda))
-             ,@(recur-all declarations-and-forms))))))
+        (with-local-vars (loop for (nil i) in names
+                          collect (list i i))
+          (let ((lambdas
+                (loop for (n _ll . body) in flets
+                   for (nil label) in names
+                   for ll = (cons 'this _ll)
+                   collect (expand-lambda n label '(:anonymous t)
+                                          ll body #'recur))))
+           ;; we only need the LABELS to delimit the lexical scope,
+           ;; so alpha convert and get rid of it completely...
+           `(%bind
+             ,(mapcar 'second names) ,(loop for (nil i) in names
+                                         collect `(%local-function ,i))
+             ((progn
+                ,@lambdas
+                ,@(recur-all declarations-and-forms)))))))))
 
 
    ((macrolet (&rest bindings) &rest declarations-and-forms)
@@ -335,7 +349,8 @@
             ((and (consp binding) (eq (car binding) :macro))
              (error "calling FUNCTION on macrolet: ~s" name))
             ((and (consp binding) (eq (car binding) :function))
-             `(%local-function ,(second binding)))
+             `(%local-ref ,(second binding))
+             #++`(%local-function ,(second binding)))
             ;; todo: global macros
             ((and (consp name) (eq (car name) 'setf))
              (error "don't know how to call FUNCTION on global setf functions yet: ~s" name))
@@ -413,7 +428,7 @@
    ((%normal-call op &rest args)
     `(%normal-call ,op ,@(recur-all args)))
    ((%local-call op &rest args)
-    `(%local-call ,op ,@(recur-all args)))
+    `(%local-call ,(recur op) ,@(recur-all args)))
    ((%setf-call op &rest args)
     `(%setf-call ,op ,@(recur-all args)))
 
@@ -442,12 +457,15 @@
         (cond
           ((and (symbolp operator) (special-operator-p operator))
            (super whole))
+          ((and (consp operator) (eq (car operator) 'lambda))
+           (recur `(funcall (function ,operator))))
           ;; expand local macros
           ((and (consp binding) (eq (car binding) :macro))
            (recur (funcall (cdr binding) args)))
           ;; mark local function calls
           ((and (consp binding) (eq (car binding) :function))
-           `(%local-call ,(second binding) ,@(recur-all args)))
+           `(%local-call ,(recur `(%local-ref ,(second binding)))
+                         ,@(recur-all args)))
           ;; compiler macros
           ;; fixme: add an environment param to compile-macro expansion
           ((and cmacro (not (eq (setf temp (funcall cmacro whole nil))
@@ -474,7 +492,8 @@
                           (setf-accessor (find-swf-accessor (caar args))))
                      (format t "#setf ~s / ~s ~s~%" (caar args) args setf-accessor)
                      (cond
-                       (setf-fun `(%local-call ,(second setf-fun)
+                       (setf-fun `(%local-call ,(recur `(%local-ref
+                                                         ,(second setf-fun)))
                                                ,(recur (second args))
                                                ,@(recur-all (cdar args))))
                        (setf-accessor (print `(%asm (:@ ,(recur (second args)))

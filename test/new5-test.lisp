@@ -453,14 +453,49 @@
                 "rand1"
                 )
               )
+
+          (c3* :handlers
+            (ftrace "exception handler...")
+            (handler-case
+                (%asm (:@ "foo")
+                      (:coerce-any)
+                      (:throw))
+              (flash:string (a)
+                (progn (ftrace (s+ "caught string " a)) nil))
+              (t (b)
+                (progn (ftrace (s+ "caught * " b)) nil)))
+            (handler-case
+                (%asm (:@ 1)
+                      (:coerce-any)
+                      (:throw))
+              (flash:string (a)
+                (progn (ftrace (s+ "caught string " a)) nil))
+              (t (b)
+                (progn (ftrace (s+ "caught * " b)) nil)))
+            (handler-case
+                (non-existant-function)
+              (flash:string (a)
+                (ftrace (s+ "caught string " a)))
+              (flash:reference-error (a)
+                (ftrace (s+ "caught reference error: " a)))
+              (t (b)
+                (ftrace (s+ "caught * " b)))
+              )
+
+
+
+
+            )
+
           (c3* (gensym)
             (defun run-tests ()
               ;;(+ "| =" (:top-level-init))
               ;;(+ "| =" (:setf-test))
               (+ (+ "| =" (:top-level))
                  (+ "| =" (:more-tests))
-                 (+ "| =" (:numbers))
-                 (+ "| =" (:rand1))))
+                 (+ "| =" (:handlers))
+                 #++(+ "| =" (:numbers))
+                 #++(+ "| =" (:rand1))))
 
             (defun main (arg)
               (let ((foo (%new- flash:flash.text.Text-Field))

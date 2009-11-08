@@ -100,8 +100,6 @@
       (defmacro %funcall (function this-arg &rest rest)
         `(flash:call ,function ,this-arg ,@rest))
 
-
-
       (defmacro %setf-1 (place value)
         `(%setf ,place ,value))
 
@@ -247,5 +245,92 @@
         (setf (%car this) a)
         (setf (%cdr this) b)))
 
-))
+
+
+    (defmacro %aref-1 (array index)
+      `(%asm
+        (:@ ,array)
+        (:@ ,index)
+        (:get-property (:multiname-l "" ""))))
+
+
+    (defmacro svref (array index)
+      `(%asm
+        (:@ ,array)
+        (:@ ,index)
+        (:get-property (:multiname-l "" ""))))
+
+
+    (defmacro %set-aref-1 (array index value)
+      `(%asm
+        (:@ ,array)
+        (:@ ,index)
+        (:@ ,value)
+        (:set-property (:multiname-l "" ""))
+        (:push-null)
+        (:coerce-any)))
+
+
+    (defmacro %set-property (object property value)
+      ;; (%set-property object property value) -> value
+      `(%asm
+        (:@ ,value)   ;; calculate value
+        (:dup)        ;; leave a copy on stack so we can return it
+        (:@ ,object)  ;; find the object
+        (:swap)       ;; stack => return-value object value
+        (:set-property ,(or (find-swf-property property) property))))
+
+
+    ;;; some low level exception handling code, mainly intended for
+    ;;; use with test framework currently, but may be generally useful
+    ;;; at some point
+    ;;; (may also turn into handler-case instead, depending on how
+    ;;;  similar the API ends up)
+    (defmacro handler-case (expr &body handlers)
+      (let ((start (gensym "HANDLER-CASE-START-"))
+            (end (gensym "HANDLER-CASE-END-"))
+            (jump (gensym "HANDLER-CASE-JUMP-")))
+        `(let (,@(remove-duplicates
+                  (loop for (nil (var) nil) in handlers
+                     when var collect var)))
+           (%asm
+            (:%dlabel ,start)
+            (:comment "%w-e-h start")
+            (:@ ,expr t) ;; fixme: type?
+            (:comment "body end")
+            (:%dlabel ,end)
+            (:jump ,jump)
+            (:comment "start exception handlers")
+            ,@(loop for (type (var) . body) in handlers
+                 for i from 0
+                 ;; todo: no-error clause
+                 when (eq type :no-error)
+                 do (error ":no-error not supported in handler-case yet")
+                 ;; fixme: should this have a better name than (gensym)?
+                 ;;        or no name?
+                  append
+                 `((:comment ,(format nil "exception handler ~s/~s" i
+                                      (length handlers)))
+                   ;; var name?
+                   (:%exception ,(gensym) ,start ,end
+                                ,(cond
+                                  ((find-swf-class type)
+                                   (swf-name (find-swf-class type)))
+                                  ((eq type t) 0)
+                                  (t type)))
+                   ;; save the var if needed
+                   ,@ (when var
+                        ;; typed?
+                        `((:coerce-any)
+                          (:@ (setf ,var (%asm-top-of-stack-untyped)) :ignored)))
+                   ;; restore scope stack
+                   (:%restore-scope-stack)
+                   (:comment "handler body")
+                   (:@ (progn ,@body) t)
+                   (:comment "handler body end")
+                   (:jump ,jump)))
+
+
+            (:comment "end handlers")
+            (:%dlabel ,jump)))))))
 

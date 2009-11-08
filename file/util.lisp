@@ -29,7 +29,8 @@
 (defun assemble-function (name data)
   #+nil(format t "--assemble-function ~s :~%" name)
   (destructuring-bind (n nid argtypes return-type flags asm
-                         &key activation-slots class-name class-static anonymous)
+                         &key activation-slots class-name class-static
+                         anonymous trait trait-type)
       data
     ;;(format t "--assemble-function ~s : ~s : ~s~%" name n nid)
     (let* ((traits (loop for (name index type) in activation-slots
@@ -47,7 +48,10 @@
                                    'avm2-asm::vkind 0 ;; no value
                                    ))))
            (mid (avm2-asm::avm2-method name nid argtypes return-type flags
-                                       :body (avm2-asm::assemble-method-body asm :traits traits))))
+                                       :body (avm2-asm::assemble-method-body
+                                              asm
+                                              :traits traits
+                                              :arg-count (1+ (length argtypes))))))
       (if class-name
           ;; member function
           (let ((class (find-swf-class class-name)))
@@ -61,8 +65,14 @@
                   (add n mid (class-functions class))
                   (add n mid (functions class)))))
           ;; normal function
-          (unless anonymous
-              (push (list n mid) (function-names *compiler-context*)))))))
+          (cond
+            ;; fixme: should these use trait instead of n ?
+            ((and (not anonymous) trait (eq trait-type :function))
+             (push (list n mid) (function-names *compiler-context*)))
+            ((and trait (eq trait-type :slot))
+             (push (list n 0) (script-slots *compiler-context*)))
+            (t
+             (format t "no trait for function ~s  =~%" name)))))))
 ;++
 (defun assemble-class (name ns super properties constructor instance-functions class-properties class-functions flags)
   (let* ((constructor-mid

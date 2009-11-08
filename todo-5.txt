@@ -29,6 +29,8 @@ figure out a workflow for working with xcompiled code?
     hook into running instance, and allow updating code directly?
     (or possibly just move straight to self hosting and slime support?)
 
+optimize out boilerplate for really simple functions
+  (:get-local-0) + (:push-scope) not needed if no function calls or globals, etc
 --
 specials
 conditions/restarts/etc
@@ -41,6 +43,15 @@ some way to switch between blob and expanded tags
 \optimize bitmap writing
   (compile to blob tag and store that instead of recompiling every time)
 reuse locals in code gen
+
+reuse repeated local functions?
+  (ex. from macros that expand to the same flet/labels every time)
+  --- multiple :new-function on the same function within a single function
+      seems to behave oddly, so need to be careful with that,
+
+figure out if local functions can be safely called with :static-call
+  instead of using calling :new-function, storing that in a var, and using
+  that
 
 ---------------------------------------------------------
 #'(on-enter-frame ship) ?

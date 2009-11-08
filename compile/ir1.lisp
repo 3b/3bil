@@ -21,7 +21,7 @@
    ((%normal-call op &rest args)
     `(%call type :normal name ,op args ,(recur-all args)))
    ((%local-call op &rest args)
-    `(%call type :local name ,op args ,(recur-all args)))
+    `(%call type :local name ,(recur op) args ,(recur-all args)))
    ((%setf-call op &rest args)
     `(%call type :setf name ,op args ,(recur-all args)))
 
@@ -131,7 +131,9 @@
    ;;    calls can just be called with call-static
    ;;    ... for now just using new-function+call on any fn with free vars
    ((%call type name args)
-    `(%call type ,type name ,name args ,(recur-all args)))
+    `(%call type ,type
+            name ,(if (eq type :local) (recur name) name)
+            args ,(recur-all args)))
 
    ;; possibly should split out closed and normal bindings, but for now
    ;; leaving combined to avoid worrying about order of evaluating the values
@@ -331,14 +333,21 @@
                ;;        and possibly expand the binding
                ((and closed-names *ir1-in-tagbody*)
                 (let ((name (gensym "CLOSURE-SCOPE-")))
-                  `(progn
-                     body
-                     ((%named-lambda
-                       name ,name
-                       flags ()
-                       lambda-list ,(cons 'this vars)
-                       body ,(recur-all body))
-                      (%call type :local name ,name args ,(recur-all values))))))
+                  (setf *ir1-need-another-pass* t)
+                  `(%bind
+                    vars ,(list name)
+                    values ((function type :local name ,name))
+                    closed-vars nil
+                    body
+                    ((%named-lambda
+                             name ,name
+                         flags ()
+                         lambda-list ,(cons 'this vars)
+                         closed-vars ,(union closed-vars closed-names)
+                         body ,(recur-all body))
+                     (%call type :local
+                            name (%ref type :local var ,name )
+                            args ,(recur-all values))))))
                ;; not in a loop, just add closed named to list
                (closed-names
                 `(%bind
@@ -386,34 +395,65 @@
              (values (super whole) *ir1-need-another-pass*)))
 ))
 
+(defvar *ir1-locally-free-vars*)
+
 (define-structured-walker ir1-find-free-vars null-ir1-walker
   :form-var whole
   :forms (((%bind vars values closed-vars body)
            (let ((*ir1-local-vars* (append vars *ir1-local-vars*)))
-             `(%bind vars ,vars
-                     values ,(recur-all values)
-                     closed-vars ,closed-vars
-                     body ,(recur-all body))))
+             (prog1
+                 `(%bind vars ,vars
+                         values ,(recur-all values)
+                         closed-vars ,closed-vars
+                         body ,(recur-all body))
+               (setf *ir1-locally-free-vars*
+                     (set-difference *ir1-locally-free-vars*
+                                     vars)))))
 
           ((%named-lambda name flags lambda-list body)
            ;;(format t "llist : ~s~%vars= ~s~%" lambda-list (lambda-list-vars lambda-list))
-           (let ((*ir1-local-vars* (lambda-list-vars lambda-list)))
-             (super whole)))
-
+           (let* ((*ir1-local-vars* (lambda-list-vars lambda-list))
+                  (walked (super whole)))
+             (setf *ir1-locally-free-vars*
+                   (set-difference *ir1-locally-free-vars*
+                                   (lambda-list-vars lambda-list)))
+             (if (or (not *ir1-locally-free-vars*)
+                     (not (getf flags :trait)))
+                 walked
+                 (progn
+                   ;; if the lambda closes over anything, we need to
+                   ;; build a closure and store it in a global slot
+                   ;; trait instead of using a function trait linked
+                   ;; directly to the method
+                   (setf (getf (getf (cdr walked) 'flags) :anonymous) t)
+                   (setf (getf (getf (cdr walked) 'flags) :trait-type) :slot)
+                   (setf (getf (getf (cdr walked) 'flags) :trait) name)
+                   `(progn
+                      body
+                      (,walked
+                       (%asm
+                        forms
+                        ((:get-global-scope)
+                         (:@ (function type :local name ,name) nil)
+                         (:set-property ,name)
+                         (:push-null)))))))))
           ((%ref type var)
            (when (and (eq type :local)
-                    (not (member var *ir1-local-vars*)))
-               (push var *ir1-free-vars*))
+                      (not (member var *ir1-local-vars*)))
+             (pushnew var *ir1-free-vars*)
+             (pushnew var *ir1-locally-free-vars*))
            (super whole))
           ((%set type var value)
            (when (and (eq type :local)
-                    (not (member var *ir1-local-vars*)))
-               (push var *ir1-free-vars*))
+                      (not (member var *ir1-local-vars*)))
+             (pushnew var *ir1-free-vars*)
+             (pushnew var *ir1-locally-free-vars*))
            (super whole))
 
           ((%compilation-unit)
            (let ((*ir1-local-vars* nil)
-                 (*ir1-free-vars* nil))
+                 (*ir1-free-vars* nil)
+                 (*ir1-locally-free-vars* nil))
              (setf whole (super whole))
              (multiple-value-prog1
                  (if *ir1-free-vars*
@@ -585,8 +625,9 @@
                    do (setf (caaadr i) t))
              #+nil(format t "~s~%" *ir1-call-stack*)))
   :forms (((%call type name args)
-           (let* ((tag (gensym))
+           (let* ((tag (gensym "tag"))
                   (flags (list nil))
+                  (r-name (if (eq type :local) (recur name) name))
                   (*ir1-call-stack* (cons (list tag flags) *ir1-call-stack*))
 
                   (recurred-args (loop for i in args
@@ -625,7 +666,7 @@
                            values ,spilled-values
                            closed-vars nil
                            body ((%call type ,type
-                                        name ,name
+                                        name ,r-name
                                         args ,(append (loop for i in spilled-vars
                                                             collect
                                                             `(%ref type :local
@@ -633,7 +674,9 @@
                                                       inline))))
                    ;; normal case, just leave args inline (we already
                    ;; did the recur-all, so don't need it here...)
-                   `(%call type ,type name ,name args ,recurred-args)))))
+                   `(%call type ,type
+                           name ,r-name
+                           args ,recurred-args)))))
 
           ((block name nlx forms)
            #+nil(when nlx (format t "nlx-block ~s~%" whole))

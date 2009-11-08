@@ -208,7 +208,7 @@
   ;;   the .swf anywhere
   ;; (label can be NIL to generate a name automatically if no other
   ;;  refs are needed aside from caller)
-  (let* ((label (or label (gensym)))
+  (let* ((label (or label (gensym "avm2-method-label")))
          (method-id (intern-method-id label)))
     (when body (setf flags (logior flags (flags body))))
     ;;; todo: handle multiple method definitions better (or decide if it needs handled at all)

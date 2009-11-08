@@ -12,8 +12,8 @@
 
 
 (defmacro %defmacro (name (&rest args) &body body)
-  (let ((form (gensym))
-        (environment (gensym)))
+  (let ((form (gensym "%defmacro-form"))
+        (environment (gensym "%defmacro-env")))
     `(add-swf-macro-function
       ',name
       (lambda (,form ,environment)

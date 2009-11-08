@@ -62,9 +62,10 @@
 (defun assemble-method-body (forms &key (init-scope 0)
                              (max-scope 1 max-scope-p)
                              (max-stack 1 max-stack-p)
+                             (arg-count 0)
                              traits)
   (let ((*current-method* (make-instance 'method-body
-                                         'local-count 1
+                                         'local-count (max arg-count 1)
                                          'max-stack 1
                                          'init-scope-depth init-scope
                                          'max-scope-depth init-scope
@@ -210,6 +211,7 @@
      ;;and do (format t "op -> ~s start -> ~s~%" op start)
      and collect op
      else do (error "invalid byte ~s at ~d " byte start)
+     unless start do (error "no start?")
      while (< start length)))
 
 
@@ -432,7 +434,7 @@
            ))
         (decoders
          ;; type tag, decoder, optional constant pool lookup function
-         `((u8  (lambda (s &key (start 0)) (elt s start)))
+         `((u8  (lambda (s &key (start 0)) (values (elt s start) (1+ start))))
            (u16  decode-u16)
            (u24  decode-u24)
            (s24  decode-u24)

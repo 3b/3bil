@@ -39,42 +39,17 @@
     (defmacro declaim (&rest a)
       nil)
 
-    (defmacro %aref-1 (array index)
-      `(%asm
-        (:@ ,array)
-        (:@ ,index)
-        (:get-property (:multiname-l "" ""))))
-
-    (defmacro svref (array index)
-      `(%asm
-        (:@ ,array)
-        (:@ ,index)
-        (:get-property (:multiname-l "" ""))))
-
-
-    (defmacro %set-aref-1 (array index value)
-      `(%asm
-        (:@ ,array)
-        (:@ ,index)
-        (:@ ,value)
-        (:set-property (:multiname-l "" ""))
-        (:push-null)
-        (:coerce-any)))
-
-
-    ;; fixme: should be a function
-    (defmacro aref (array &rest subscripts)
-      (let ((a (gensym)))
+    (defun aref (a &arest subscripts)
+      (let ((i (%aref-1 subscripts 0)))
         (if (= 1 (length subscripts))
-            `(let ((,a ,array))
-               (if (%typep ,a flash:array)
-                   (%aref-1 ,a ,(first subscripts))
-                   (if (%typep ,a flash:string)
-                       (flash:char-at ,a 1)
-                       (if (%typep ,a not-simple-array-type)
-                           (%aref-n ,a ,@subscripts)
-                           (svref ,a ,@subscripts)))))
-            `(%aref-n ,array ,@subscripts))))
+            (if (%typep a flash:array)
+                (%aref-1 a i)
+                (if (%typep a flash:string)
+                    (flash:char-at a i)
+                    (if (%typep a not-simple-array-type)
+                        (%aref-n a subscripts)
+                        (svref a subscripts))))
+            (%aref-n a subscripts))))
 
     ;; fixme: what broke this?
     #++
@@ -103,15 +78,6 @@
               (if (%typep a not-simple-array-type)
                   (%setf-aref-n a subscript value)
                   (setf (svref a subscript) value)))))
-
-    (defmacro %set-property (object property value)
-      ;; (%set-property object property value) -> value
-      (print`(%asm
-         (:@ ,value) ;; calculate value
-         (:dup)      ;; leave a copy on stack so we can return it
-         (:@ ,object) ;; find the object
-         (:swap)      ;; stack => return-value object value
-         (:set-property ,(or (find-swf-property property) property)))))
 
     (defmacro %array (&rest args)
       ;; (%array ... ) -> array

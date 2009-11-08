@@ -117,7 +117,8 @@
                (loop for i in (inherited-symbol-tables s)
                   when (find-swf-class symbol i)
                   return it))))
-    (unless c (format t "couldn't find class ~s~%" symbol) #+nil(break))
+    (unless (or c (eq symbol t))
+      (format t "couldn't find class ~s~%" symbol) #+nil(break))
     c))
 
 ;;; handler for normal form evaluation, evaluate ARGS, and call

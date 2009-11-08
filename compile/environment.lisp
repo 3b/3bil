@@ -51,8 +51,8 @@ actionscript code")
 
 #+nil(defun alpha-convert-name (sym)
   (gensym (format nil "~a ~a #" *alpha-name-prefix* (symbol-name sym))))
-(defun alpha-convert-name (sym)
-  (gensym (format nil "###__~a__###" sym)))
+(defun alpha-convert-name (sym &optional (prefix ""))
+  (gensym (format nil "~a###__~a__###" prefix sym)))
 
 (defun alphatize-var-names (names)
   (loop for i in names

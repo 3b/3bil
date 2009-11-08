@@ -4,10 +4,12 @@
 ;;; with minimum effort to write a test...
 
 
+(defparameter *side-effect-fun* nil)
 
 (defmacro def-tests (name (&key) &body tests)
   (let ((good (gensym "good"))
         (bad (gensym "bad"))
+        (errors (gensym "err"))
         (side (gensym "side"))
         (calls '((call0 (f)
                   (let ((r (funcall f))) (side-effect r r)))
@@ -23,37 +25,44 @@
                   (let ((r (funcall (funcall f a) b))) (side-effect r r)))
                  )))
     `(c3 ,name
-         (let ((,side ()))
-           (flet ((side-effect (&rest a)
-                    (push a ,side)
-                    (if (> (length a) 0)
-                        (car (last a))
-                        0))
-                  (reset-side-effects ()
+         (let* ((,side ())
+                (*side-effect-fun* (lambda (&rest a)
+                                     (push a ,side)
+                                     (if (> (length a) 0)
+                                         (car (last a))
+                                         0))))
+           (flet ((reset-side-effects ()
                     (setf ,side ()))
                   (get-side-effects ()
                     ,side))
              `(let ((,',good 0)
-                   (,',bad 0))
+                    (,',bad 0)
+                    (,',errors 0))
                (labels ,',calls
-                 (macrolet ((test (tname form result sides)
+                 (macrolet ((test (tname form &optional result sides)
                               `(progn
                                  (reset-side-effects)
                                  (setf (flash:.text (running (app)))
                                        (s+ "run:" ,tname))
 
-                                 (let ((res ,form))
-                                   (if (and (match res ,result)
-                                            (match (reverse (get-side-effects))
-                                                   ,sides))
-                                       (progn
-                                         (mark-pass ,tname res)
-                                         (incf ,',',good))
-                                       (progn
-                                         (mark-fail ,tname res ,result
-                                                    (reverse (get-side-effects))
-                                                    ,sides)
-                                         (incf ,',',bad)))))))
+                                 (let ((res)
+                                       (err))
+                                   (handler-case
+                                       (setf res ,form)
+                                     (t (e) (setf err e)))
+                                   (cond
+                                     (err
+                                      (incf ,',',errors)
+                                      (mark-error ,tname err))
+                                     ((and (match res ,result)
+                                           (match (reverse (get-side-effects))
+                                                  ,sides))
+                                      (mark-pass ,tname res)
+                                      (incf ,',',good))
+                                     (t (mark-fail ,tname res ,result
+                                                   (reverse (get-side-effects))
+                                                   ,sides)
+                                        (incf ,',',bad)))))))
 
                    ,,@(loop for i in tests
                          for string = (format nil "~s" i)
@@ -71,8 +80,8 @@
                                          ',(reverse (get-side-effects)))))))
                          )
 
-                   (ftrace (s+ ,',name ": passed=" ,',good "  failed=" ,',bad))
-                   (s+ "test " ,',name ": " ,',good "passed, " ,',bad " failed")
+                   (ftrace (s+ ,',name ": passed=" ,',good "  failed=" ,',bad " errored=" ,',errors))
+                   (s+ "test " ,',name ": " ,',good " passed, " ,',bad " failed, " ,',errors " errored")
 
                    )))))
          ))
@@ -81,8 +90,26 @@
 (defun s+ (&rest a)
   (format nil "~{~a~}" a))
 (defun ftrace (&rest a)
-  (format t "~{~a~}~%" a)
-)
+  (format t "~{~a~}~%" a))
+(defun side-effect (&rest a)
+  (if *side-effect-fun*
+      (apply *side-effect-fun* a)
+      (error "test stuff broken? no side effect function")))
+(defun x0 ()
+  (side-effect 'x0 'x0))
+(defun x1 (x)
+  (side-effect 'x1 x)
+  (side-effect 'x x))
+(defun x (x r)
+  (side-effect 'x r)
+  (side-effect x r))
+(defun y (x r)
+  (side-effect 'y r)
+  (side-effect x r))
+(defun z (x r)
+  (side-effect 'z r)
+  (side-effect x r))
+
 (with-open-file (s "/tmp/ctests.swf"
                    :direction :output
                    :element-type '(unsigned-byte 8)
@@ -113,29 +140,32 @@
             (%set-property-static :test-class .app this)
             (main this)))
 
-      (defun app ()
-        (%get-property-static :test-class .app))
+        (defun app ()
+          (%get-property-static :test-class .app))
 
         (defun ftracef (x &arest args)
           (flash:trace x)
           (flash:trace (+ "=>" (flash:apply x nil args))))
 
+        #++
         (defun baz (&arest x)
           (if (< (random 2) 1) t nil))
 
+        #++
         (defun foo (&arest x)
           (ftrace (+ "foo called : " x))
           (aref x 0))
+        #+++
         (defun hoge (&arest x)
           (ftrace (+ "hoge called : " x))
           (aref x 0))
 
-        (defun x (&arest x)
-          (ftrace (+ "global X called : " x))
-          (aref x 0))
-        (defun y (&arest x)
-          (ftrace (+ "global Y called : " x))
-          (aref x 0))
+        #++(defun x (&arest x)
+             (ftrace (+ "global X called : " x))
+             (aref x 0))
+        #++(defun y (&arest x)
+             (ftrace (+ "global Y called : " x))
+             (aref x 0))
 
         (defun side-effect (&arest a)
           (push (loop for i across a
@@ -143,8 +173,8 @@
                    collect i)
                 (side-effects (app)))
           #++(ftrace (list->str
-                   (loop for i across a
-                      collect i)))
+                      (loop for i across a
+                         collect i)))
           (if (> (length a) 0)
               (aref a (1- (length a)))
               0))
@@ -181,36 +211,38 @@
           (write-text ".")
           (setf (flash:.text (running (app))) "")
           #++(ftrace (s+ "pass: " name " = " (if (consp res) (list->str res) res))))
+        (defun mark-error (name err)
+          (write-text "e")
+          (setf (flash:.text (running (app))) "")
+          (ftrace (s+ "error: " name " = " err))
+          (when (%typep err flash:error)
+            (ftrace (s+ " >> " (flash:get-stack-trace err)))))
         (defun mark-fail (name res good side good-side)
           (write-text "!")
           (setf (flash:.text (running (app))) "")
-          (ftrace (s+ "!!!fail: " name " = " (if (consp res) (list->str res) res)
-                     " expected " (if (consp good) (list->str good) good)))
+          (ftrace (s+ "fail: " name " = " (if (consp res) (list->str res) res)
+                      " expected " (if (consp good) (list->str good) good)))
           (when (or side good-side)
-              (ftrace (s+ "    : side effects " (list->str side)
-                          " expected " (list->str good-side)))))
-
-
-)
+            (ftrace (s+ "    : side effects " (list->str side)
+                        " expected " (list->str good-side)))))
+        ;; defun with side effects for tests to scoping
+        (defun x0 ()
+          (side-effect 'x0 'x0))
+        (defun x1 (x)
+          (side-effect 'x1 x)
+          (side-effect 'x x))
+        (defun x (x r)
+          (side-effect 'x r)
+          (side-effect x r))
+        (defun y (x r)
+          (side-effect 'y r)
+          (side-effect x r))
+        (defun z (x r)
+          (side-effect 'z r)
+          (side-effect x r))
+        )
 
       (def-tests "foo" ()
-        ;; defun with side effects for tests to scoping
-        (progn
-          (defun x0 ()
-            (side-effect 'x0 'x0))
-          (defun x1 (x)
-            (side-effect 'x1 x)
-            (side-effect 'x x))
-          (defun x (x r)
-            (side-effect 'x r)
-            (side-effect x r))
-          (defun y (x r)
-            (side-effect 'y r)
-            (side-effect x r))
-          (defun z (x r)
-            (side-effect 'z r)
-            (side-effect x r))
-          nil)
         ;; tests
         (+ 1 2)
         (+ (side-effect 1 1) 2)
@@ -279,7 +311,7 @@
         (labels ((x (a) (list a))) (x 1233))
         (flet ((x (a) (list a))) (x 1234))
         :here2
-        (flet ((x (a) (return-from x 1))) (x 123))
+        (flet ((x (a) (return-from x (+ a 1)))) (x 123))
         (flet ((x (a) (return-from x 111) (list a))) (x 1235))
         :labels
         (labels ((x (a) (z a))
@@ -292,18 +324,24 @@
             (a v))
           1)
         (cc 1)
-        #++(let ((l ()))
-             (labels ((a (b)
-                        (push (+ b 1) l)
-                        (+ b 1))
-                      (b (b)
-                        (a b)))
-               (let ((c 1))
-                 (defun cc2 (v)
-                   (b v)))
-               1)
-             (cc2 1)
-             )
+        (progn
+          (let ((a 1))
+            (defun cc1 (v)
+              (incf a v))
+            a)
+          (cc1 1))
+        (let ((l ()))
+          (labels ((a (b)
+                     (push (+ b 1) l)
+                     (+ b 1))
+                   (b (b)
+                     (a b)))
+            (let ((c 1))
+              (defun cc2 (v)
+                (b v)))
+            1)
+          (cc2 1)
+          )
         :loop
         (loop
            for (a . b) on '(1 2)
@@ -345,13 +383,13 @@
 
         (call (function (lambda (x) (+ x 1))) 1000)
         (call2 (function x) 1001 4)
-        #++(labels ((x (a) (list (y a))) (y (a) (x a))) (function x))
+        (call (labels ((x (a) (if (zerop a) 0 (list (y a))))
+                       (y (a) (x (1- a))))
+                (function x)) 3)
         (call (labels ((x (a) (+ (z a))) (y (a) a) (z (a) (+ (y a)))) (function x)) 1002)
         (if t 1 2)
         (let ((a (if (x 1 t) 1 2))) a)
         (let ((a (if (x 2 nil) 1 2))) a)
-        ;;(return-from a 1) ;; error
-        ;;(throw 'a 1)      ;; uncaught exception
         (catch 111 (throw 111 'thrown-111))
         ;; fixme: intern symbols
         ;;(catch 'a (throw 'a 'thrown-a))
@@ -374,34 +412,34 @@
         (+ 1 (block xxfoo (flet ((bar () (return-from xxfoo 100) 1000)) (bar) 10000)) 2)
 
         (call (let ((x 1)) (lambda (y) (+ x y))) 1234)
-        #+n800(call^2 (lambda (a) (lambda (b) (+ a b))) 1234 2344)
+        (call^2 (lambda (a) (lambda (b) (+ a b))) 1234 2344)
         ;;?;(call^2  (lambda (a) (let ((j 123)) (lambda (b) (+ a b j)))) 2345 234)
         ;;
-        #+n800(call (lambda (a) (tagbody (let ((j 123)) (lambda (b) (+ a b j)))))
+        (call (lambda (a) (tagbody (let ((j 12300)) (lambda (b) (+ a b j)))))
               12345)
         (call (funcall
                (lambda (a)
-                 (let ((k 123))
+                 (let ((k 12301))
                    (let ((j 1))
                      (let ((l k))
-                       (lambda (b) (+ a b j)))))) 123) 456)
-        #+|?|(call (lambda (a) (tagbody
-                                  (let ((k 123))
-                                    (let ((j 1))
-                                      (let ((l k))
-                                        (lambda (b) (+ a b j))))))) 2345)
-        #+|?|(call (lambda (a) (tagbody foo
-                                  (let ((k 123))
-                                    (let ((j 1))
-                                      (let ((l k))
-                                        (lambda (b)
-                                          (if (zerop a)
-                                              (go bar)
-                                              (+ a b j)))))) bar)) 15423)
+                       (lambda (b) (+ a b j)))))) 12302) 456)
+        (call (lambda (a) (tagbody
+                             (let ((k 12303))
+                               (let ((j 1))
+                                 (let ((l k))
+                                   (lambda (b) (+ a b j))))))) 2345)
+        (call (lambda (a) (tagbody foo
+                             (let ((k 12304))
+                               (let ((j 1))
+                                 (let ((l k))
+                                   (lambda (b)
+                                     (if (zerop a)
+                                         (go bar)
+                                         (+ a b j)))))) bar)) 15423)
         :return-from2
-        (call (flet ((x (a) (list (y (return-from x 100) a)))
-                     (y (a) (x a))) #'x) 1)
-;;;;(cal(block x (lambda (a) (return-from x 100) 10)) 1) ;;uncaught exception
+        (call (flet ((x1 (a) (list (y (return-from x1 100) a)))
+                     (y (a) (x1 a))) #'x1) 1)
+        (block x (call (lambda (a) (return-from x (+ a 100)) 10) 1))
         (call (labels ((x (a) (+ (y (lambda (x) (side-effect 1 1)
                                             (return-from x (+ a x))))
                                  1000))
@@ -410,7 +448,7 @@
         (call0 (lambda () (tagbody foo (go bar) bar
                              (lambda () (side-effect 1 1) (go foo)))))
 
-        (tagbody 1 (lambda (x) (side-effect 1 1) (go 1)))
+        (tagbody 1 (lambda (x) (side-effect x 1) (go 1)))
         :nlx
         (tagbody nlx 1 (flet ((x () (go 2))) (x)) (side-effect "bug!" "foo") 2)
         (call (lambda (x) (block blah 1)) 101)
@@ -425,7 +463,7 @@
           (progn (x 4 5) 3)
           (return-from x0 1))
         :return-from-3
-        #+|?|(labels ((aaa (f c)
+        (labels ((aaa (f c)
                    (side-effect (s+ "enter" c) 2)
                    (if (< 10 c)
                        (funcall f)
@@ -466,19 +504,11 @@
             (unwind-protect (return-from nil)
               (side-effect "x=" x)))) ;; print 5, return nil
 
-        :exit-extent-errors
-        #++(funcall (block nil #'(lambda () (return-from nil))))
-        #++(let ((a nil))
-               (tagbody t (setq a #'(lambda () (go t))))
-               (funcall a))
-        #++(funcall (block nil
-                        (tagbody a (return-from nil
-                                     #'(lambda () (go a))))))
         :here5
         (tagbody a (unwind-protect (go b) (x1 "unwinding")) b)
         (+ 1 (block x (return-from x 2)) 3)
         (tagbody (+ 1 (go 2) 3) 2)
-;;;; setfunctions
+        ;; setf functions
         :flet-setf
         (flet (((setf foo) (a b c d) (s+ a b c d)))
           (setf (foo 1 2 3) 4))
@@ -487,7 +517,7 @@
           (bar))
         (call4 (flet (((setf foo) (a b c d) (s+ a b c d)))
                  (function (setf foo))) 1 2 3 4)
-;;;; fix: ensure compatible types of branches/jumps when no dest type
+        ;; fix: ensure compatible types of branches/jumps when no dest type
         (if t 1 "2")
         :fixme
         (let ((ababab 1))
@@ -498,6 +528,8 @@
         "top level")
 
       (def-tests "more-tests" ()
+        (if 1 'a)                   ;; compile error
+        ((lambda () (side-effect "foo")))
         (dotimes (i 10)
           (side-effect (s+ "  i = " i)))
         #++(ftrace (bleh))
@@ -512,8 +544,8 @@
         (defun-test 234)
         (progn
           (defun defmacro-test-1 (a b)
-           (side-effect a b)
-           (+ a b 1000))
+            (side-effect a b)
+            (+ a b 1000))
           nil)
         (progn
           (defmacro defmacro-test (a1)
@@ -528,7 +560,6 @@
 
 
       (def-tests "expected-fail" ()
-
         (when 0 'c)
         (unless 0 'd)
         (when "" 'c)
@@ -537,33 +568,114 @@
 
         )
 
-      #++
-      (def-tests "need error handling" ()
-        (let ((a 1))
-          (defun cc (v)
-            (incf a v))
-          a)
-        (cc 1)
+      (def-tests "expected error" ()
+        ;; probably should distinguish between tests that should fail, and tests
+        ;; that currently fail but shouldn't...
+        ;;--
+        ;; shouldn't error
+
+        ;;--
+        ;; should error
+        (test "" (throw 'a 1) ) ;; uncaught exception
+        (test "" (funcall (block nil #'(lambda () (return-from nil)))))
+        (test "" (let ((a nil))
+                   (tagbody t (setq a #'(lambda () (go t))))
+                   (funcall a)))
+        (test "" (funcall (block nil
+                            (tagbody a (return-from nil
+                                         #'(lambda () (go a)))))))
+
 
         )
+      #++
+      (def-tests "verify-error" ()
+        (loop for i below 10
+           when (oddp i)
+           collect i))
 
       #++
       (def-tests "can't/shouldn't-compile" ()
-          (if 1 'a) ;; compile error
-          ;; should be compiler error
-          (let ((x (progn (+ 1 2) (side-effect 1 2) (+ 3 4))) x))
-
-          )
-
-      #++
-      (def-tests "crash-vm?" ()
-        (flet ((x (a b) (list 987 (y a b)))
-               (y (a b) (x a b)))
-          (x 1234 567))
+        (test "" (return-from a 1)) ;; error
+        ;; should be compiler error
+        (let ((x (progn (+ 1 2) (side-effect 1 2) (+ 3 4))) x))
 
         )
 
-      (c3* (gensym)
+      (def-tests "bad-abc" ()
+                                        ;:a
+                                        ;(let ((a (catch '123 (throw '123 'thrown-123)))) a)
+                                        ;(tagbody (x (+ 1 2 (go foo) 3 4) 123) (go bar) foo (side-effect "went to foo" t) bar)
+        #++(tagbody (x (+ 1 2 (if (x 1 t) 3 (go foo)) 4 5) nil)
+              (go bar) foo
+              (side-effect "went to foo") bar)
+        #++(tagbody (x (+ 1 2 (if (x nil nil) 3 (go foo)) 4 5) nil)
+              (go bar) foo
+              (x "went to foo" 1) bar)
+                                        ;:here3
+        #++(let ((a 1)) (flet ((x1 (b) (+ a b))) (x1 10)))
+        #++(call2 (let ((a 1) (b 10)) (lambda (a c) (+ a b c))) 100 1000)
+
+        #++(let ((a 1) (b 10))
+             (flet ((x (a c) (+ a b c)))
+               (x 100 1000)))
+                                        ;:return-from
+        #++(+ 1 (block xxfoo (flet ((bar () (return-from xxfoo 100) 1000)) (bar) 10000)) 2)
+
+                                        ;(call (let ((x 1)) (lambda (y) (+ x y))) 1234)
+        (call^2 (lambda (a) (lambda (b) (+ a b))) 1234 2344)
+        (call^2  (lambda (a) (let ((j 123)) (lambda (b) (+ a b j)))) 2345 234)
+        ;;
+        #++(call (lambda (a) (tagbody (let ((j 123)) (lambda (b) (+ a b j)))))
+                 12345)
+
+        ;;
+        )
+      (def-tests "bad1-abc" ()
+        (call^2 (lambda (a) (lambda (b) (+ a b))) 1234 2344)
+        #++(call^2  (lambda (a) (let ((j 123)) (lambda (b) (+ a b j)))) 2345 234))
+      (def-tests "bad2-abc" ()
+        #++(call^2 (lambda (a) (lambda (b) (+ a b))) 1234 2344)
+        (call^2  (lambda (a) (let ((j 123)) (lambda (b) (+ a b j)))) 2345 234))
+
+      (let ((*ir1-dump-asm* nil))
+        (def-tests "bad3-abc" ()
+          (progn (ftrace "b3") nil)
+          (call^2 (lambda (a) (let ((j 123)) (lambda (b) (+ a b j)))) 2345 234)
+          (call^2 (lambda (a) (lambda (b) (+ a b))) 1234 2344))
+        )
+
+      #++(c3* "bad4-abc"
+        (ftrace "bad4-abc")
+        (labels ((call^2 (f a b)
+                   #++(let ((r (funcall (funcall f a) b)))
+                     #++(side-effect r r))))
+          (progn;handler-case
+              (progn
+                (call^2 (lambda (a) (let ((j 123)) (lambda (b) (+ a b j)))) 2345 234)
+                (call^2 (lambda (a) (lambda (b) (+ a b))) 1234 2344))
+            #++(t (e) (ftrace "foo!")))))
+
+      #+-(c3* "bad4-abc"
+        (ftrace "bad4-abc")
+        (labels ((call^2 (f a b)
+                   #++(let ((r (funcall (funcall f a) b)))
+                        #++(side-effect r r))))
+          (let ((f1 (lambda (a) (let ((j 123)) (lambda (b) (+ a b j)))) 2345 234 ))
+            (call^2 f1)
+            (call^2 (lambda (a) (lambda (b) (+ a b))) 1234 2344))
+          #++(t (e) (ftrace "foo!"))))
+      (c3* "bad4-abc"
+        (ftrace "bad4-abc")
+        (labels ((call^2 (f a b)
+                   (declare (foo))
+                   #++(let ((r (funcall (funcall f a) b)))
+                        #++(side-effect r r))))
+          (call^2 (lambda (a) (lambda () 1)) 876 543)
+          (call^2 (lambda (a) (lambda () 1)) 987 654)
+          #++(t (e) (ftrace "foo!"))))
+
+
+      (c3* (gensym "aaa")
         (defun line (s)
           (write-text (s+ "
 " s "
@@ -571,7 +683,12 @@
         (defun run-tests ()
           (line (list->str (:foo)))
           (line (list->str ("more-tests")))
-          (line (list->str ("expected-fail"))))
+          (line (list->str ("expected-fail")))
+          (line (list->str ("expected error")))
+          (line (list->str ("bad1-abc")))
+          (line (list->str ("bad2-abc")))
+          (ftrace "bleh")
+          (line (list->str ("bad4-abc"))))
 
         (defun main (arg)
           (let ((foo (%new- flash:flash.text.Text-Field))
@@ -611,6 +728,8 @@
              (flash:begin-fill ,gfx ,color ,alpha)
              ,@body
              (flash:end-fill ,gfx)))
+        (defun foo ()
+          (lambda (a) (lambda (b) (lambda (c) (+ a c b)))))
 
         (defun frame (evt)
           (let* ((canvas (slot-value this :canvas))
@@ -625,8 +744,8 @@
                                        400 300 0 0 0)
             (flash:begin-gradient-fill gfx "radial"
                                        (vector #x202600 #x0d0f00) ;; colors
-                                       (vector 1 1)       ;; alpha
-                                       (vector 0 255)     ;; ratios
+                                       (vector 1 1)   ;; alpha
+                                       (vector 0 255) ;; ratios
                                        matrix)
             (flash:draw-rect gfx 0 0 400 300 )
             (flash:trace "click")

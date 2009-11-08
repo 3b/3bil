@@ -20,6 +20,7 @@
                           (:file "misc")
                           (:file "cl-new")
                           (:file "sacla-loop")
+                          (:file "cl-late")
                           ;; misc extra stuff...
                           (:file "fu")
                           )))
