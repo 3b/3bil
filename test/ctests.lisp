@@ -553,9 +553,14 @@
           nil)
         (test "(defmacro-test 5 " (defmacro-test 5) 1055 '((5 50)))
         (ftrace :defun-setf)
-        #++(defun (setf hoge) (value x y)
-             (ftrace (s+ "setf-hoge " value " " x " " y)))
-        #++(setf (hoge 1 2) 3)
+        (defun (setf hoge) (value x y)
+          (side-effect "setf-hoge " value " " x " " y)
+          value)
+        (setf (hoge 1 2) 3)
+        (setf (aref (vector 1 2 3) 2) 4)
+        (let ((a (vector 1 2 3)))
+          (setf (aref a 1) "a")
+          a)
         "more tests")
 
 
@@ -573,7 +578,7 @@
         ;; that currently fail but shouldn't...
         ;;--
         ;; shouldn't error
-
+        (setf (car (cons 1 2)) 3)
         ;;--
         ;; should error
         (test "" (throw 'a 1) ) ;; uncaught exception

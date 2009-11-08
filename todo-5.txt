@@ -53,6 +53,10 @@ figure out if local functions can be safely called with :static-call
   instead of using calling :new-function, storing that in a var, and using
   that
 
+(setf car) ?
+  not sure if it is worth special casing some more common places, or
+  if it would be better to wait for a full setf macro
+
 ---------------------------------------------------------
 #'(on-enter-frame ship) ?
 

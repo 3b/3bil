@@ -18,13 +18,21 @@
 
   (c3* (gensym)
 
-
       (defmacro defun (name args &body body)
-        (if (and (listp name) (eq (car name) 'setf))
-            `(defun-setf ,(second name) ,args ,@body)
-            `(%named-lambda ,name
-                   (:trait-type :function :trait ,name)
-                 ,args (block ,name ,@body))))
+        `(progn
+           ,(if (and (listp name) (eq (car name) 'setf))
+                (print
+                 `(%named-lambda ,name
+                        (:anonymous t
+                                    :trait ,(second name)
+                                    :class-name setf-namespace-type
+                                    :class-static t)
+                      ,args
+                    (block ,(second name) ,@body)))
+                `(%named-lambda ,name
+                       (:trait-type :function :trait ,name)
+                     ,args (block ,name ,@body)))
+           ',name))
 
 
 

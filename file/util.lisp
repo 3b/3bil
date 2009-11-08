@@ -52,6 +52,10 @@
                                               asm
                                               :traits traits
                                               :arg-count (1+ (length argtypes))))))
+      (when trait
+        (setf n (if (symbolp trait)
+                    (avm2-asm::symbol-to-qname-list trait)
+                    `(:qname "" ,trait))))
       (if class-name
           ;; member function
           (let ((class (find-swf-class class-name)))

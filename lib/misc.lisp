@@ -39,6 +39,12 @@
     (defmacro declaim (&rest a)
       nil)
 
+    (defun svref (array index)
+      (%asm
+       (:@ array)
+       (:@ index)
+       (:get-property (:multiname-l "" ""))))
+
     (defun aref (a &arest subscripts)
       (let ((i (%aref-1 subscripts 0)))
         (if (= 1 (length subscripts))
@@ -51,12 +57,10 @@
                         (svref a subscripts))))
             (%aref-n a subscripts))))
 
-    ;; fixme: what broke this?
-    #++
     (defun (setf aref) (value a subscript)
       ;; fixme: support multiple dimensions (need &rest, apply?)
       (if (%typep a flash:array)
-          (%set-aref-1 a subscript value)
+          (progn (%set-aref-1 a subscript value) value)
           (if (%typep a flash:string)
               ;; fixme: is there a better way to do this?
               (flash:concat (flash:substr a 0 subscript)

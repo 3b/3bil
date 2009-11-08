@@ -254,12 +254,6 @@
         (:get-property (:multiname-l "" ""))))
 
 
-    (defmacro svref (array index)
-      `(%asm
-        (:@ ,array)
-        (:@ ,index)
-        (:get-property (:multiname-l "" ""))))
-
 
     (defmacro %set-aref-1 (array index value)
       `(%asm
