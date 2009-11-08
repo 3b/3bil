@@ -25,7 +25,6 @@
   ;;multiname_info = (kind values*) for now, 0-2 values depending on kind
   (destructuring-bind (first &optional second third)
       mn
-    ;;(format t "~%multiname ~s ~s ~s~%" first second third)
     (cond
       ((member first '(#x07 #x0d))
        (make-instance (%swf::subclass-from-id '%swf:abc-multiname first)
@@ -48,9 +47,6 @@
          (strings avm2-asm::strings) (namespaces avm2-asm::namespaces)
          (ns-sets avm2-asm::ns-sets) (multinames avm2-asm::multinames))
       context
-    ;;(format t "constant pools:~%ints=~s~%uints=~s~%doubles=~s~%" ints uints doubles)
-    ;;(format t "strings=~s~%namespaces=~s~%multinames=~s~%" strings namespaces multinames)
-
     ;; fixme: handle this better...
     (flet ((fix (a &optional (xlate 'identity))
              (loop for i from 1 below (length a)
@@ -81,13 +77,6 @@
                                             '%swf:value (car a)
                                             '%swf:kind (cdr a)))
                            optional-params)
-                   #+nil(make-instance '%swf:abc-method-info-option-info
-                                  '%swf:options
-                                  (mapcar (lambda (a)
-                                            (make-instance '%swf:abc-interned-value+kind-constant
-                                                           '%swf:value (car a)
-                                                           '%swf:kind (cdr a)))
-                                          optional-params))
                    '%swf:param-names pnames)))
 
 (defun translate-metadata-info (metadata)
@@ -150,7 +139,6 @@
   (destructuring-bind (name super-name flags interfaces iinit traits
                             &optional protected-ns)
       instance
-    (format t "~%instance = ~s / init ~s~%" instance iinit)
     (make-instance '%swf:abc-instance-info
                    '%swf:name name
                    '%swf:super-name super-name

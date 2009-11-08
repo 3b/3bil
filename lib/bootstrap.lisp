@@ -54,7 +54,6 @@
               (benvironment (gensym))
               (op-var (gensym))
               (lambda-list (add-op-var-to-macro-lambda-list op-var args)))
-         (format t "lambda-list -> ~s~%" lambda-list)
          (add-swf-cmacro-function
           name
           (coerce `(lambda (,bform ,benvironment)
@@ -166,7 +165,6 @@
             (constructor (cdr (assoc :constructor class-options)))
             (super-args (cdr (assoc :super-args class-options)))
             (fake-accessors (second (assoc :fake-accessors class-options))))
-        (format t "slot-spec = ~s~%" slot-specifiers)
         ;; todo: class options
         ;;  (:swf-flags :sealed <bool> :final <bool> :interface <bool> ...?)
         ;;  :metaclass? :documentation :default-initargs?
@@ -182,12 +180,6 @@
                                          ;; unused, but might as well allow it
                                          documentation) (if (listp spec) spec (list spec))
                  (declare (ignore type documentation))
-                                        ;(format t "slot ~s = ~s ~s ~s ~s~%" name allocation inline-reader inline-writer inline-accessor)
-                 #++(when fake-accessors
-                   (let ((a (gensym)))
-                     (push `(defmacro ,name (,a)
-                              `(slot-value ,,a ,',name))
-                           forms)))
                  (when fake-accessors
                    (add-swf-accessor name name))
                  (if (eq allocation :class)
@@ -215,26 +207,24 @@
            do (add-swf-property p p))
         (loop for p in static-properties
            do (add-swf-class-property p p))
-                                        ;(format t "constructor = ~%")
-        (print
-         `(progn
-            ,@(nreverse forms)
-            (%named-lambda ,constructor-sym
-                  (:no-auto-return t :no-auto-scope t :anonymous t)
-                ,(car constructor)      ; lambda list
-              (%asm
-               (:get-local-0)
-               (:push-scope)
-               (:get-local-0)
-               ,@(loop for i in super-args
-                    collect `(:@ ,i))
-               (:construct-super ,(length super-args))
-               (:%activation-record)
-               (:push-null))
-              (block nil
-                ,@(cdr constructor))
-              (%asm (:return-void)))
-            ))))
+        `(progn
+           ,@(nreverse forms)
+           (%named-lambda ,constructor-sym
+                 (:no-auto-return t :no-auto-scope t :anonymous t)
+               ,(car constructor)       ; lambda list
+             (%asm
+              (:get-local-0)
+              (:push-scope)
+              (:get-local-0)
+              ,@(loop for i in super-args
+                   collect `(:@ ,i))
+              (:construct-super ,(length super-args))
+              (:%activation-record)
+              (:push-null))
+             (block nil
+               ,@(cdr constructor))
+             (%asm (:return-void)))
+           )))
 
 
 

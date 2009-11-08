@@ -76,7 +76,7 @@
             ((and trait (eq trait-type :slot))
              (push (list n 0) (script-slots *compiler-context*)))
             (t
-             (format t "no trait for function ~s  =~%" name)))))))
+             #++(format t "no trait for function ~s  =~%" name)))))))
 ;++
 (defun assemble-class (name ns super properties constructor instance-functions class-properties class-functions flags)
   (let* ((constructor-mid

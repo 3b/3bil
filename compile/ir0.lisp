@@ -166,34 +166,30 @@
     (let* ((arest (when arest (alphatize-var-names (list arest))))
            (required (append (alphatize-var-names required)
                              arest)))
-      (when arest
-        (format t "arest = ~s = ~s~%" arest (cadar arest))
-        (format t "args = ~s = ~s~%" required  (append required arest)))
-      (print
-       `(%named-lambda ,lambda-name
-              (,@flags ,@(if arest `(:arest ,(cadar arest))))
-            ,(mapcar 'cadr required)
-          ,(if (or optional rest keys aux)
-               (with-local-vars required
-                 (funcall recur
-                          ;; expanding to a macro call from special
-                          ;; forms is a bit ugly, but better than
-                          ;; adding special forms for no reason, and
-                          ;; we can avoid it easily enough to
-                          ;; bootstrap that far
-                          `(%destructuring-bind-*
-                            (:optional ,optional :key ,keys :aux ,aux
-                                       :allow-other-keys ,allow-other-keys)
-                            ,(cadr arest)
-                            ;; fixme: probably should just add the block/progn in
-                            ;; the caller instead of here?
-                            (,@(if block-name `(block ,block-name) '(progn))
-                               ,@body))))
-               (with-local-vars required
-                 (funcall recur `(,@(if block-name
-                                        `(block ,block-name)
-                                        '(progn))
-                                    ,@body)))))))))
+      `(%named-lambda ,lambda-name
+             (,@flags ,@(if arest `(:arest ,(cadar arest))))
+           ,(mapcar 'cadr required)
+         ,(if (or optional rest keys aux)
+              (with-local-vars required
+                (funcall recur
+                         ;; expanding to a macro call from special
+                         ;; forms is a bit ugly, but better than
+                         ;; adding special forms for no reason, and
+                         ;; we can avoid it easily enough to
+                         ;; bootstrap that far
+                         `(%destructuring-bind-*
+                           (:optional ,optional :key ,keys :aux ,aux
+                                      :allow-other-keys ,allow-other-keys)
+                           ,(cadr arest)
+                           ;; fixme: probably should just add the block/progn in
+                           ;; the caller instead of here?
+                           (,@(if block-name `(block ,block-name) '(progn))
+                              ,@body))))
+              (with-local-vars required
+                (funcall recur `(,@(if block-name
+                                       `(block ,block-name)
+                                       '(progn))
+                                   ,@body))))))))
 
 (define-walker ir0-minimal-compilation-etc null-cl-walker
   :atoms (((or number string simple-vector bit-vector (eql t) (eql nil))
@@ -474,15 +470,12 @@
           ;; normal macros
           ;; fixme: add an environment param to macroexpansion
           (macro
-           ;;(format t "expanding macro ~s~%" whole)
-           ;;(format t "-> ~s~%" (funcall macro whole nil))
            (recur (funcall macro whole nil)))
 
           ;; todo: known functions (cl:foo, etc)/inlining
 
           ;; special case SETF until macro can handle it...
           ((member operator '(setf %setf))
-           ;;(format t "handling special cased setf ~s~%" whole)
            (if (> (length args) 2)
                (recur `(progn ,@(loop for (var val) on args by #'cddr
                                       collect `(setf ,var ,val))))
@@ -490,17 +483,16 @@
                    (let* ((sym `(setf ,(caar args)))
                           (setf-fun (lexenv-get-function-binding sym))
                           (setf-accessor (find-swf-accessor (caar args))))
-                     (format t "#setf ~s / ~s ~s~%" (caar args) args setf-accessor)
                      (cond
                        (setf-fun `(%local-call ,(recur `(%local-ref
                                                          ,(second setf-fun)))
                                                ,(recur (second args))
                                                ,@(recur-all (cdar args))))
-                       (setf-accessor (print `(%asm (:@ ,(recur (second args)))
-                                              (:dup)
-                                              (:@ ,(recur (cadar args)))
-                                              (:swap)
-                                              (:set-property ,setf-accessor))))
+                       (setf-accessor `(%asm (:@ ,(recur (second args)))
+                                             (:dup)
+                                             (:@ ,(recur (cadar args)))
+                                             (:swap)
+                                             (:set-property ,setf-accessor)))
                        (t `(%setf-call ,(caar args)
                                      ,(recur (second args))
                                      ,@(recur-all (cdar args))))))
@@ -508,7 +500,6 @@
 
           ;; expand fake accessors
           (accessor
-           (format t "accessor ~s - ~s / ~s~%" accessor operator args)
            (recur `(slot-value ,@args ,accessor)))
 
           ;; wrap anything else in %normal-call

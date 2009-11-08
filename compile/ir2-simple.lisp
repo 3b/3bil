@@ -138,7 +138,6 @@
                              (t
                               (error "don't know how to compile quoted value ~s" value)))
                  ,@(coerce-type))))
-        ;;(format t "quoted ~s -> ~s~%" value a)
         a))
 
      ;; type = :local , :normal , :setf , ??
@@ -153,7 +152,6 @@
            (cond
             ;; known methods
             ((setf tmp (find-swf-method name *symbol-table*))
-             ;;(format t "compiling known method call to ~s~%" name)
              `(,@(let ((*ir1-dest-type* nil))
                       (recur (first args)))
                  ,@(let ((*ir1-dest-type* nil))
@@ -163,8 +161,6 @@
                  ,@(coerce-type)))
             ;; known static methods
             ((setf tmp (find-swf-static-method name *symbol-table*))
-             #+nil(format t "compiling known static method call to ~s~%  tmp=~s~%"
-                     name tmp)
              `(;#+nil(:find-property-strict ,(car tmp)) ;;??
                (:get-lex ,(if (find-swf-class (car tmp))
                               (swf-name (find-swf-class (car tmp)))
@@ -188,7 +184,6 @@
                  ,@(coerce-type)))
             ;; unknown function... call directly
             (t
-             ;;(format t "compiling normal call to ~s~%" name)
              ;; fixme: is this correct?
              `(#+nil(:find-property-strict ,name)
                     (:get-global-scope)
@@ -299,8 +294,7 @@
       (ecase type
         ;; fixme: should these coerce the type after the dup instead of before?
         ;; fixme: possibly should factor out the recur + dup?
-        (:local #+nil(format t "%set local name=~s info=~s~%" var (getf *ir1-var-info* var nil))
-                `(,@(cond
+        (:local `(,@(cond
                      ;; hacks to allow (:@ (setf foo <value on top of stack>))
                      ;; in %asm
                      ((member (call-name value) '(%asm-top-of-stack-untyped
@@ -321,7 +315,6 @@
                               (coerce-type))))
         (:closure
          (let ((c (get-closure-index var)))
-           #+nil(format t "%set closure : var=~s c=~s~%" var c)
            `(,@(cond
                 ;; hacks to allow (:@ (setf foo <value on top of stack>))
                 ;; in %asm
@@ -376,7 +369,7 @@
                    for i in asm
                    when (and (consp i) (eq (car i) :%activation-record))
                    append activation into a
-                   and do (setf found t) (format t "//~s~%" i)
+                   and do (setf found t)
                    else collect i into a
                    finally (return (if found
                                        a
@@ -393,11 +386,8 @@
       (ecase type
         (:local `((:new-function ,name)
                   ,@(coerce-type)))
-        (:normal #++`((:find-property-strict ,name)
-                   (:get-property ,name)
-                   ,@(coerce-type))
-                 ;; fixme: share code with function calls?
-                 (let (tmp)
+        (:normal (let (tmp)
+                   ;; fixme: share code with function calls?
                    (cond
                      ;; known methods
                      ((setf tmp (find-swf-method name *symbol-table*))
@@ -405,7 +395,7 @@
                         ,@(coerce-type)))
                      ;; known static methods
                      ((setf tmp (find-swf-static-method name *symbol-table*))
-                      `(;#+nil(:find-property-strict ,(car tmp)) ;;??
+                      `( ;#+nil(:find-property-strict ,(car tmp)) ;;??
                         (:get-lex ,(if (find-swf-class (car tmp))
                                        (swf-name (find-swf-class (car tmp)))
                                        (car tmp)))
@@ -424,7 +414,7 @@
                              (:get-global-scope)
                              (:get-property ,name)
                              ,@(coerce-type)))))
-)
+         )
         (:method (error "method calls with object not done yet..."))))
 
      ;; common code for nlx handling in catch/return/tagbody
@@ -535,13 +525,7 @@
                                                   (recur i)))
                               (:push-null)
                               ,@(coerce-type))
-                      tag-code ,(let ((*ir1-dest-type* nil)
-                                      #+nil(exit-point (get-tag-info
-                                                        name :exit-point-var)))
-                                     #+nil(recur `(%ref type ,(get-var-info
-                                                               exit-point
-                                                               :ref-type :local)
-                                                        var ,exit-point))
+                      tag-code ,(let ((*ir1-dest-type* nil))
                                      (recur `(%ref type ,(get-var-info
                                                           name
                                                           :ref-type :local)
@@ -682,7 +666,6 @@
       (let ((*ir1-tag-info* tag-info)
             (*ir1-var-info* var-info)
             (*ir1-fun-info* fun-info))
-        #+nil(format t "tag info : ~s~%" tag-info)
         `(%compilation-unit
           var-info ,var-info
           tag-info ,tag-info
@@ -877,7 +860,6 @@
                 (setf rest-p r)
                 ;; drop &arest arg name from count of required args
                 (decf count)))
-            ;;(format t "::::: flags = ~s nas=~s~%" flags (getf flags :no-auto-scope))
             (let* ((asm (with-lambda-context (:args names :blocks nil)
                           `(,@(if (getf flags :no-auto-scope)
                                   `((:comment "skipping auto scope"))
@@ -918,7 +900,6 @@
                 :trait-type (getf flags :trait-type)
                 :activation-slots
                 (when activation-vars
-                  #+nil(format t "activation-vars : ~s~%" activation-vars)
                   (loop for (name index) in activation-vars
                      ;; no type info for now..
                      collect `(,name ,index 0))))

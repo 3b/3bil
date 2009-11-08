@@ -34,15 +34,15 @@
          (flash:end-fill ,gfx)))
 
         (defmacro object (&rest rest)
-          (print `(%asm
-             ,@(loop for (name val) on rest by #'cddr
-                  ;; fixme: figure out how to specify desired type directly
-                  collect `(:@ ,(if (and (symbolp name) (keywordp name))
-                                    (avm2-asm::symbol-to-export-string name)
-                                    name))
-                  collect `(:coerce-string)
-                  collect `(:@ ,val))
-             (:new-object ,(/ (length rest) 2)))))
+          `(%asm
+            ,@(loop for (name val) on rest by #'cddr
+                 ;; fixme: figure out how to specify desired type directly
+                 collect `(:@ ,(if (and (symbolp name) (keywordp name))
+                                   (avm2-asm::symbol-to-export-string name)
+                                   name))
+                 collect `(:coerce-string)
+                 collect `(:@ ,val))
+            (:new-object ,(/ (length rest) 2))))
 
         (defmacro display (object
                            &key (x 0 xp) (y 0 yp) (width 0 wp) (height 0 hp)
@@ -79,41 +79,41 @@
           (let ((o (gensym))
                 (tf (gensym)))
             (declare (ignorable tf))
-            (print `(let* ((,o ,object)
-                     ,@ (when (or fp sp)
-                          `((,tf (%new- flash:flash.text.text-format)))))
-                (display ,o ,@args)
-                ,@ (when (or fp sp)
-                     (loop for f in '(flash:.font
-                                      flash:.size
-                                      flash:.color)
-                        for v in (list font size color)
-                        for p in (list fp sp cp)
-                        when p
-                        collect `(setf (,f ,tf) ,v)))
-                ,@ (when (or fp sp cp)
-                     `((setf (flash:.default-text-format ,o) ,tf)))
+            `(let* ((,o ,object)
+                    ,@ (when (or fp sp)
+                         `((,tf (%new- flash:flash.text.text-format)))))
+               (display ,o ,@args)
+               ,@ (when (or fp sp)
+                    (loop for f in '(flash:.font
+                                     flash:.size
+                                     flash:.color)
+                       for v in (list font size color)
+                       for p in (list fp sp cp)
+                       when p
+                       collect `(setf (,f ,tf) ,v)))
+               ,@ (when (or fp sp cp)
+                    `((setf (flash:.default-text-format ,o) ,tf)))
 
-                ,@(loop for f in '(flash:.auto-size
-                                   flash:.text-color
-                                   flash:.word-wrap
-                                   flash:.background
-                                   flash:.background-color
-                                   flash:.border
-                                   flash:.border-color
-                                   flash:.mouse-wheel-enabled
-                                   flash:.text
-                                   flash:.selectable)
-                     for v in (list auto-size text-color word-wrap
-                                    background background-color
-                                    border border-color mouse-wheel-enabled
-                                    text
-                                    selectable)
-                     for p in (list asp tcp wwp bgp bgcp borderp bcp mwep tp
-                                    selp)
-                     when p
-                     collect `(setf (,f ,o) ,v))
-                ,o))))
+               ,@(loop for f in '(flash:.auto-size
+                                  flash:.text-color
+                                  flash:.word-wrap
+                                  flash:.background
+                                  flash:.background-color
+                                  flash:.border
+                                  flash:.border-color
+                                  flash:.mouse-wheel-enabled
+                                  flash:.text
+                                  flash:.selectable)
+                    for v in (list auto-size text-color word-wrap
+                                   background background-color
+                                   border border-color mouse-wheel-enabled
+                                   text
+                                   selectable)
+                    for p in (list asp tcp wwp bgp bgcp borderp bcp mwep tp
+                                   selp)
+                    when p
+                    collect `(setf (,f ,o) ,v))
+               ,o)))
 
         (defmacro text-field (&rest args)
           `(text (%new- flash:flash.text.text-field)

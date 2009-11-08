@@ -101,40 +101,37 @@
       ;; fixme: implement this correctly once VALUES works
       (let ((values (gensym))
             (index (gensym)))
-        (format t "w-h-t-i~%")
-        (print `(let ((,index 0))
-            (macrolet ((multiple-value-setq (vars form)
-                         (format t "m-v-s~%")
-                         (print `(let ((,',values))
-                                   ,form
-                                   ,@(loop for var in vars
-                                        for i from 0
-                                        collect `(setf ,var (aref ,',values ,i)))
-                                   (aref ,',values 0))))
-                       (,name ()
-                         (format t "m-v-s~%")
-                         (print `(let* ((next (%asm
-                                               (:@ ,',hash-table)
-                                               (:@ ,',index)
-                                               (:coerce-i)
-                                               (:has-next)))
-                                        (next-p (not (zerop next)))
-                                        (key (when next-p
-                                               (%asm
-                                                (:@ ,',hash-table)
-                                                (:@ ,',index)
-                                                (:coerce-i)
-                                                (:next-name))))
-                                        (val (when next-p
-                                               (%asm
-                                                (:@ ,',hash-table)
-                                                (:@ ,',index)
-                                                (:coerce-i)
-                                                (:next-value)))))
-                                   (ftrace (s+ "hash-it : " next "/" key "/" val))
-                                   (setf ,',index next)
-                                   (setf ,',values (%array next-p key val ))))))
-              ,@body)))))
+        `(let ((,index 0))
+           (macrolet ((multiple-value-setq (vars form)
+                        `(let ((,',values))
+                           ,form
+                           ,@(loop for var in vars
+                                for i from 0
+                                collect `(setf ,var (aref ,',values ,i)))
+                           (aref ,',values 0)))
+                      (,name ()
+                        `(let* ((next (%asm
+                                       (:@ ,',hash-table)
+                                       (:@ ,',index)
+                                       (:coerce-i)
+                                       (:has-next)))
+                                (next-p (not (zerop next)))
+                                (key (when next-p
+                                       (%asm
+                                        (:@ ,',hash-table)
+                                        (:@ ,',index)
+                                        (:coerce-i)
+                                        (:next-name))))
+                                (val (when next-p
+                                       (%asm
+                                        (:@ ,',hash-table)
+                                        (:@ ,',index)
+                                        (:coerce-i)
+                                        (:next-value)))))
+                           (ftrace (s+ "hash-it : " next "/" key "/" val))
+                           (setf ,',index next)
+                           (setf ,',values (%array next-p key val )))))
+             ,@body))))
 
     (defun get-universal-time ()
       (+ (floor (/ (flash:get-time (%new- flash:date)) 1000))

@@ -1095,39 +1095,39 @@
   (avm2-compiler::c3* :loop
     (defmacro extended-loop (&rest tokens &environment environment)
       (let ((*environment* environment))
-        (print (with-loop-context tokens
-           (let ((body-tag (gensym "LOOP-BODY-"))
-                 (epilogue-tag (gensym "LOOP-EPILOGUE-")))
-             (name-clause?)
-             (variable-clause*)
-             (main-clause*)
-             (when *loop-tokens*
-               (error "Loop form tail ~S remained unprocessed." *loop-tokens*))
-             (reduce-redundant-code)
-             (destructuring-bind (&key binding-forms iterator-forms initially
-                                       head neck body tail finally results)
-                 *loop-components*
-               (check-multiple-bindings
-                (append *temporaries* (mapappend #'bound-variables binding-forms)
-                        (mapcar #'(lambda (spec) (getf (cdr spec) :var)) *accumulators*)))
-               `(block ,*loop-name*
-                  ,(with-temporaries `(,*temporaries* :ignorable ,*ignorable*)
-                                     (with-accumulators *accumulators*
-                                       (with-binding-forms binding-forms
-                                         (with-iterator-forms iterator-forms
-                                           `(macrolet ((loop-finish () '(go ,epilogue-tag)))
-                                              (tagbody
-                                                 ,@head
-                                                 ,@initially
-                                                 ,body-tag
-                                                 ,@neck
-                                                 ,@body
-                                                 ,@tail
-                                                 (go ,body-tag)
-                                                 ,epilogue-tag
-                                                 ,@finally
-                                                 ,@(when results
-                                                         `((return-from ,*loop-name* ,(car results)))))))))))))))))
+        (with-loop-context tokens
+          (let ((body-tag (gensym "LOOP-BODY-"))
+                (epilogue-tag (gensym "LOOP-EPILOGUE-")))
+            (name-clause?)
+            (variable-clause*)
+            (main-clause*)
+            (when *loop-tokens*
+              (error "Loop form tail ~S remained unprocessed." *loop-tokens*))
+            (reduce-redundant-code)
+            (destructuring-bind (&key binding-forms iterator-forms initially
+                                      head neck body tail finally results)
+                *loop-components*
+              (check-multiple-bindings
+               (append *temporaries* (mapappend #'bound-variables binding-forms)
+                       (mapcar #'(lambda (spec) (getf (cdr spec) :var)) *accumulators*)))
+              `(block ,*loop-name*
+                 ,(with-temporaries `(,*temporaries* :ignorable ,*ignorable*)
+                                    (with-accumulators *accumulators*
+                                      (with-binding-forms binding-forms
+                                        (with-iterator-forms iterator-forms
+                                          `(macrolet ((loop-finish () '(go ,epilogue-tag)))
+                                             (tagbody
+                                                ,@head
+                                                ,@initially
+                                                ,body-tag
+                                                ,@neck
+                                                ,@body
+                                                ,@tail
+                                                (go ,body-tag)
+                                                ,epilogue-tag
+                                                ,@finally
+                                                ,@(when results
+                                                        `((return-from ,*loop-name* ,(car results))))))))))))))))
 
     (defmacro simple-loop (&rest compound-forms)
       (let ((top (gensym)))

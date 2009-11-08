@@ -411,7 +411,6 @@
                                      vars)))))
 
           ((%named-lambda name flags lambda-list body)
-           ;;(format t "llist : ~s~%vars= ~s~%" lambda-list (lambda-list-vars lambda-list))
            (let* ((*ir1-local-vars* (lambda-list-vars lambda-list))
                   (walked (super whole)))
              (setf *ir1-locally-free-vars*
@@ -491,8 +490,6 @@
           ((block name nlx forms)
            (let* ((*ir1-local-tags* (cons name *ir1-local-tags*))
                   (rforms (recur-all forms)))
-             #+nil(format t "block : nlx = ~s ~s/~s~%" (member name *ir1-nlx-tags*)
-                     name *ir1-nlx-tags*)
              (if (or nlx
                      (member name *ir1-nlx-tags*)
                      (member name *ir1-lx-tags*))
@@ -503,7 +500,6 @@
               `(progn body ,rforms))))
 
           ((return-from name value)
-           ;;(format t "return-from name=~s/~s~%" name *ir1-local-tags*)
            (if (member name *ir1-local-tags*)
                (progn
                  (push name *ir1-lx-tags*)
@@ -579,15 +575,11 @@
         repeat 5
         for i from 0
         for *ir1-free-vars* = nil
-        ;;do (format t "closure-scope pass ~s~%->~s~%--------~%" i form)
         ;; find free vars, convert-closed over bindings to lambdas inside loops
         do (setf (values form not-done) (ir1-find-free-vars form))
-        ;;do (format t "==closure-scope pass ~s~%->~s~%--------~%" i form)
         ;; convert non-local go/return-from to %nlx
         do (setf (values form not-done2) (ir1-find-nlx-tags form))
-        while (or not-done not-done2)
-       )
-  ;;(format t "==closure-scope done ~%->~s~%--------~%" form)
+        while (or not-done not-done2))
   form)
 
 
@@ -620,10 +612,8 @@
   :labels ((mark-catch-arg ()
              ;; loop over every call in progress, and mark current arg as
              ;; having an exception block
-                           #+nil(format t "marking : ~s ->" *ir1-call-stack*)
              (loop for i in *ir1-call-stack*
-                   do (setf (caaadr i) t))
-             #+nil(format t "~s~%" *ir1-call-stack*)))
+                   do (setf (caaadr i) t))))
   :forms (((%call type name args)
            (let* ((tag (gensym "tag"))
                   (flags (list nil))
@@ -655,8 +645,6 @@
                        finally (return (values spilled-vars
                                                spilled-values
                                                inline)))
-               #+nil(format t "spilling: ~s/~s/~s~%"spilled-vars spilled-values inline)
-               #+nil(format t "flags: ~s/~s/~%" flags recurred-args)
                (if spilled-vars
                    ;; some args need to be in locals, so replace the
                    ;; call with a local binding to allocate temp vars,
@@ -679,7 +667,6 @@
                            args ,recurred-args)))))
 
           ((block name nlx forms)
-           #+nil(when nlx (format t "nlx-block ~s~%" whole))
            (when nlx (mark-catch-arg))
            (super whole))
           ((tagbody name nlx forms)
@@ -768,8 +755,6 @@
           do (set-var-info var :simple-init simple))
     (super whole))
    ((%named-lambda name flags lambda-list closed-vars body)
-    ;;(loop for var in (lambda-list-vars lambda-list)
-    ;;        do (set-var-info var :simple-init simple))
     (let ((*ir1-current-fun* name))
       (super whole)))
 
