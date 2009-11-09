@@ -832,7 +832,7 @@
           (line (list->str ("expected error")))
           (line (list->str ("bad1-abc")))
           (line (list->str ("bad2-abc")))
-          (line (list->str ("bad4-abc")))
+          ("bad4-abc")
           (line "done tests..."))
 
         (defun main (arg)
@@ -884,20 +884,20 @@
             (setf (flash:.opaque-background canvas) #x0d0f00)
             (flash:clear gfx)
             (with-fill gfx (#x202600  0.5)
-                       (flash:draw-rect gfx 0 0 400 300 ))
+                       (flash:draw-rect gfx 0 0 600 400 ))
             (flash:create-gradient-box matrix
-                                       400 300 0 0 0)
+                                       600 400 0 0 0)
             (flash:begin-gradient-fill gfx "radial"
                                        (vector #x202600 #x0d0f00) ;; colors
                                        (vector 1 1)   ;; alpha
                                        (vector 0 255) ;; ratios
                                        matrix)
-            (flash:draw-rect gfx 0 0 400 300 )
+            (flash:draw-rect gfx 0 0 600 400 )
             (flash:trace "click")
             (flash:end-fill gfx)))))
     (list
      (3b-swf:show-frame)))
    :x-twips 600
-   :y-twips 300
+   :y-twips 400
    :frame-rate 30
    :flash-version 9))
