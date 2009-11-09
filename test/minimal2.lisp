@@ -1,7 +1,6 @@
 (in-package :avm2-compiler)
 
-;;; minimal sample, for new5 compiler/3b-swf
-
+;;; minimal sample, for new5 compiler/3b-swf/fu
 
 (with-open-file (s "/tmp/foo.swf" :direction :output
                    :element-type '(unsigned-byte 8) :if-exists :supersede)
@@ -15,67 +14,60 @@
      (3b-swf:background-color #x869ca7)
      (3b-swf:frame-label "frame1"))
 
-      (compile-abc-tag (((nil :test-Class)))
-        #+nil
-        (def-swf-class :test-class "test-class" %flash.display:sprite (blob)
-                       (()
-                        (main this)))
+      (compile-abc-tag (((nil :test-Class))
+                        :inherit (avm2-compiler::*cl-symbol-table*
+                                  fu::%*fu-symbol-table*))
+
         (c3* :top-level
 
-         (defclass-swf :test-class ( %flash.display:sprite)
-            ((blob))
-           (:constructor ()
+          (defclass-swf :test-class (flash:flash.display.sprite)
+            (text
+             canvas
+             (%app :allocation :class ))
+            (:fake-accessors t)
+            (:constructor ()
+              (%set-property-static :test-class %app this)
               (main this)))
 
-         #++(swf-constructor :test-class ()
-            (main this))
+        (defun app ()
+          (%get-property-static :test-class %app))
 
          (defun main (arg)
-           (let ((foo (%new- %flash.text:Text-Field))
-                 (canvas (%new- %flash.display:Sprite)))
-             (setf (%flash.display:width foo) 350)
-             (setf (%flash.text:auto-size foo) "left")
-             (setf (%flash.text:text-color foo) #x30e830)
-             (setf (%flash.text:word-wrap foo) t)
-             (setf (%flash.text:background foo) t)
-             (setf (%flash.text:background-color foo) #x20202020)
-             (setf (%flash.text:text foo) "abc")
-
-             (%flash.display:add-child arg canvas)
-             (%flash.display:add-child arg foo)
-
-             (%set-property- this :canvas canvas)
+           (let ((canvas (fu:display (%new- flash:flash.display.sprite)
+                                    :parent arg))
+                 (foo (fu:text-field :width 350
+                                     :auto-size "left"
+                                     :text-color (fu:rgb 0.2 0.9 0.2)
+                                     :word-wrap t
+                                     :background t
+                                     :background-color #x20202020
+                                     :text "Hello World"
+                                     :parent arg)))
+             (setf (text (app)) foo)
+             (setf (canvas (app)) canvas)
              (frame nil)
-
-             (%flash.display:add-event-listener canvas "click" #'frame)))
-
-         (defmacro with-fill (gfx (color alpha &key line-style) &body body)
-           `(progn
-              ,@(when line-style
-                      `((%flash.display:line-style ,gfx ,@line-style)))
-              (%flash.display:begin-fill ,gfx ,color ,alpha)
-              ,@body
-              (%flash.display:end-fill ,gfx)))
+             (flash:add-event-listener canvas "click" #'frame)))
 
          (defun frame (evt)
-           (let* ((canvas (slot-value this :canvas))
-                  (gfx (slot-value canvas '%flash.display:graphics))
-                  (matrix (%new- %flash.geom:Matrix)))
+           (let* ((canvas (canvas (app)))
+                  (gfx (flash:.graphics canvas))
+                  (matrix (%new- flash:flash.geom.matrix)))
 
-             (setf (%flash.display:opaque-background canvas) #x0d0f00)
-             (%flash.display:clear gfx)
-             (with-fill gfx (#x202600  0.5)
-               (%flash.display:draw-rect gfx 0 0 400 300 ))
-             (%flash.geom:create-gradient-box matrix
-                                              400 300 0 0 0)
-             (%flash.display:begin-gradient-fill gfx "radial"
-                                                 (vector #x202600 #x0d0f00) ;; colors
-                                                 (vector 1 1) ;; alpha
-                                                 (vector 0 255) ;; ratios
-                                                 matrix)
-             (%flash.display:draw-rect gfx 0 0 400 300 )
+             (setf (flash:.opaque-background canvas) #x0d0f00)
+             (flash:clear gfx)
+             (fu:with-fill gfx (#x202600  0.5)
+               (flash:draw-rect gfx 0 0 400 300 ))
+             (flash:create-gradient-box matrix 400 300 0 0 0)
+             (flash:begin-gradient-fill gfx "radial"
+                                        (vector #x202600 #x0d0f00) ;; colors
+                                        (vector 1 1) ;; alpha
+                                        (vector 0 255) ;; ratios
+                                        matrix)
+             (flash:draw-rect gfx 0 0 400 300 )
              (ftrace "1click")
-             (%flash.display:end-fill gfx)))))
+             (when evt
+               (incf (flash:.text (text (app))) " click!"))
+             (flash:end-fill gfx)))))
 
     (list
      (3b-swf:show-frame)))

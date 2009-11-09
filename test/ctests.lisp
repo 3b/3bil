@@ -241,7 +241,6 @@
           (side-effect 'z r)
           (side-effect x r))
         )
-
       (def-tests "foo" ()
         ;; tests
         (+ 1 2)
@@ -565,6 +564,11 @@
 
 
       (def-tests "expected-fail" ()
+        ;; -- comparison operators, interning
+        (eq :foo :foo)
+        (eql :foo :foo)
+        (equal "2" 2)
+        ;; -- 'falsy' values
         (when 0 'c)
         (unless 0 'd)
         (when "" 'c)
@@ -578,7 +582,23 @@
         ;; that currently fail but shouldn't...
         ;;--
         ;; shouldn't error
+        ;;  -- no (setf car) yet
         (setf (car (cons 1 2)) 3)
+        ;;  -- need %type-of
+        (car nil)
+        (cdr nil)
+        (if (car nil) "t" "f")
+        ;; -- need proper types
+        (typecase 123
+          (cons "-cons-")
+          (integer "-:int-")
+          (otherwise "-t-"))
+        (let ((cc (cons 1 2)))
+          (typecase cc
+            (cons "-cons-")
+            (integer "-:int-")
+            (otherwise "-t-")))
+
         ;;--
         ;; should error
         (test "" (throw 'a 1) ) ;; uncaught exception
@@ -679,6 +699,125 @@
           (call^2 (lambda (a) (lambda () 1)) 987 654)
           #++(t (e) (ftrace "foo!"))))
 
+      (def-tests "old-tests" ()
+        (cons 2 3)
+        (car (cons 2 3))
+        (cdr (cons 2 3))
+        (case (car (cons 2 4))
+          (1 "1")
+          (2 "2")
+          (3 "3")
+          (otherwise "t"))
+        (case (cdr (cons 2 4))
+          (1 "1")
+          (2 "2")
+          (3 "3")
+          (otherwise "t"))
+        (block foo
+          1
+          (if t (return-from foo "ret"))
+          2)
+        (let* ((s2 "<")
+               (s3 (block foo
+                     (unwind-protect
+                          (progn
+                            (return-from foo "-ret-")
+                            "bleh")
+                       (setf s2 (s+ s2 123))))))
+          (s+ s2 s3 ">"))
+        (let* ((a (cons 2 3))
+               (b (cons 1 a)))
+          (rplaca (cdr b) 123)
+          (s+ "(" (car a) " " (car b) ")"))
+        (flet ((foo (a b c) (s+ a b c)))
+          (foo (flet ((afoo (a b c)
+                        (s+ a b c)))
+                 (afoo "a" "b" "c"))
+               "d" "e" ))
+        (when t "-t-")
+        (when nil "-t-")
+        (unless t "-t-")
+        (unless nil "-t-")
+        (and)
+        (and "t")
+        (and "t" nil)
+        (and nil "t")
+        (and "t1" "t2")
+        (or)
+        (or "t")
+        (or "t" nil)
+        (or nil "t")
+        (or "t1" "t2")
+        (let ((cc (cons 2 3)))
+          (cond
+            ((eq 1 cc) "-foo-")
+            ((> 3 2) "-3>2-")
+            (nil "-nil-")
+            (t "-t-")))
+        (let ((c2 (cons "a" (cons "b" nil))))
+          (pop c2))
+        (let ((c2 (cons "a" (cons "b" nil))))
+          (pop c2)
+          (side-effect (car c2) (cdr c2)))
+
+        (let ((temp ""))
+          (dolist (a (cons "a" (cons "b" (cons "c" nil)))
+                   (side-effect a))))
+
+        (let ((temp "{"))
+          (setf temp (s+ (dotimes (a 5 temp)
+                           (setf temp (s+ temp a)))
+                         "}")))
+
+        (nth 3 (list 0 1 2 3 4))
+        (nthcdr 3 (list 0 1 2 3 4))
+        (last (list 0 1 2 3 4))
+        (last (cons 0 (cons 1 2)))
+        #++(defun rest-test (a b &rest c)
+             (side-effect a b c))
+        #++(rest-test 1 2 3 4 5)
+        :foo
+        '(1 a :b)
+        #(1 2 3 )
+        (aref #(1 2 3) 1)
+        #++(aref "piyo" 1)
+        #++(array-row-major-index (%new* not-simple-array-type
+                                         #(2 3 4) nil nil
+                                         #(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24)
+                                         0)
+                                  0 2 1)
+        #++(aref (%new- not-simple-array-type
+                        #(2 3 4) nil nil
+                        #(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24)
+                        0)
+                 0 2 1)
+        (reverse #(1 2 3))
+        (reverse "hoge")
+        (let ((foo 4))
+          (if (and (> foo 0) (<= 0.0 (random 1.0) 1.0))
+              "t" "f"))
+        (nconc (cons 1 2) (cons 3 4))
+        ;; examples from clhs
+        (do ((temp-one 1 (1+ temp-one))
+             (temp-two 0 (1- temp-two)))
+            ((> (- temp-one temp-two) 5) temp-one))
+        (do ((temp-one 1 (1+ temp-one))
+             (temp-two 0 (1+ temp-one)))
+            ((= 3 temp-two) temp-one))
+        (do* ((temp-one 1 (1+ temp-one))
+              (temp-two 0 (1+ temp-one)))
+             ((= 3 temp-two) temp-one))
+
+        (defun unused-args-test (a b c) "ok")
+        (unused-args-test 1 2 3)
+        #++ pi
+        (list-length '(1 2 3))
+        '(-1025 -512 -256 -255 -128 -127 -65 -64 -63 -1 0 1 63 64 65 127 128 255 256)
+        (unused-args-test 1 2 3)
+
+        )
+
+
 
       (c3* (gensym "aaa")
         (defun line (s)
@@ -688,12 +827,13 @@
         (defun run-tests ()
           (line (list->str (:foo)))
           (line (list->str ("more-tests")))
+          (line (list->str ("old-tests")))
           (line (list->str ("expected-fail")))
           (line (list->str ("expected error")))
           (line (list->str ("bad1-abc")))
           (line (list->str ("bad2-abc")))
-          (ftrace "bleh")
-          (line (list->str ("bad4-abc"))))
+          (line (list->str ("bad4-abc")))
+          (line "done tests..."))
 
         (defun main (arg)
           (let ((foo (%new- flash:flash.text.Text-Field))

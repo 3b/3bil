@@ -15,21 +15,22 @@
      (3b-swf:background-color #x869ca7)
      (3b-swf:frame-label "frame1"))
 
-    (compile-abc-tag (((nil :test-class))
+    (compile-abc-tag (((nil :roots-class))
                       :inherit (avm2-compiler::*cl-symbol-table*
                                 fu::%*fu-symbol-table*))
 
       (c3* :top-level
-        (defclass-swf :test-class (flash:flash.display.sprite)
+        (defclass-swf :roots-class (flash:flash.display.sprite)
           (text
            canvas
            (%app :allocation :class ))
           (:fake-accessors t)
           (:constructor ()
+            (%set-property-static :roots-class %app this)
             (main this)))
 
         (defun app ()
-          (%get-property-static :test-class %app))
+          (%get-property-static :roots-class %app))
 
         (defun random-range (a b)
           (+ a (floor (random (- b a)))))
@@ -45,8 +46,7 @@
                                     :background-color (fu:rgba 0.1 0.1 0.1 0.1)
                                     :text "..."
                                     :parent arg)))
-            (%set-property-static :test-class %app arg)
-            ;(setf (%app arg) arg)
+            ;(%set-property-static :roots-class %app arg)
             (setf (canvas arg) canvas)
             (setf (text arg) foo)
             (frame nil)
