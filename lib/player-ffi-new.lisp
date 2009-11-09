@@ -2332,7 +2332,7 @@
       :RETURN-TYPE "void" :ARGS (("proto" "Object")) :STATIC T)
      (flash::object.%has-own-property :SWF-NAME "Object::_hasOwnProperty"
       :RETURN-TYPE "Boolean" :ARGS (("o" "*") ("V" "String")) :STATIC T)))
-  (avm2-compiler::declare-swf-class flash:class (object)
+  (avm2-compiler::declare-swf-class flash:class (flash:object)
     :swf-name "Class"
     :constants
     ((flash:+class.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
@@ -2341,7 +2341,7 @@
       flash:.prototype))
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash:function (object)
+  (avm2-compiler::declare-swf-class flash:function (flash:object)
     :swf-name "Function"
     :constants
     ((flash:+function.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC
@@ -2359,7 +2359,7 @@
       (&OPTIONAL (("thisArg" "*") "UNDEFINED")) :STATIC NIL)
      (flash::function.empty-ctor :SWF-NAME "Function::emptyCtor" :RETURN-TYPE
       "*" :ARGS NIL :STATIC T)))
-  (avm2-compiler::declare-swf-class flash:namespace (object)
+  (avm2-compiler::declare-swf-class flash:namespace (flash:object)
     :swf-name "Namespace"
     :constants
     ((flash:+namespace.length+ :SWF-NAME "length" :TYPE "*" :VALUE "2" :STATIC
@@ -2374,7 +2374,7 @@
       :STATIC NIL)
      (flash:value-of :SWF-NAME "valueOf" :RETURN-TYPE "String" :ARGS NIL
       :STATIC NIL)))
-  (avm2-compiler::declare-swf-class flash:boolean (object)
+  (avm2-compiler::declare-swf-class flash:boolean (flash:object)
     :swf-name "Boolean"
     :constants
     ((flash:+boolean.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC
@@ -2386,7 +2386,7 @@
       :STATIC NIL)
      (flash:value-of :SWF-NAME "valueOf" :RETURN-TYPE "Boolean" :ARGS NIL
       :STATIC NIL)))
-  (avm2-compiler::declare-swf-class flash:number (object)
+  (avm2-compiler::declare-swf-class flash:number (flash:object)
     :swf-name "Number"
     :constants
     ((flash:+number.nan+ :SWF-NAME "NaN" :TYPE "Number" :VALUE "NOT-A-NUMBER"
@@ -2423,7 +2423,7 @@
       "String" :ARGS (("n" "Number") ("radix" "int")) :STATIC T)
      (flash::number.%convert :SWF-NAME "Number::_convert" :RETURN-TYPE "String"
       :ARGS (("n" "Number") ("precision" "int") ("mode" "int")) :STATIC T)))
-  (avm2-compiler::declare-swf-class flash:int (object)
+  (avm2-compiler::declare-swf-class flash:int (flash:object)
     :swf-name "int"
     :constants
     ((flash:+int.max-value+ :SWF-NAME "MAX_VALUE" :TYPE "int" :VALUE
@@ -2444,7 +2444,7 @@
       NIL)
      (flash:to-precision :SWF-NAME "toPrecision" :RETURN-TYPE "String" :ARGS
       (&OPTIONAL (("p" "*") "0")) :STATIC NIL)))
-  (avm2-compiler::declare-swf-class flash:uint (object)
+  (avm2-compiler::declare-swf-class flash:uint (flash:object)
     :swf-name "uint"
     :constants
     ((flash:+uint.max-value+ :SWF-NAME "MAX_VALUE" :TYPE "uint" :VALUE
@@ -2465,7 +2465,7 @@
       NIL)
      (flash:to-precision :SWF-NAME "toPrecision" :RETURN-TYPE "String" :ARGS
       (&OPTIONAL (("p" "*") "0")) :STATIC NIL)))
-  (avm2-compiler::declare-swf-class flash:string (object)
+  (avm2-compiler::declare-swf-class flash:string (flash:object)
     :swf-name "String"
     :constants
     ((flash:+string.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
@@ -2546,7 +2546,7 @@
       :ARGS (("s" "String") ("p" "*")) :STATIC T)
      (flash::string.%replace :SWF-NAME "String::_replace" :RETURN-TYPE "String"
       :ARGS (("s" "String") ("p" "*") ("repl" "*")) :STATIC T)))
-  (avm2-compiler::declare-swf-class flash:array (object)
+  (avm2-compiler::declare-swf-class flash:array (flash:object)
     :swf-name "Array"
     :constants
     ((flash:+array.descending+ :SWF-NAME "DESCENDING" :TYPE "uint" :VALUE "2"
@@ -2630,7 +2630,7 @@
       (("o" "*") ("sep" "*")) :STATIC T)
      (flash::array.%shift :SWF-NAME "Array::_shift" :RETURN-TYPE "*" :ARGS
       (("o" "*")) :STATIC T)))
-  (avm2-compiler::declare-swf-class flash::%-as3--.vec.vector (object)
+  (avm2-compiler::declare-swf-class flash::%-as3--.vec.vector (flash:object)
     :swf-name "__AS3__.vec::Vector"
     :constants
     ()
@@ -2638,7 +2638,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash::%-as3--.vec.vector$object (object)
+  (avm2-compiler::declare-swf-class flash::%-as3--.vec.vector$object (flash:object)
     :swf-name "__AS3__.vec::Vector$object"
     :constants
     ()
@@ -2686,7 +2686,7 @@
       NIL)
      (flash:reverse :SWF-NAME "reverse" :RETURN-TYPE
       "__AS3__.vec::Vector$object" :ARGS NIL :STATIC NIL)))
-  (avm2-compiler::declare-swf-class flash::%-as3--.vec.vector$int (object)
+  (avm2-compiler::declare-swf-class flash::%-as3--.vec.vector$int (flash:object)
     :swf-name "__AS3__.vec::Vector$int"
     :constants
     ()
@@ -2733,7 +2733,7 @@
      (flash:reverse :SWF-NAME "reverse" :RETURN-TYPE "__AS3__.vec::Vector$int"
       :ARGS NIL :STATIC NIL)
      (flash:shift :SWF-NAME "shift" :RETURN-TYPE "int" :ARGS NIL :STATIC NIL)))
-  (avm2-compiler::declare-swf-class flash::%-as3--.vec.vector$uint (object)
+  (avm2-compiler::declare-swf-class flash::%-as3--.vec.vector$uint (flash:object)
     :swf-name "__AS3__.vec::Vector$uint"
     :constants
     ()
@@ -2780,7 +2780,7 @@
      (flash:reverse :SWF-NAME "reverse" :RETURN-TYPE "__AS3__.vec::Vector$uint"
       :ARGS NIL :STATIC NIL)
      (flash:shift :SWF-NAME "shift" :RETURN-TYPE "uint" :ARGS NIL :STATIC NIL)))
-  (avm2-compiler::declare-swf-class flash::%-as3--.vec.vector$double (object)
+  (avm2-compiler::declare-swf-class flash::%-as3--.vec.vector$double (flash:object)
     :swf-name "__AS3__.vec::Vector$double"
     :constants
     ()
@@ -2831,7 +2831,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.system.system (object)
+  (avm2-compiler::declare-swf-class flash::flash.system.system (flash:object)
     :swf-name "flash.system::System"
     :constants
     ()
@@ -2883,7 +2883,7 @@
     NIL "void")
    (avm2-compiler::swf-ffi-defun-find-prop-strict flash::flash.sampler.pause-sampling "flash.sampler::pauseSampling"
     NIL "void")
-  (avm2-compiler::declare-swf-class flash::flash.sampler.stack-frame (object)
+  (avm2-compiler::declare-swf-class flash::flash.sampler.stack-frame (flash:object)
     :swf-name "flash.sampler::StackFrame"
     :constants
     ((flash:+stack-frame.file+ :SWF-NAME "file" :TYPE "String" :VALUE "NIL"
@@ -2897,7 +2897,7 @@
     :methods
     ((flash:to-string :SWF-NAME "toString" :RETURN-TYPE "String" :ARGS NIL
       :STATIC NIL)))
-  (avm2-compiler::declare-swf-class flash::flash.sampler.sample (object)
+  (avm2-compiler::declare-swf-class flash::flash.sampler.sample (flash:object)
     :swf-name "flash.sampler::Sample"
     :constants
     ((flash:+sample.time+ :SWF-NAME "time" :TYPE "Number" :VALUE "NIL" :STATIC
@@ -2908,7 +2908,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash::flash.sampler.new-object-sample (flash.sampler.sample)
+  (avm2-compiler::declare-swf-class flash::flash.sampler.new-object-sample (flash:flash.sampler.sample)
     :swf-name "flash.sampler::NewObjectSample"
     :constants
     ((flash:+new-object-sample.id+ :SWF-NAME "id" :TYPE "Number" :VALUE "NIL"
@@ -2920,7 +2920,7 @@
       flash:.object))
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash::flash.sampler.delete-object-sample (flash.sampler.sample)
+  (avm2-compiler::declare-swf-class flash::flash.sampler.delete-object-sample (flash:flash.sampler.sample)
     :swf-name "flash.sampler::DeleteObjectSample"
     :constants
     ((flash:+delete-object-sample.id+ :SWF-NAME "id" :TYPE "Number" :VALUE
@@ -2934,7 +2934,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.event (object)
+  (avm2-compiler::declare-swf-class flash::flash.events.event (flash:object)
     :swf-name "flash.events::Event"
     :constants
     ((flash:+event.select+ :SWF-NAME "SELECT" :TYPE "String" :VALUE "select"
@@ -3032,7 +3032,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.text-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.text-event (flash:flash.events.event)
     :swf-name "flash.events::TextEvent"
     :constants
     ((flash:+text-event.link+ :SWF-NAME "LINK" :TYPE "String" :VALUE "link"
@@ -3050,7 +3050,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.error-event (flash.events.text-event)
+  (avm2-compiler::declare-swf-class flash::flash.events.error-event (flash:flash.events.text-event)
     :swf-name "flash.events::ErrorEvent"
     :constants
     ((flash:+error-event.error+ :SWF-NAME "ERROR" :TYPE "String" :VALUE "error"
@@ -3065,7 +3065,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.async-error-event (flash.events.error-event)
+  (avm2-compiler::declare-swf-class flash::flash.events.async-error-event (flash:flash.events.error-event)
     :swf-name "flash.events::AsyncErrorEvent"
     :constants
     ((flash:+async-error-event.async-error+ :SWF-NAME "ASYNC_ERROR" :TYPE
@@ -3103,7 +3103,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.utils.byte-array (object)
+  (avm2-compiler::declare-swf-class flash::flash.utils.byte-array (flash:object)
     :swf-name "flash.utils::ByteArray"
     :constants
     ()
@@ -3191,7 +3191,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash:error (object)
+  (avm2-compiler::declare-swf-class flash:error (flash:object)
     :swf-name "Error"
     :constants
     ((flash:+error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC T))
@@ -3210,7 +3210,7 @@
       "String" :ARGS (("index" "int")) :STATIC T)
      (flash::error.throw-error :SWF-NAME "throwError" :RETURN-TYPE "*" :ARGS
       (("type" "Class") ("index" "uint")) :STATIC T)))
-  (avm2-compiler::declare-swf-class flash:definition-error (error)
+  (avm2-compiler::declare-swf-class flash:definition-error (flash:error)
     :swf-name "DefinitionError"
     :constants
     ((flash:+definition-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
@@ -3219,7 +3219,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash:eval-error (error)
+  (avm2-compiler::declare-swf-class flash:eval-error (flash:error)
     :swf-name "EvalError"
     :constants
     ((flash:+eval-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
@@ -3228,7 +3228,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash:range-error (error)
+  (avm2-compiler::declare-swf-class flash:range-error (flash:error)
     :swf-name "RangeError"
     :constants
     ((flash:+range-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
@@ -3237,7 +3237,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash:reference-error (error)
+  (avm2-compiler::declare-swf-class flash:reference-error (flash:error)
     :swf-name "ReferenceError"
     :constants
     ((flash:+reference-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
@@ -3246,7 +3246,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash:security-error (error)
+  (avm2-compiler::declare-swf-class flash:security-error (flash:error)
     :swf-name "SecurityError"
     :constants
     ((flash:+security-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
@@ -3255,7 +3255,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash:syntax-error (error)
+  (avm2-compiler::declare-swf-class flash:syntax-error (flash:error)
     :swf-name "SyntaxError"
     :constants
     ((flash:+syntax-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
@@ -3264,7 +3264,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash:type-error (error)
+  (avm2-compiler::declare-swf-class flash:type-error (flash:error)
     :swf-name "TypeError"
     :constants
     ((flash:+type-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
@@ -3273,7 +3273,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash:uri-error (error)
+  (avm2-compiler::declare-swf-class flash:uri-error (flash:error)
     :swf-name "URIError"
     :constants
     ((flash:+uri-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
@@ -3282,7 +3282,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash:verify-error (error)
+  (avm2-compiler::declare-swf-class flash:verify-error (flash:error)
     :swf-name "VerifyError"
     :constants
     ((flash:+verify-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
@@ -3291,7 +3291,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash:uninitialized-error (error)
+  (avm2-compiler::declare-swf-class flash:uninitialized-error (flash:error)
     :swf-name "UninitializedError"
     :constants
     ((flash:+uninitialized-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE
@@ -3300,7 +3300,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash:argument-error (error)
+  (avm2-compiler::declare-swf-class flash:argument-error (flash:error)
     :swf-name "ArgumentError"
     :constants
     ((flash:+argument-error.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1"
@@ -3312,7 +3312,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.shader-precision (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.shader-precision (flash:object)
     :swf-name "flash.display::ShaderPrecision"
     :constants
     ((flash:+shader-precision.full+ :SWF-NAME "FULL" :TYPE "String" :VALUE
@@ -3326,7 +3326,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash:math (object)
+  (avm2-compiler::declare-swf-class flash:math (flash:object)
     :swf-name "Math"
     :constants
     ((flash:+math.pi+ :SWF-NAME "PI" :TYPE "Number" :VALUE
@@ -3393,7 +3393,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash:reg-exp (object)
+  (avm2-compiler::declare-swf-class flash:reg-exp (flash:object)
     :swf-name "RegExp"
     :constants
     ((flash:+reg-exp.length+ :SWF-NAME "length" :TYPE "int" :VALUE "1" :STATIC
@@ -3432,7 +3432,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.weak-method-closure (object)
+  (avm2-compiler::declare-swf-class flash::flash.events.weak-method-closure (flash:object)
     :swf-name "flash.events::WeakMethodClosure"
     :constants
     ()
@@ -3440,7 +3440,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash::flash.events.weak-function-closure (object)
+  (avm2-compiler::declare-swf-class flash::flash.events.weak-function-closure (flash:object)
     :swf-name "flash.events::WeakFunctionClosure"
     :constants
     ()
@@ -3448,7 +3448,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash::flash.events.event-dispatcher (object)
+  (avm2-compiler::declare-swf-class flash::flash.events.event-dispatcher (flash:object)
     :swf-name "flash.events::EventDispatcher"
     :constants
     ()
@@ -3477,7 +3477,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.ui.context-menu-item (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.ui.context-menu-item (flash:flash.events.event-dispatcher)
     :swf-name "flash.ui::ContextMenuItem"
     :constants
     ()
@@ -3496,7 +3496,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.system.application-domain (object)
+  (avm2-compiler::declare-swf-class flash::flash.system.application-domain (flash:object)
     :swf-name "flash.system::ApplicationDomain"
     :constants
     ()
@@ -3519,7 +3519,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.content-element (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.content-element (flash:object)
     :swf-name "flash.text.engine::ContentElement"
     :constants
     ((flash:+content-element.graphic-element+ :SWF-NAME "GRAPHIC_ELEMENT" :TYPE
@@ -3550,7 +3550,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.scene (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.scene (flash:object)
     :swf-name "flash.display::Scene"
     :constants
     ()
@@ -3566,7 +3566,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.printing.print-job (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.printing.print-job (flash:flash.events.event-dispatcher)
     :swf-name "flash.printing::PrintJob"
     :constants
     ()
@@ -3615,7 +3615,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.graphics-path (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.graphics-path (flash:object)
     :swf-name "flash.display::GraphicsPath"
     :constants
     ()
@@ -3642,7 +3642,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.geom.matrix (object)
+  (avm2-compiler::declare-swf-class flash::flash.geom.matrix (flash:object)
     :swf-name "flash.geom::Matrix"
     :constants
     ()
@@ -3685,7 +3685,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-justifier (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-justifier (flash:object)
     :swf-name "flash.text.engine::TextJustifier"
     :constants
     ()
@@ -3703,7 +3703,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.space-justifier (flash.text.engine.text-justifier)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.space-justifier (flash:flash.text.engine.text-justifier)
     :swf-name "flash.text.engine::SpaceJustifier"
     :constants
     ()
@@ -3727,7 +3727,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.display-object (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.display.display-object (flash:flash.events.event-dispatcher)
     :swf-name "flash.display::DisplayObject"
     :constants
     ()
@@ -3817,7 +3817,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.bitmap (flash.display.display-object)
+  (avm2-compiler::declare-swf-class flash::flash.display.bitmap (flash:flash.display.display-object)
     :swf-name "flash.display::Bitmap"
     :constants
     ()
@@ -3833,7 +3833,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.xml.xml-node (object)
+  (avm2-compiler::declare-swf-class flash::flash.xml.xml-node (flash:object)
     :swf-name "flash.xml::XMLNode"
     :constants
     ()
@@ -3885,7 +3885,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.xml.xml-document (flash.xml.xml-node)
+  (avm2-compiler::declare-swf-class flash::flash.xml.xml-document (flash:flash.xml.xml-node)
     :swf-name "flash.xml::XMLDocument"
     :constants
     ()
@@ -3910,7 +3910,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.east-asian-justifier (flash.text.engine.text-justifier)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.east-asian-justifier (flash:flash.text.engine.text-justifier)
     :swf-name "flash.text.engine::EastAsianJustifier"
     :constants
     ()
@@ -3923,7 +3923,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.text-renderer (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.text-renderer (flash:object)
     :swf-name "flash.text::TextRenderer"
     :constants
     ()
@@ -3945,7 +3945,7 @@
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
    (avm2-compiler::swf-ffi-defun-find-prop-strict flash:is-xml-name "isXMLName"
     (&OPTIONAL (("str" "*") "UNDEFINED")) "Boolean")
-  (avm2-compiler::declare-swf-class flash:xml (object)
+  (avm2-compiler::declare-swf-class flash:xml (flash:object)
     :swf-name "XML"
     :constants
     ((flash:+xml.length+ :SWF-NAME "length" :TYPE "*" :VALUE "1" :STATIC T))
@@ -4046,7 +4046,7 @@
       (&OPTIONAL ("o" "Object")) :STATIC T)
      (flash::xml.settings :SWF-NAME "settings" :RETURN-TYPE "Object" :ARGS NIL
       :STATIC T)))
-  (avm2-compiler::declare-swf-class flash:xml-list (object)
+  (avm2-compiler::declare-swf-class flash:xml-list (flash:object)
     :swf-name "XMLList"
     :constants
     ((flash:+xml-list.length+ :SWF-NAME "length" :TYPE "*" :VALUE "1" :STATIC T))
@@ -4127,7 +4127,7 @@
       :ARGS (("child1" "*") ("child2" "*")) :STATIC NIL)
      (flash:has-own-property :SWF-NAME "hasOwnProperty" :RETURN-TYPE "Boolean"
       :ARGS (&OPTIONAL (("P" "*") "UNDEFINED")) :STATIC NIL)))
-  (avm2-compiler::declare-swf-class flash:q-name (object)
+  (avm2-compiler::declare-swf-class flash:q-name (flash:object)
     :swf-name "QName"
     :constants
     ((flash:+q-name.length+ :SWF-NAME "length" :TYPE "*" :VALUE "2" :STATIC T))
@@ -4143,7 +4143,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.stage-align (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.stage-align (flash:object)
     :swf-name "flash.display::StageAlign"
     :constants
     ((flash:+stage-align.right+ :SWF-NAME "RIGHT" :TYPE "String" :VALUE "R"
@@ -4176,7 +4176,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.color-correction-support (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.color-correction-support (flash:object)
     :swf-name "flash.display::ColorCorrectionSupport"
     :constants
     ((flash:+color-correction-support.default-on+ :SWF-NAME "DEFAULT_ON" :TYPE
@@ -4192,7 +4192,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.errors.illegal-operation-error (error)
+  (avm2-compiler::declare-swf-class flash::flash.errors.illegal-operation-error (flash:error)
     :swf-name "flash.errors::IllegalOperationError"
     :constants
     ()
@@ -4200,7 +4200,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash::flash.errors.i-o-error (error)
+  (avm2-compiler::declare-swf-class flash::flash.errors.i-o-error (flash:error)
     :swf-name "flash.errors::IOError"
     :constants
     ()
@@ -4208,7 +4208,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash::flash.errors.memory-error (error)
+  (avm2-compiler::declare-swf-class flash::flash.errors.memory-error (flash:error)
     :swf-name "flash.errors::MemoryError"
     :constants
     ()
@@ -4216,7 +4216,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash::flash.errors.stack-overflow-error (error)
+  (avm2-compiler::declare-swf-class flash::flash.errors.stack-overflow-error (flash:error)
     :swf-name "flash.errors::StackOverflowError"
     :constants
     ()
@@ -4224,7 +4224,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash::flash.errors.script-timeout-error (error)
+  (avm2-compiler::declare-swf-class flash::flash.errors.script-timeout-error (flash:error)
     :swf-name "flash.errors::ScriptTimeoutError"
     :constants
     ()
@@ -4232,7 +4232,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash::flash.errors.invalid-swf-error (error)
+  (avm2-compiler::declare-swf-class flash::flash.errors.invalid-swf-error (flash:error)
     :swf-name "flash.errors::InvalidSWFError"
     :constants
     ()
@@ -4240,7 +4240,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash::flash.errors.eof-error (flash.errors.i-o-error)
+  (avm2-compiler::declare-swf-class flash::flash.errors.eof-error (flash:flash.errors.i-o-error)
     :swf-name "flash.errors::EOFError"
     :constants
     ()
@@ -4251,7 +4251,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.line-scale-mode (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.line-scale-mode (flash:object)
     :swf-name "flash.display::LineScaleMode"
     :constants
     ((flash:+line-scale-mode.none+ :SWF-NAME "NONE" :TYPE "String" :VALUE
@@ -4269,7 +4269,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.font-style (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.font-style (flash:object)
     :swf-name "flash.text::FontStyle"
     :constants
     ((flash:+font-style.regular+ :SWF-NAME "REGULAR" :TYPE "String" :VALUE
@@ -4287,7 +4287,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.geom.utils3-d (object)
+  (avm2-compiler::declare-swf-class flash::flash.geom.utils3-d (flash:object)
     :swf-name "flash.geom::Utils3D"
     :constants
     ()
@@ -4312,7 +4312,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.typographic-case (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.typographic-case (flash:object)
     :swf-name "flash.text.engine::TypographicCase"
     :constants
     ((flash:+typographic-case.caps-and-small-caps+ :SWF-NAME
@@ -4336,7 +4336,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.tab-alignment (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.tab-alignment (flash:object)
     :swf-name "flash.text.engine::TabAlignment"
     :constants
     ((flash:+tab-alignment.end+ :SWF-NAME "END" :TYPE "String" :VALUE "end"
@@ -4354,7 +4354,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.system.i-me-conversion-mode (object)
+  (avm2-compiler::declare-swf-class flash::flash.system.i-me-conversion-mode (flash:object)
     :swf-name "flash.system::IMEConversionMode"
     :constants
     ((flash:+i-me-conversion-mode.alphanumeric-full+ :SWF-NAME
@@ -4395,7 +4395,7 @@
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
    (avm2-compiler::swf-ffi-defun-find-prop-strict flash::flash.system.fscommand "flash.system::fscommand"
     (("command" "String") &OPTIONAL (("args" "String") "")) "void")
-  (avm2-compiler::declare-swf-class flash::flash.system.fs-command (object)
+  (avm2-compiler::declare-swf-class flash::flash.system.fs-command (flash:object)
     :swf-name "flash.system::FSCommand"
     :constants
     ()
@@ -4407,7 +4407,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.tab-stop (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.tab-stop (flash:object)
     :swf-name "flash.text.engine::TabStop"
     :constants
     ()
@@ -4434,7 +4434,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.graphics-gradient-fill (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.graphics-gradient-fill (flash:object)
     :swf-name "flash.display::GraphicsGradientFill"
     :constants
     ()
@@ -4460,7 +4460,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.font-description (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.font-description (flash:object)
     :swf-name "flash.text.engine::FontDescription"
     :constants
     ()
@@ -4489,7 +4489,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.net-stream (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.net.net-stream (flash:flash.events.event-dispatcher)
     :swf-name "flash.net::NetStream"
     :constants
     ((flash:+net-stream.direct-connections+ :SWF-NAME "DIRECT_CONNECTIONS"
@@ -4570,7 +4570,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.xml.xml-node-type (object)
+  (avm2-compiler::declare-swf-class flash::flash.xml.xml-node-type (flash:object)
     :swf-name "flash.xml::XMLNodeType"
     :constants
     ((flash:+xml-node-type.processing-instruction-node+ :SWF-NAME
@@ -4594,7 +4594,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.i-me-event (flash.events.text-event)
+  (avm2-compiler::declare-swf-class flash::flash.events.i-me-event (flash:flash.events.text-event)
     :swf-name "flash.events::IMEEvent"
     :constants
     ((flash:+i-me-event.ime-composition+ :SWF-NAME "IME_COMPOSITION" :TYPE
@@ -4609,7 +4609,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.bitmap-filter (object)
+  (avm2-compiler::declare-swf-class flash::flash.filters.bitmap-filter (flash:object)
     :swf-name "flash.filters::BitmapFilter"
     :constants
     ()
@@ -4621,7 +4621,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.drop-shadow-filter (flash.filters.bitmap-filter)
+  (avm2-compiler::declare-swf-class flash::flash.filters.drop-shadow-filter (flash:flash.filters.bitmap-filter)
     :swf-name "flash.filters::DropShadowFilter"
     :constants
     ()
@@ -4654,7 +4654,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.utils.timer (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.utils.timer (flash:flash.events.event-dispatcher)
     :swf-name "flash.utils::Timer"
     :constants
     ()
@@ -4682,7 +4682,7 @@
     (("closure" "Function") ("delay" "Number")) "uint")
    (avm2-compiler::swf-ffi-defun-find-prop-strict flash::flash.utils.set-timeout "flash.utils::setTimeout"
     (("closure" "Function") ("delay" "Number")) "uint")
-  (avm2-compiler::declare-swf-class flash::flash.utils.set-interval-timer (flash.utils.timer)
+  (avm2-compiler::declare-swf-class flash::flash.utils.set-interval-timer (flash:flash.utils.timer)
     :swf-name "flash.utils::SetIntervalTimer"
     :constants
     ()
@@ -4698,7 +4698,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.ui.keyboard (object)
+  (avm2-compiler::declare-swf-class flash::flash.ui.keyboard (flash:object)
     :swf-name "flash.ui::Keyboard"
     :constants
     ((flash:+keyboard.numpad-multiply+ :SWF-NAME "NUMPAD_MULTIPLY" :TYPE "uint"
@@ -4789,7 +4789,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.media.sound-mixer (object)
+  (avm2-compiler::declare-swf-class flash::flash.media.sound-mixer (flash:object)
     :swf-name "flash.media::SoundMixer"
     :constants
     ()
@@ -4811,7 +4811,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.shader-data (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.shader-data (flash:object)
     :swf-name "flash.display::ShaderData"
     :constants
     ()
@@ -4822,7 +4822,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.bitmap-data (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.bitmap-data (flash:object)
     :swf-name "flash.display::BitmapData"
     :constants
     ()
@@ -4958,7 +4958,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.text-field-type (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.text-field-type (flash:object)
     :swf-name "flash.text::TextFieldType"
     :constants
     ((flash:+text-field-type.dynamic+ :SWF-NAME "DYNAMIC" :TYPE "String" :VALUE
@@ -4972,7 +4972,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.graphics-end-fill (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.graphics-end-fill (flash:object)
     :swf-name "flash.display::GraphicsEndFill"
     :constants
     ()
@@ -4983,7 +4983,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.net-filter-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.net-filter-event (flash:flash.events.event)
     :swf-name "flash.events::NetFilterEvent"
     :constants
     ()
@@ -5000,7 +5000,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.graphics-triangle-path (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.graphics-triangle-path (flash:object)
     :swf-name "flash.display::GraphicsTrianglePath"
     :constants
     ()
@@ -5018,7 +5018,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.gradient-type (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.gradient-type (flash:object)
     :swf-name "flash.display::GradientType"
     :constants
     ((flash:+gradient-type.radial+ :SWF-NAME "RADIAL" :TYPE "String" :VALUE
@@ -5032,7 +5032,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.url-request-method (object)
+  (avm2-compiler::declare-swf-class flash::flash.net.url-request-method (flash:object)
     :swf-name "flash.net::URLRequestMethod"
     :constants
     ((flash:+url-request-method.get+ :SWF-NAME "GET" :TYPE "String" :VALUE
@@ -5046,7 +5046,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.utils.object-input (object)
+  (avm2-compiler::declare-swf-class flash::flash.utils.object-input (flash:object)
     :swf-name "flash.utils::ObjectInput"
     :constants
     ()
@@ -5091,7 +5091,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.accessibility.accessibility-implementation (object)
+  (avm2-compiler::declare-swf-class flash::flash.accessibility.accessibility-implementation (flash:object)
     :swf-name "flash.accessibility::AccessibilityImplementation"
     :constants
     ()
@@ -5128,7 +5128,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.media.camera (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.media.camera (flash:flash.events.event-dispatcher)
     :swf-name "flash.media::Camera"
     :constants
     ()
@@ -5184,7 +5184,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.font-metrics (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.font-metrics (flash:object)
     :swf-name "flash.text.engine::FontMetrics"
     :constants
     ()
@@ -5212,7 +5212,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.avm1-movie (flash.display.display-object)
+  (avm2-compiler::declare-swf-class flash::flash.display.avm1-movie (flash:flash.display.display-object)
     :swf-name "flash.display::AVM1Movie"
     :constants
     ()
@@ -5226,7 +5226,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.displacement-map-filter-mode (object)
+  (avm2-compiler::declare-swf-class flash::flash.filters.displacement-map-filter-mode (flash:object)
     :swf-name "flash.filters::DisplacementMapFilterMode"
     :constants
     ((flash:+displacement-map-filter-mode.clamp+ :SWF-NAME "CLAMP" :TYPE
@@ -5244,7 +5244,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.gradient-glow-filter (flash.filters.bitmap-filter)
+  (avm2-compiler::declare-swf-class flash::flash.filters.gradient-glow-filter (flash:flash.filters.bitmap-filter)
     :swf-name "flash.filters::GradientGlowFilter"
     :constants
     ()
@@ -5296,7 +5296,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.joint-style (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.joint-style (flash:object)
     :swf-name "flash.display::JointStyle"
     :constants
     ((flash:+joint-style.round+ :SWF-NAME "ROUND" :TYPE "String" :VALUE "round"
@@ -5312,7 +5312,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.local-connection (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.net.local-connection (flash:flash.events.event-dispatcher)
     :swf-name "flash.net::LocalConnection"
     :constants
     ()
@@ -5334,7 +5334,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.font-weight (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.font-weight (flash:object)
     :swf-name "flash.text.engine::FontWeight"
     :constants
     ((flash:+font-weight.normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE
@@ -5348,7 +5348,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.url-request (object)
+  (avm2-compiler::declare-swf-class flash::flash.net.url-request (flash:object)
     :swf-name "flash.net::URLRequest"
     :constants
     ()
@@ -5381,7 +5381,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.graphics-stroke (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.graphics-stroke (flash:object)
     :swf-name "flash.display::GraphicsStroke"
     :constants
     ()
@@ -5405,7 +5405,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.xml.xml-tag (object)
+  (avm2-compiler::declare-swf-class flash::flash.xml.xml-tag (flash:object)
     :swf-name "flash.xml::XMLTag"
     :constants
     ()
@@ -5423,7 +5423,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.i-o-error-event (flash.events.error-event)
+  (avm2-compiler::declare-swf-class flash::flash.events.i-o-error-event (flash:flash.events.error-event)
     :swf-name "flash.events::IOErrorEvent"
     :constants
     ((flash:+i-o-error-event.io-error+ :SWF-NAME "IO_ERROR" :TYPE "String"
@@ -5444,7 +5444,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.graphic-element (flash.text.engine.content-element)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.graphic-element (flash:flash.text.engine.content-element)
     :swf-name "flash.text.engine::GraphicElement"
     :constants
     ()
@@ -5460,7 +5460,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.desktop.clipboard-formats (object)
+  (avm2-compiler::declare-swf-class flash::flash.desktop.clipboard-formats (flash:object)
     :swf-name "flash.desktop::ClipboardFormats"
     :constants
     ((flash:+clipboard-formats.url-format+ :SWF-NAME "URL_FORMAT" :TYPE
@@ -5489,7 +5489,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash::flash.desktop.clipboard-transfer-mode (object)
+  (avm2-compiler::declare-swf-class flash::flash.desktop.clipboard-transfer-mode (flash:object)
     :swf-name "flash.desktop::ClipboardTransferMode"
     :constants
     ((flash:+clipboard-transfer-mode.clone-preferred+ :SWF-NAME
@@ -5504,7 +5504,7 @@
     ()
     :methods
     ())
-  (avm2-compiler::declare-swf-class flash::flash.desktop.clipboard (object)
+  (avm2-compiler::declare-swf-class flash::flash.desktop.clipboard (flash:object)
     :swf-name "flash.desktop::Clipboard"
     :constants
     ()
@@ -5535,7 +5535,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.break-opportunity (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.break-opportunity (flash:object)
     :swf-name "flash.text.engine::BreakOpportunity"
     :constants
     ((flash:+break-opportunity.none+ :SWF-NAME "NONE" :TYPE "String" :VALUE
@@ -5553,7 +5553,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.gradient-bevel-filter (flash.filters.bitmap-filter)
+  (avm2-compiler::declare-swf-class flash::flash.filters.gradient-bevel-filter (flash:flash.filters.bitmap-filter)
     :swf-name "flash.filters::GradientBevelFilter"
     :constants
     ()
@@ -5586,7 +5586,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.graphics-path-command (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.graphics-path-command (flash:object)
     :swf-name "flash.display::GraphicsPathCommand"
     :constants
     ((flash:+graphics-path-command.no-op+ :SWF-NAME "NO_OP" :TYPE "int" :VALUE
@@ -5608,7 +5608,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.focus-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.focus-event (flash:flash.events.event)
     :swf-name "flash.events::FocusEvent"
     :constants
     ((flash:+focus-event.focus-in+ :SWF-NAME "FOCUS_IN" :TYPE "String" :VALUE
@@ -5638,7 +5638,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.geom.matrix3-d (object)
+  (avm2-compiler::declare-swf-class flash::flash.geom.matrix3-d (flash:object)
     :swf-name "flash.geom::Matrix3D"
     :constants
     ()
@@ -5711,7 +5711,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-rotation (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-rotation (flash:object)
     :swf-name "flash.text.engine::TextRotation"
     :constants
     ((flash:+text-rotation.auto+ :SWF-NAME "AUTO" :TYPE "String" :VALUE "auto"
@@ -5731,7 +5731,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.sample-data-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.sample-data-event (flash:flash.events.event)
     :swf-name "flash.events::SampleDataEvent"
     :constants
     ((flash:+sample-data-event.sample-data+ :SWF-NAME "SAMPLE_DATA" :TYPE
@@ -5749,7 +5749,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.bitmap-data-channel (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.bitmap-data-channel (flash:object)
     :swf-name "flash.display::BitmapDataChannel"
     :constants
     ((flash:+bitmap-data-channel.alpha+ :SWF-NAME "ALPHA" :TYPE "uint" :VALUE
@@ -5767,7 +5767,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.geom.vector3-d (object)
+  (avm2-compiler::declare-swf-class flash::flash.geom.vector3-d (flash:object)
     :swf-name "flash.geom::Vector3D"
     :constants
     ((flash:+vector3-d.x-axis+ :SWF-NAME "X_AXIS" :TYPE "flash.geom::Vector3D"
@@ -5826,7 +5826,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.interactive-object (flash.display.display-object)
+  (avm2-compiler::declare-swf-class flash::flash.display.interactive-object (flash:flash.display.display-object)
     :swf-name "flash.display::InteractiveObject"
     :constants
     ()
@@ -5852,7 +5852,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.ui.context-menu (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.ui.context-menu (flash:flash.events.event-dispatcher)
     :swf-name "flash.ui::ContextMenu"
     :constants
     ()
@@ -5877,7 +5877,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.kerning (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.kerning (flash:object)
     :swf-name "flash.text.engine::Kerning"
     :constants
     ((flash:+kerning.off+ :SWF-NAME "OFF" :TYPE "String" :VALUE "off" :STATIC T)
@@ -5891,7 +5891,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.loader-info (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.display.loader-info (flash:flash.events.event-dispatcher)
     :swf-name "flash.display::LoaderInfo"
     :constants
     ()
@@ -5945,7 +5945,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.shape (flash.display.display-object)
+  (avm2-compiler::declare-swf-class flash::flash.display.shape (flash:flash.display.display-object)
     :swf-name "flash.display::Shape"
     :constants
     ()
@@ -5957,7 +5957,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.sync-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.sync-event (flash:flash.events.event)
     :swf-name "flash.events::SyncEvent"
     :constants
     ((flash:+sync-event.sync+ :SWF-NAME "SYNC" :TYPE "String" :VALUE "sync"
@@ -5973,7 +5973,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.bevel-filter (flash.filters.bitmap-filter)
+  (avm2-compiler::declare-swf-class flash::flash.filters.bevel-filter (flash:flash.filters.bitmap-filter)
     :swf-name "flash.filters::BevelFilter"
     :constants
     ()
@@ -6008,7 +6008,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.shader-filter (flash.filters.bitmap-filter)
+  (avm2-compiler::declare-swf-class flash::flash.filters.shader-filter (flash:flash.filters.bitmap-filter)
     :swf-name "flash.filters::ShaderFilter"
     :constants
     ()
@@ -6028,7 +6028,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.geom.rectangle (object)
+  (avm2-compiler::declare-swf-class flash::flash.geom.rectangle (flash:object)
     :swf-name "flash.geom::Rectangle"
     :constants
     ()
@@ -6088,7 +6088,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.swf-version (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.swf-version (flash:object)
     :swf-name "flash.display::SWFVersion"
     :constants
     ((flash:+swf-version.flash9+ :SWF-NAME "FLASH9" :TYPE "uint" :VALUE "9"
@@ -6118,7 +6118,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.responder (object)
+  (avm2-compiler::declare-swf-class flash::flash.net.responder (flash:object)
     :swf-name "flash.net::Responder"
     :constants
     ()
@@ -6129,7 +6129,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.system.capabilities (object)
+  (avm2-compiler::declare-swf-class flash::flash.system.capabilities (flash:object)
     :swf-name "flash.system::Capabilities"
     :constants
     ()
@@ -6198,7 +6198,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.net-stream-info (object)
+  (avm2-compiler::declare-swf-class flash::flash.net.net-stream-info (flash:object)
     :swf-name "flash.net::NetStreamInfo"
     :constants
     ()
@@ -6247,7 +6247,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-element (flash.text.engine.content-element)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-element (flash:flash.text.engine.content-element)
     :swf-name "flash.text.engine::TextElement"
     :constants
     ()
@@ -6271,7 +6271,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.justification-style (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.justification-style (flash:object)
     :swf-name "flash.text.engine::JustificationStyle"
     :constants
     ((flash:+justification-style.push-out-only+ :SWF-NAME "PUSH_OUT_ONLY" :TYPE
@@ -6288,7 +6288,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.stage-display-state (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.stage-display-state (flash:object)
     :swf-name "flash.display::StageDisplayState"
     :constants
     ((flash:+stage-display-state.normal+ :SWF-NAME "NORMAL" :TYPE "String"
@@ -6302,7 +6302,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::adobe.utils.product-manager (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::adobe.utils.product-manager (flash:flash.events.event-dispatcher)
     :swf-name "adobe.utils::ProductManager"
     :constants
     ()
@@ -6323,7 +6323,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.frame-label (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.frame-label (flash:object)
     :swf-name "flash.display::FrameLabel"
     :constants
     ()
@@ -6337,7 +6337,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.element-format (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.element-format (flash:object)
     :swf-name "flash.text.engine::ElementFormat"
     :constants
     ()
@@ -6387,7 +6387,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.shader-parameter (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.shader-parameter (flash:object)
     :swf-name "flash.display::ShaderParameter"
     :constants
     ()
@@ -6403,7 +6403,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.shader-job (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.display.shader-job (flash:flash.events.event-dispatcher)
     :swf-name "flash.display::ShaderJob"
     :constants
     ()
@@ -6425,7 +6425,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.color-correction (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.color-correction (flash:object)
     :swf-name "flash.display::ColorCorrection"
     :constants
     ((flash:+color-correction.off+ :SWF-NAME "OFF" :TYPE "String" :VALUE "off"
@@ -6441,7 +6441,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.text-format-align (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.text-format-align (flash:object)
     :swf-name "flash.text::TextFormatAlign"
     :constants
     ((flash:+text-format-align.right+ :SWF-NAME "RIGHT" :TYPE "String" :VALUE
@@ -6459,7 +6459,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.utils.dictionary (object)
+  (avm2-compiler::declare-swf-class flash::flash.utils.dictionary (flash:object)
     :swf-name "flash.utils::Dictionary"
     :constants
     ()
@@ -6470,7 +6470,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.shared-object (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.net.shared-object (flash:flash.events.event-dispatcher)
     :swf-name "flash.net::SharedObject"
     :constants
     ()
@@ -6516,7 +6516,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.socket (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.net.socket (flash:flash.events.event-dispatcher)
     :swf-name "flash.net::Socket"
     :constants
     ()
@@ -6595,7 +6595,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.color-matrix-filter (flash.filters.bitmap-filter)
+  (avm2-compiler::declare-swf-class flash::flash.filters.color-matrix-filter (flash:flash.filters.bitmap-filter)
     :swf-name "flash.filters::ColorMatrixFilter"
     :constants
     ()
@@ -6608,7 +6608,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.bitmap-filter-type (object)
+  (avm2-compiler::declare-swf-class flash::flash.filters.bitmap-filter-type (flash:object)
     :swf-name "flash.filters::BitmapFilterType"
     :constants
     ((flash:+bitmap-filter-type.full+ :SWF-NAME "FULL" :TYPE "String" :VALUE
@@ -6624,7 +6624,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.text-color-type (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.text-color-type (flash:object)
     :swf-name "flash.text::TextColorType"
     :constants
     ((flash:+text-color-type.light-color+ :SWF-NAME "LIGHT_COLOR" :TYPE
@@ -6638,7 +6638,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.displacement-map-filter (flash.filters.bitmap-filter)
+  (avm2-compiler::declare-swf-class flash::flash.filters.displacement-map-filter (flash:flash.filters.bitmap-filter)
     :swf-name "flash.filters::DisplacementMapFilter"
     :constants
     ()
@@ -6667,7 +6667,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.graphics-path-winding (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.graphics-path-winding (flash:object)
     :swf-name "flash.display::GraphicsPathWinding"
     :constants
     ((flash:+graphics-path-winding.non-zero+ :SWF-NAME "NON_ZERO" :TYPE
@@ -6692,7 +6692,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.external.external-interface (object)
+  (avm2-compiler::declare-swf-class flash::flash.external.external-interface (flash:object)
     :swf-name "flash.external::ExternalInterface"
     :constants
     ()
@@ -6712,7 +6712,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.text-run (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.text-run (flash:object)
     :swf-name "flash.text::TextRun"
     :constants
     ()
@@ -6728,7 +6728,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.shader (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.shader (flash:object)
     :swf-name "flash.display::Shader"
     :constants
     ()
@@ -6742,7 +6742,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.media.video (flash.display.display-object)
+  (avm2-compiler::declare-swf-class flash::flash.media.video (flash:flash.display.display-object)
     :swf-name "flash.media::Video"
     :constants
     ()
@@ -6764,7 +6764,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.text-format-display (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.text-format-display (flash:object)
     :swf-name "flash.text::TextFormatDisplay"
     :constants
     ((flash:+text-format-display.block+ :SWF-NAME "BLOCK" :TYPE "String" :VALUE
@@ -6778,7 +6778,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.media.i-d3-info (object)
+  (avm2-compiler::declare-swf-class flash::flash.media.i-d3-info (flash:object)
     :swf-name "flash.media::ID3Info"
     :constants
     ()
@@ -6802,7 +6802,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.media.sound-transform (object)
+  (avm2-compiler::declare-swf-class flash::flash.media.sound-transform (flash:object)
     :swf-name "flash.media::SoundTransform"
     :constants
     ()
@@ -6824,7 +6824,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.trace.trace (object)
+  (avm2-compiler::declare-swf-class flash::flash.trace.trace (flash:object)
     :swf-name "flash.trace::Trace"
     :constants
     ((flash:+trace.file+ :SWF-NAME "FILE" :TYPE "*" :VALUE "1" :STATIC T)
@@ -6853,7 +6853,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.text-snapshot (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.text-snapshot (flash:object)
     :swf-name "flash.text::TextSnapshot"
     :constants
     ()
@@ -6887,7 +6887,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.interpolation-method (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.interpolation-method (flash:object)
     :swf-name "flash.display::InterpolationMethod"
     :constants
     ((flash:+interpolation-method.rgb+ :SWF-NAME "RGB" :TYPE "String" :VALUE
@@ -6901,7 +6901,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.ui.context-menu-built-in-items (object)
+  (avm2-compiler::declare-swf-class flash::flash.ui.context-menu-built-in-items (flash:object)
     :swf-name "flash.ui::ContextMenuBuiltInItems"
     :constants
     ()
@@ -6928,7 +6928,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.text-extent (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.text-extent (flash:object)
     :swf-name "flash.text::TextExtent"
     :constants
     ()
@@ -6950,7 +6950,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.cff-hinting (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.cff-hinting (flash:object)
     :swf-name "flash.text.engine::CFFHinting"
     :constants
     ((flash:+cff-hinting.horizontal-stem+ :SWF-NAME "HORIZONTAL_STEM" :TYPE
@@ -6964,7 +6964,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.system.security-domain (object)
+  (avm2-compiler::declare-swf-class flash::flash.system.security-domain (flash:object)
     :swf-name "flash.system::SecurityDomain"
     :constants
     ()
@@ -6976,7 +6976,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash:date (object)
+  (avm2-compiler::declare-swf-class flash:date (flash:object)
     :swf-name "Date"
     :constants
     ((flash:+date.length+ :SWF-NAME "length" :TYPE "int" :VALUE "7" :STATIC T))
@@ -7134,7 +7134,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.dynamic-property-output (object)
+  (avm2-compiler::declare-swf-class flash::flash.net.dynamic-property-output (flash:object)
     :swf-name "flash.net::DynamicPropertyOutput"
     :constants
     ()
@@ -7146,7 +7146,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.blur-filter (flash.filters.bitmap-filter)
+  (avm2-compiler::declare-swf-class flash::flash.filters.blur-filter (flash:flash.filters.bitmap-filter)
     :swf-name "flash.filters::BlurFilter"
     :constants
     ()
@@ -7163,7 +7163,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.graphics-bitmap-fill (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.graphics-bitmap-fill (flash:object)
     :swf-name "flash.display::GraphicsBitmapFill"
     :constants
     ()
@@ -7181,7 +7181,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.status-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.status-event (flash:flash.events.event)
     :swf-name "flash.events::StatusEvent"
     :constants
     ((flash:+status-event.status+ :SWF-NAME "STATUS" :TYPE "String" :VALUE
@@ -7199,7 +7199,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.geom.orientation3-d (object)
+  (avm2-compiler::declare-swf-class flash::flash.geom.orientation3-d (flash:object)
     :swf-name "flash.geom::Orientation3D"
     :constants
     ((flash:+orientation3-d.quaternion+ :SWF-NAME "QUATERNION" :TYPE "String"
@@ -7215,7 +7215,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.geom.color-transform (object)
+  (avm2-compiler::declare-swf-class flash::flash.geom.color-transform (flash:object)
     :swf-name "flash.geom::ColorTransform"
     :constants
     ()
@@ -7246,7 +7246,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.static-text (flash.display.display-object)
+  (avm2-compiler::declare-swf-class flash::flash.text.static-text (flash:flash.display.display-object)
     :swf-name "flash.text::StaticText"
     :constants
     ()
@@ -7258,7 +7258,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::adobe.utils.custom-actions (object)
+  (avm2-compiler::declare-swf-class flash::adobe.utils.custom-actions (flash:object)
     :swf-name "adobe.utils::CustomActions"
     :constants
     ()
@@ -7275,7 +7275,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.url-stream (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.net.url-stream (flash:flash.events.event-dispatcher)
     :swf-name "flash.net::URLStream"
     :constants
     ()
@@ -7325,7 +7325,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.security-error-event (flash.events.error-event)
+  (avm2-compiler::declare-swf-class flash::flash.events.security-error-event (flash:flash.events.error-event)
     :swf-name "flash.events::SecurityErrorEvent"
     :constants
     ((flash:+security-error-event.security-error+ :SWF-NAME "SECURITY_ERROR"
@@ -7340,7 +7340,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.ligature-level (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.ligature-level (flash:object)
     :swf-name "flash.text.engine::LigatureLevel"
     :constants
     ((flash:+ligature-level.minimum+ :SWF-NAME "MINIMUM" :TYPE "String" :VALUE
@@ -7360,7 +7360,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.morph-shape (flash.display.display-object)
+  (avm2-compiler::declare-swf-class flash::flash.display.morph-shape (flash:flash.display.display-object)
     :swf-name "flash.display::MorphShape"
     :constants
     ()
@@ -7371,7 +7371,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.anti-alias-type (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.anti-alias-type (flash:object)
     :swf-name "flash.text::AntiAliasType"
     :constants
     ((flash:+anti-alias-type.normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE
@@ -7385,7 +7385,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.media.microphone (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.media.microphone (flash:flash.events.event-dispatcher)
     :swf-name "flash.media::Microphone"
     :constants
     ()
@@ -7433,7 +7433,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.url-loader-data-format (object)
+  (avm2-compiler::declare-swf-class flash::flash.net.url-loader-data-format (flash:object)
     :swf-name "flash.net::URLLoaderDataFormat"
     :constants
     ((flash:+url-loader-data-format.text+ :SWF-NAME "TEXT" :TYPE "String"
@@ -7449,7 +7449,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.media.sound-channel (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.media.sound-channel (flash:flash.events.event-dispatcher)
     :swf-name "flash.media::SoundChannel"
     :constants
     ()
@@ -7468,7 +7468,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.progress-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.progress-event (flash:flash.events.event)
     :swf-name "flash.events::ProgressEvent"
     :constants
     ((flash:+progress-event.socket-data+ :SWF-NAME "SOCKET_DATA" :TYPE "String"
@@ -7488,7 +7488,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.context-menu-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.context-menu-event (flash:flash.events.event)
     :swf-name "flash.events::ContextMenuEvent"
     :constants
     ((flash:+context-menu-event.menu-select+ :SWF-NAME "MENU_SELECT" :TYPE
@@ -7512,7 +7512,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.text-field (flash.display.interactive-object)
+  (avm2-compiler::declare-swf-class flash::flash.text.text-field (flash:flash.display.interactive-object)
     :swf-name "flash.text::TextField"
     :constants
     ()
@@ -7657,7 +7657,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.xml.xml-parser (object)
+  (avm2-compiler::declare-swf-class flash::flash.xml.xml-parser (flash:object)
     :swf-name "flash.xml::XMLParser"
     :constants
     ()
@@ -7671,7 +7671,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::adobe.utils.xmlui (object)
+  (avm2-compiler::declare-swf-class flash::adobe.utils.xmlui (flash:object)
     :swf-name "adobe.utils::XMLUI"
     :constants
     ()
@@ -7689,7 +7689,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.ui.mouse (object)
+  (avm2-compiler::declare-swf-class flash::flash.ui.mouse (flash:object)
     :swf-name "flash.ui::Mouse"
     :constants
     ()
@@ -7704,7 +7704,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.activity-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.activity-event (flash:flash.events.event)
     :swf-name "flash.events::ActivityEvent"
     :constants
     ((flash:+activity-event.activity+ :SWF-NAME "ACTIVITY" :TYPE "String"
@@ -7727,7 +7727,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.system.ime (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.system.ime (flash:flash.events.event-dispatcher)
     :swf-name "flash.system::IME"
     :constants
     ()
@@ -7744,7 +7744,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.object-encoding (object)
+  (avm2-compiler::declare-swf-class flash::flash.net.object-encoding (flash:object)
     :swf-name "flash.net::ObjectEncoding"
     :constants
     ((flash:+object-encoding.amf3+ :SWF-NAME "AMF3" :TYPE "uint" :VALUE "3"
@@ -7762,7 +7762,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.rendering-mode (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.rendering-mode (flash:object)
     :swf-name "flash.text.engine::RenderingMode"
     :constants
     ((flash:+rendering-mode.normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE
@@ -7776,7 +7776,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.printing.print-job-options (object)
+  (avm2-compiler::declare-swf-class flash::flash.printing.print-job-options (flash:object)
     :swf-name "flash.printing::PrintJobOptions"
     :constants
     ()
@@ -7788,7 +7788,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.ui.mouse-cursor (object)
+  (avm2-compiler::declare-swf-class flash::flash.ui.mouse-cursor (flash:object)
     :swf-name "flash.ui::MouseCursor"
     :constants
     ((flash:+mouse-cursor.auto+ :SWF-NAME "AUTO" :TYPE "String" :VALUE "auto"
@@ -7808,7 +7808,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-line-creation-result (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-line-creation-result (flash:object)
     :swf-name "flash.text.engine::TextLineCreationResult"
     :constants
     ((flash:+text-line-creation-result.insufficient-width+ :SWF-NAME
@@ -7826,7 +7826,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.data-event (flash.events.text-event)
+  (avm2-compiler::declare-swf-class flash::flash.events.data-event (flash:flash.events.text-event)
     :swf-name "flash.events::DataEvent"
     :constants
     ((flash:+data-event.upload-complete-data+ :SWF-NAME "UPLOAD_COMPLETE_DATA"
@@ -7844,7 +7844,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.stage-quality (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.stage-quality (flash:object)
     :swf-name "flash.display::StageQuality"
     :constants
     ((flash:+stage-quality.high+ :SWF-NAME "HIGH" :TYPE "String" :VALUE "high"
@@ -7862,7 +7862,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.xml-socket (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.net.xml-socket (flash:flash.events.event-dispatcher)
     :swf-name "flash.net::XMLSocket"
     :constants
     ()
@@ -7880,7 +7880,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-block (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-block (flash:object)
     :swf-name "flash.text.engine::TextBlock"
     :constants
     ()
@@ -7944,7 +7944,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.accessibility.accessibility-properties (object)
+  (avm2-compiler::declare-swf-class flash::flash.accessibility.accessibility-properties (flash:object)
     :swf-name "flash.accessibility::AccessibilityProperties"
     :constants
     ()
@@ -7966,7 +7966,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.font-posture (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.font-posture (flash:object)
     :swf-name "flash.text.engine::FontPosture"
     :constants
     ((flash:+font-posture.normal+ :SWF-NAME "NORMAL" :TYPE "String" :VALUE
@@ -7980,7 +7980,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.graphics-shader-fill (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.graphics-shader-fill (flash:object)
     :swf-name "flash.display::GraphicsShaderFill"
     :constants
     ()
@@ -7994,7 +7994,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.url-loader (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.net.url-loader (flash:flash.events.event-dispatcher)
     :swf-name "flash.net::URLLoader"
     :constants
     ()
@@ -8013,7 +8013,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.group-element (flash.text.engine.content-element)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.group-element (flash:flash.text.engine.content-element)
     :swf-name "flash.text.engine::GroupElement"
     :constants
     ()
@@ -8051,7 +8051,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.net-connection (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.net.net-connection (flash:flash.events.event-dispatcher)
     :swf-name "flash.net::NetConnection"
     :constants
     ()
@@ -8099,7 +8099,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.display-object-container (flash.display.interactive-object)
+  (avm2-compiler::declare-swf-class flash::flash.display.display-object-container (flash:flash.display.interactive-object)
     :swf-name "flash.display::DisplayObjectContainer"
     :constants
     ()
@@ -8148,7 +8148,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.sprite (flash.display.display-object-container)
+  (avm2-compiler::declare-swf-class flash::flash.display.sprite (flash:flash.display.display-object-container)
     :swf-name "flash.display::Sprite"
     :constants
     ()
@@ -8176,7 +8176,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.movie-clip (flash.display.sprite)
+  (avm2-compiler::declare-swf-class flash::flash.display.movie-clip (flash:flash.display.sprite)
     :swf-name "flash.display::MovieClip"
     :constants
     ()
@@ -8221,7 +8221,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.net-status-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.net-status-event (flash:flash.events.event)
     :swf-name "flash.events::NetStatusEvent"
     :constants
     ((flash:+net-status-event.net-status+ :SWF-NAME "NET_STATUS" :TYPE "String"
@@ -8237,7 +8237,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.grid-fit-type (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.grid-fit-type (flash:object)
     :swf-name "flash.text::GridFitType"
     :constants
     ((flash:+grid-fit-type.pixel+ :SWF-NAME "PIXEL" :TYPE "String" :VALUE
@@ -8253,7 +8253,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.caps-style (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.caps-style (flash:object)
     :swf-name "flash.display::CapsStyle"
     :constants
     ((flash:+caps-style.round+ :SWF-NAME "ROUND" :TYPE "String" :VALUE "round"
@@ -8269,7 +8269,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.file-filter (object)
+  (avm2-compiler::declare-swf-class flash::flash.net.file-filter (flash:object)
     :swf-name "flash.net::FileFilter"
     :constants
     ()
@@ -8285,7 +8285,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.font-lookup (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.font-lookup (flash:object)
     :swf-name "flash.text.engine::FontLookup"
     :constants
     ((flash:+font-lookup.device+ :SWF-NAME "DEVICE" :TYPE "String" :VALUE
@@ -8299,7 +8299,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.url-request-header (object)
+  (avm2-compiler::declare-swf-class flash::flash.net.url-request-header (flash:object)
     :swf-name "flash.net::URLRequestHeader"
     :constants
     ()
@@ -8313,7 +8313,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.text-display-mode (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.text-display-mode (flash:object)
     :swf-name "flash.text::TextDisplayMode"
     :constants
     ((flash:+text-display-mode.lcd+ :SWF-NAME "LCD" :TYPE "String" :VALUE "lcd"
@@ -8329,7 +8329,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.csm-settings (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.csm-settings (flash:object)
     :swf-name "flash.text::CSMSettings"
     :constants
     ()
@@ -8345,7 +8345,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.utils.endian (object)
+  (avm2-compiler::declare-swf-class flash::flash.utils.endian (flash:object)
     :swf-name "flash.utils::Endian"
     :constants
     ((flash:+endian.little-endian+ :SWF-NAME "LITTLE_ENDIAN" :TYPE "String"
@@ -8359,7 +8359,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.font-type (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.font-type (flash:object)
     :swf-name "flash.text::FontType"
     :constants
     ((flash:+font-type.embedded-cff+ :SWF-NAME "EMBEDDED_CFF" :TYPE "String"
@@ -8375,7 +8375,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.simple-button (flash.display.interactive-object)
+  (avm2-compiler::declare-swf-class flash::flash.display.simple-button (flash:flash.display.interactive-object)
     :swf-name "flash.display::SimpleButton"
     :constants
     ()
@@ -8404,7 +8404,7 @@
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
    (avm2-compiler::swf-ffi-defconstant flash:+flash-proxy+ "flash.utils::flash_proxy" "*")
-  (avm2-compiler::declare-swf-class flash::flash.utils.proxy (object)
+  (avm2-compiler::declare-swf-class flash::flash.utils.proxy (flash:object)
     :swf-name "flash.utils::Proxy"
     :constants
     ()
@@ -8434,7 +8434,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.system.security-panel (object)
+  (avm2-compiler::declare-swf-class flash::flash.system.security-panel (flash:object)
     :swf-name "flash.system::SecurityPanel"
     :constants
     ((flash:+security-panel.display+ :SWF-NAME "DISPLAY" :TYPE "String" :VALUE
@@ -8458,7 +8458,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.glow-filter (flash.filters.bitmap-filter)
+  (avm2-compiler::declare-swf-class flash::flash.filters.glow-filter (flash:flash.filters.bitmap-filter)
     :swf-name "flash.filters::GlowFilter"
     :constants
     ()
@@ -8490,7 +8490,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.url-variables (object)
+  (avm2-compiler::declare-swf-class flash::flash.net.url-variables (flash:object)
     :swf-name "flash.net::URLVariables"
     :constants
     ()
@@ -8504,7 +8504,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.full-screen-event (flash.events.activity-event)
+  (avm2-compiler::declare-swf-class flash::flash.events.full-screen-event (flash:flash.events.activity-event)
     :swf-name "flash.events::FullScreenEvent"
     :constants
     ((flash:+full-screen-event.full-screen+ :SWF-NAME "FULL_SCREEN" :TYPE
@@ -8520,7 +8520,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.net-stream-play-transitions (object)
+  (avm2-compiler::declare-swf-class flash::flash.net.net-stream-play-transitions (flash:object)
     :swf-name "flash.net::NetStreamPlayTransitions"
     :constants
     ((flash:+net-stream-play-transitions.reset+ :SWF-NAME "RESET" :TYPE "*"
@@ -8540,7 +8540,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.digit-case (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.digit-case (flash:object)
     :swf-name "flash.text.engine::DigitCase"
     :constants
     ((flash:+digit-case.old-style+ :SWF-NAME "OLD_STYLE" :TYPE "String" :VALUE
@@ -8556,7 +8556,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.media.sound-loader-context (object)
+  (avm2-compiler::declare-swf-class flash::flash.media.sound-loader-context (flash:object)
     :swf-name "flash.media::SoundLoaderContext"
     :constants
     ()
@@ -8570,7 +8570,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.file-reference-list (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.net.file-reference-list (flash:flash.events.event-dispatcher)
     :swf-name "flash.net::FileReferenceList"
     :constants
     ()
@@ -8583,7 +8583,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.shader-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.shader-event (flash:flash.events.event)
     :swf-name "flash.events::ShaderEvent"
     :constants
     ((flash:+shader-event.complete+ :SWF-NAME "COMPLETE" :TYPE "String" :VALUE
@@ -8603,7 +8603,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-line-mirror-region (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-line-mirror-region (flash:object)
     :swf-name "flash.text.engine::TextLineMirrorRegion"
     :constants
     ()
@@ -8627,7 +8627,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.bitmap-filter-quality (object)
+  (avm2-compiler::declare-swf-class flash::flash.filters.bitmap-filter-quality (flash:object)
     :swf-name "flash.filters::BitmapFilterQuality"
     :constants
     ((flash:+bitmap-filter-quality.high+ :SWF-NAME "HIGH" :TYPE "int" :VALUE
@@ -8643,7 +8643,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.text-format (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.text-format (flash:object)
     :swf-name "flash.text::TextFormat"
     :constants
     ()
@@ -8691,7 +8691,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.graphics (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.graphics (flash:object)
     :swf-name "flash.display::Graphics"
     :constants
     ()
@@ -8791,7 +8791,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.timer-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.timer-event (flash:flash.events.event)
     :swf-name "flash.events::TimerEvent"
     :constants
     ((flash:+timer-event.timer+ :SWF-NAME "TIMER" :TYPE "String" :VALUE "timer"
@@ -8810,7 +8810,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.utils.object-output (object)
+  (avm2-compiler::declare-swf-class flash::flash.utils.object-output (flash:object)
     :swf-name "flash.utils::ObjectOutput"
     :constants
     ()
@@ -8860,7 +8860,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.media.sound (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.media.sound (flash:flash.events.event-dispatcher)
     :swf-name "flash.media::Sound"
     :constants
     ()
@@ -8895,7 +8895,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.style-sheet (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.text.style-sheet (flash:flash.events.event-dispatcher)
     :swf-name "flash.text::StyleSheet"
     :constants
     ()
@@ -8915,7 +8915,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.line-justification (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.line-justification (flash:object)
     :swf-name "flash.text.engine::LineJustification"
     :constants
     ((flash:+line-justification.all-including-last+ :SWF-NAME
@@ -8931,7 +8931,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-line-validity (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-line-validity (flash:object)
     :swf-name "flash.text.engine::TextLineValidity"
     :constants
     ((flash:+text-line-validity.possibly-invalid+ :SWF-NAME "POSSIBLY_INVALID"
@@ -8949,7 +8949,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.loader (flash.display.display-object-container)
+  (avm2-compiler::declare-swf-class flash::flash.display.loader (flash:flash.display.display-object-container)
     :swf-name "flash.display::Loader"
     :constants
     ()
@@ -8988,7 +8988,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.blend-mode (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.blend-mode (flash:object)
     :swf-name "flash.display::BlendMode"
     :constants
     ((flash:+blend-mode.difference+ :SWF-NAME "DIFFERENCE" :TYPE "String"
@@ -9028,7 +9028,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.geom.point (object)
+  (avm2-compiler::declare-swf-class flash::flash.geom.point (flash:object)
     :swf-name "flash.geom::Point"
     :constants
     ()
@@ -9063,7 +9063,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.system.loader-context (object)
+  (avm2-compiler::declare-swf-class flash::flash.system.loader-context (flash:object)
     :swf-name "flash.system::LoaderContext"
     :constants
     ()
@@ -9081,7 +9081,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.system.jpeg-loader-context (flash.system.loader-context)
+  (avm2-compiler::declare-swf-class flash::flash.system.jpeg-loader-context (flash:flash.system.loader-context)
     :swf-name "flash.system::JPEGLoaderContext"
     :constants
     ()
@@ -9093,7 +9093,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.mouse-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.mouse-event (flash:flash.events.event)
     :swf-name "flash.events::MouseEvent"
     :constants
     ((flash:+mouse-event.roll-over+ :SWF-NAME "ROLL_OVER" :TYPE "String" :VALUE
@@ -9151,7 +9151,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.font (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.font (flash:object)
     :swf-name "flash.text::Font"
     :constants
     ()
@@ -9173,7 +9173,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-baseline (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-baseline (flash:object)
     :swf-name "flash.text.engine::TextBaseline"
     :constants
     ((flash:+text-baseline.roman+ :SWF-NAME "ROMAN" :TYPE "String" :VALUE
@@ -9198,7 +9198,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.stage (flash.display.display-object-container)
+  (avm2-compiler::declare-swf-class flash::flash.display.stage (flash:flash.display.display-object-container)
     :swf-name "flash.display::Stage"
     :constants
     ()
@@ -9278,7 +9278,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.graphics-solid-fill (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.graphics-solid-fill (flash:object)
     :swf-name "flash.display::GraphicsSolidFill"
     :constants
     ()
@@ -9292,7 +9292,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.geom.transform (object)
+  (avm2-compiler::declare-swf-class flash::flash.geom.transform (flash:object)
     :swf-name "flash.geom::Transform"
     :constants
     ()
@@ -9320,7 +9320,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.ui.context-menu-clipboard-items (object)
+  (avm2-compiler::declare-swf-class flash::flash.ui.context-menu-clipboard-items (flash:object)
     :swf-name "flash.ui::ContextMenuClipboardItems"
     :constants
     ()
@@ -9341,7 +9341,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.system.security (object)
+  (avm2-compiler::declare-swf-class flash::flash.system.security (flash:object)
     :swf-name "flash.system::Security"
     :constants
     ((flash:+security.local-with-network+ :SWF-NAME "LOCAL_WITH_NETWORK" :TYPE
@@ -9371,7 +9371,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.keyboard-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.keyboard-event (flash:flash.events.event)
     :swf-name "flash.events::KeyboardEvent"
     :constants
     ((flash:+keyboard-event.key-up+ :SWF-NAME "KEY_UP" :TYPE "String" :VALUE
@@ -9401,7 +9401,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.spread-method (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.spread-method (flash:object)
     :swf-name "flash.display::SpreadMethod"
     :constants
     ((flash:+spread-method.reflect+ :SWF-NAME "REFLECT" :TYPE "String" :VALUE
@@ -9417,7 +9417,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.shader-input (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.shader-input (flash:object)
     :swf-name "flash.display::ShaderInput"
     :constants
     ()
@@ -9437,7 +9437,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.shader-parameter-type (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.shader-parameter-type (flash:object)
     :swf-name "flash.display::ShaderParameterType"
     :constants
     ((flash:+shader-parameter-type.float4+ :SWF-NAME "FLOAT4" :TYPE "String"
@@ -9477,7 +9477,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.event-phase (object)
+  (avm2-compiler::declare-swf-class flash::flash.events.event-phase (flash:object)
     :swf-name "flash.events::EventPhase"
     :constants
     ((flash:+event-phase.capturing-phase+ :SWF-NAME "CAPTURING_PHASE" :TYPE
@@ -9493,7 +9493,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-line (flash.display.display-object-container)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.text-line (flash:flash.display.display-object-container)
     :swf-name "flash.text.engine::TextLine"
     :constants
     ((flash:+text-line.max-line-width+ :SWF-NAME "MAX_LINE_WIDTH" :TYPE "int"
@@ -9567,7 +9567,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.pixel-snapping (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.pixel-snapping (flash:object)
     :swf-name "flash.display::PixelSnapping"
     :constants
     ((flash:+pixel-snapping.auto+ :SWF-NAME "AUTO" :TYPE "String" :VALUE "auto"
@@ -9583,7 +9583,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.text-line-metrics (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.text-line-metrics (flash:object)
     :swf-name "flash.text::TextLineMetrics"
     :constants
     ()
@@ -9604,7 +9604,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.file-reference (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.net.file-reference (flash:flash.events.event-dispatcher)
     :swf-name "flash.net::FileReference"
     :constants
     ()
@@ -9642,7 +9642,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.stage-scale-mode (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.stage-scale-mode (flash:object)
     :swf-name "flash.display::StageScaleMode"
     :constants
     ((flash:+stage-scale-mode.show-all+ :SWF-NAME "SHOW_ALL" :TYPE "String"
@@ -9660,7 +9660,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.shared-object-flush-status (object)
+  (avm2-compiler::declare-swf-class flash::flash.net.shared-object-flush-status (flash:object)
     :swf-name "flash.net::SharedObjectFlushStatus"
     :constants
     ((flash:+shared-object-flush-status.pending+ :SWF-NAME "PENDING" :TYPE
@@ -9674,7 +9674,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.text-field-auto-size (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.text-field-auto-size (flash:object)
     :swf-name "flash.text::TextFieldAutoSize"
     :constants
     ((flash:+text-field-auto-size.right+ :SWF-NAME "RIGHT" :TYPE "String"
@@ -9692,7 +9692,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.printing.print-job-orientation (object)
+  (avm2-compiler::declare-swf-class flash::flash.printing.print-job-orientation (flash:object)
     :swf-name "flash.printing::PrintJobOrientation"
     :constants
     ((flash:+print-job-orientation.portrait+ :SWF-NAME "PORTRAIT" :TYPE
@@ -9706,7 +9706,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.events.http-status-event (flash.events.event)
+  (avm2-compiler::declare-swf-class flash::flash.events.http-status-event (flash:flash.events.event)
     :swf-name "flash.events::HTTPStatusEvent"
     :constants
     ((flash:+http-status-event.http-status+ :SWF-NAME "HTTP_STATUS" :TYPE
@@ -9722,7 +9722,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.filters.convolution-filter (flash.filters.bitmap-filter)
+  (avm2-compiler::declare-swf-class flash::flash.filters.convolution-filter (flash:flash.filters.bitmap-filter)
     :swf-name "flash.filters::ConvolutionFilter"
     :constants
     ()
@@ -9751,7 +9751,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.ui.key-location (object)
+  (avm2-compiler::declare-swf-class flash::flash.ui.key-location (flash:object)
     :swf-name "flash.ui::KeyLocation"
     :constants
     ((flash:+key-location.standard+ :SWF-NAME "STANDARD" :TYPE "uint" :VALUE
@@ -9769,7 +9769,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.accessibility.accessibility (object)
+  (avm2-compiler::declare-swf-class flash::flash.accessibility.accessibility (flash:object)
     :swf-name "flash.accessibility::Accessibility"
     :constants
     ()
@@ -9787,7 +9787,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.geom.perspective-projection (object)
+  (avm2-compiler::declare-swf-class flash::flash.geom.perspective-projection (flash:object)
     :swf-name "flash.geom::PerspectiveProjection"
     :constants
     ()
@@ -9804,7 +9804,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.action-script-version (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.action-script-version (flash:object)
     :swf-name "flash.display::ActionScriptVersion"
     :constants
     ((flash:+action-script-version.actionscript3+ :SWF-NAME "ACTIONSCRIPT3"
@@ -9818,7 +9818,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.net.net-stream-play-options (flash.events.event-dispatcher)
+  (avm2-compiler::declare-swf-class flash::flash.net.net-stream-play-options (flash:flash.events.event-dispatcher)
     :swf-name "flash.net::NetStreamPlayOptions"
     :constants
     ()
@@ -9838,7 +9838,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.media.sound-codec (object)
+  (avm2-compiler::declare-swf-class flash::flash.media.sound-codec (flash:object)
     :swf-name "flash.media::SoundCodec"
     :constants
     ((flash:+sound-codec.nellymoser+ :SWF-NAME "NELLYMOSER" :TYPE "String"
@@ -9852,7 +9852,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.display.triangle-culling (object)
+  (avm2-compiler::declare-swf-class flash::flash.display.triangle-culling (flash:object)
     :swf-name "flash.display::TriangleCulling"
     :constants
     ((flash:+triangle-culling.positive+ :SWF-NAME "POSITIVE" :TYPE "String"
@@ -9868,7 +9868,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::flash.text.engine.digit-width (object)
+  (avm2-compiler::declare-swf-class flash::flash.text.engine.digit-width (flash:object)
     :swf-name "flash.text.engine::DigitWidth"
     :constants
     ((flash:+digit-width.tabular+ :SWF-NAME "TABULAR" :TYPE "String" :VALUE
@@ -9884,7 +9884,7 @@
 )
 
 (cl:let ((avm2-compiler::*symbol-table* avm2-compiler::*player-symbol-table*))
-  (avm2-compiler::declare-swf-class flash::authoring.auth-object (object)
+  (avm2-compiler::declare-swf-class flash::authoring.auth-object (flash:object)
     :swf-name "authoring::authObject"
     :constants
     ()

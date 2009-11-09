@@ -371,6 +371,11 @@
 (defparameter *dumped-functions* nil)
 (defparameter *trace-extra-functions* nil)
 
+(defun maybe-add-package (name package)
+  (if (and name (not (find #\: name)))
+    (format nil "~a:~a" package name)
+    name))
+
 (defun ffi-from-tag (package tag renamer local-types &key skip-$)
   ;; top level functions/constants/etc
   (loop
@@ -451,7 +456,8 @@
                (qualified-class-name class-name package renamer)
                (if super
                    (format nil "~a"  ;; "~a::~a" package
-                           (or (gethash super local-types)
+                           (or (maybe-add-package (gethash super local-types)
+                                                  package)
                                ;; fixme: need to make a flash: package using new naming
                                ;; scheme, and update this to match...
                                #++(make-name super renamer :prefix "")
