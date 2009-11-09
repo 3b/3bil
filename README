@@ -1,13 +1,24 @@
-Proof of concept lisp->avm2 bytecode compiler
+work-in-progress lisp->avm2 bytecode compiler
 
-installation:
-  tell ASDF about the .asd files in the subdirs, then load avm2-lib.asd
-  (which should load the asm and compiler .asd automatically)
+(see also http://wiki.github.com/3b/3bil )
 
-  compile and load file/write.lisp
+installation using clbuild:
 
-usage:
-  look at test/roots.lisp and test/test.lisp for examples
-  compiling either of those files should generate a working .swf file
-  in /tmp/ (change the path in the WITH-OPEN-FILE to change destination)
+add to my-projects in clbuild directory :
+
+3bil        get_git git://github.com/3b/3bil.git
+3b-swf        get_git git://github.com/3b/3b-swf.git
+
+
+add to my-dependencies in clbuild directory:
+
+3b-swf alexandria babel chipz cl-vectors cljl closure-common cxml flexi-streams ieee-floats puri salza2 trivial-features trivial-gray-streams vecto zip zpb-ttf zpng 
+3bil 3b-swf alexandria babel chipz cl-vectors cljl closure-common cxml flexi-streams ieee-floats puri salza2 trivial-features trivial-gray-streams vecto zpb-ttf zpng 
+
+then
+ ./clbuild install 3bil
+and start a lisp and load 3b-swf-writer with asdf
+
+see test/roots-new.lisp and test/minimal2.lisp for sample usage, or compile ctests.lisp and load /tmp/ctests.swf into flash 9+ to run the tests
+
 
