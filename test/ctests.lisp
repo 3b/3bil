@@ -278,6 +278,10 @@
         (when nil 'e)
         (unless nil 'f)
 
+        (car nil)
+        (cdr nil)
+        (if (car nil) "t" "f")
+
         (progn (progn 1 2) 'a (+ 2 3) (progn 3))
         (let ((a 1)) a)
         (tagbody foo (go baz) baz)
@@ -409,7 +413,6 @@
             (x 100 1000)))
         :return-from
         (+ 1 (block xxfoo (flet ((bar () (return-from xxfoo 100) 1000)) (bar) 10000)) 2)
-
         (call (let ((x 1)) (lambda (y) (+ x y))) 1234)
         (call^2 (lambda (a) (lambda (b) (+ a b))) 1234 2344)
         ;;?;(call^2  (lambda (a) (let ((j 123)) (lambda (b) (+ a b j)))) 2345 234)
@@ -560,6 +563,8 @@
         (let ((a (vector 1 2 3)))
           (setf (aref a 1) "a")
           a)
+        (+ 1 (block xxfoo2 (flet ((bar () (return-from xxfoo2 100) 1000)) (bar) 10000)))
+        (+ (block xxfoo3 (flet ((bar () (return-from xxfoo3 100) 1000)) (bar) 10000)) 1)
         "more tests")
 
 
@@ -573,6 +578,7 @@
         (unless 0 'd)
         (when "" 'c)
         (unless "" 'd)
+        ;; -- let* bindings in wrong order?
         (let* ((x (progn (+ 1 2) (side-effect 3 4) (+ 3 4))) x) x)
 
         )
@@ -585,9 +591,6 @@
         ;;  -- no (setf car) yet
         (setf (car (cons 1 2)) 3)
         ;;  -- need %type-of
-        (car nil)
-        (cdr nil)
-        (if (car nil) "t" "f")
         ;; -- need proper types
         (typecase 123
           (cons "-cons-")
@@ -644,7 +647,7 @@
              (flet ((x (a c) (+ a b c)))
                (x 100 1000)))
                                         ;:return-from
-        #++(+ 1 (block xxfoo (flet ((bar () (return-from xxfoo 100) 1000)) (bar) 10000)) 2)
+        (+ 1 (block axfoo (flet ((bar () (return-from axfoo 100) 1000)) (bar) 10000)) 2)
 
                                         ;(call (let ((x 1)) (lambda (y) (+ x y))) 1234)
         (call^2 (lambda (a) (lambda (b) (+ a b))) 1234 2344)
@@ -830,6 +833,7 @@
           (line (list->str ("old-tests")))
           (line (list->str ("expected-fail")))
           (line (list->str ("expected error")))
+          (line (list->str ("bad-abc")))
           (line (list->str ("bad1-abc")))
           (line (list->str ("bad2-abc")))
           ("bad4-abc")

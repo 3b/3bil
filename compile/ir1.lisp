@@ -75,10 +75,15 @@
     `(%compilation-unit lambdas ,(recur-all lambdas)))
 
    ((%asm &rest forms)
-    `(%asm forms ,(loop for i in forms
-                        when (eq (car i) :@)
-                        collect `(:@ ,(recur (second i)) ,@(cddr i))
-                        else collect i)))
+    (labels ((recur-%asm (ops)
+               (loop for i in ops
+                  when (eq (car i) :@)
+                  collect `(:@ ,(recur (second i)) ,@(cddr i))
+                  else when (eq (car i) :%push-arglist)
+                  collect `(:%push-arglist
+                            ,@(recur-%asm (cdr i)))
+                  else collect i)))
+      `(%asm forms ,(recur-%asm forms))))
 
    ;; todo:
 
@@ -159,6 +164,7 @@
                       flags ,flags
                       lambda-list ,lambda-list
                       closed-vars ,closed-vars
+                      activation-vars ,activation-vars
                       body ,(recur-all body))))
 
    ((function type name)
@@ -210,11 +216,17 @@
         fun-info ,*ir1-fun-info*
         lambdas ,rlambdas)))
 
-   ((%asm &rest forms)
-    `(%asm forms ,(loop for i in forms
-                        when (eq (car i) :@)
-                        collect `(:@ ,(recur (second i)) ,@(cddr i))
-                        else collect i)))
+   ((%asm forms)
+    (labels ((recur-%asm (ops)
+               (loop for i in ops
+                  when (eq (car i) :@)
+                  collect `(:@ ,(recur (second i)) ,@(cddr i))
+                  else when (eq (car i) :%push-arglist)
+                  collect `(:%push-arglist
+                            ,@(recur-%asm (cdr i)))
+                  else collect i)))
+      `(%asm forms ,(recur-%asm forms))))
+
    ;; todo:
 
    ;;       ((load-time-value form &optional read-only-p)
@@ -561,7 +573,7 @@
                  (*ir1-lx-tags* nil)
                  (*ir1-need-another-pass* nil))
              (setf whole (super whole))
-             (prog1
+             (multiple-value-prog1
                  (values whole *ir1-need-another-pass*)
                (when *ir1-local-tags* (format t "local tags: ~s~%" *ir1-local-tags*))
                #+nil(format t "nlx tags: ~s~%" *ir1-nlx-tags*)
@@ -602,123 +614,6 @@
                tag-info ,tag-info
                fun-info ,fun-info
                lambdas ,*ir1-lambdas*)))))
-
-;;; mark function calls needing args in temps due to catch blocks
-;;;  (possibly splitting args into before/after groups so latter set don't
-;;;   need temporaries)
-(defparameter *ir1-call-stack* nil)
-(define-structured-walker ir1-mark-spilled-args null-ir1-walker
-  :form-var whole
-  :labels ((mark-catch-arg ()
-             ;; loop over every call in progress, and mark current arg as
-             ;; having an exception block
-             (loop for i in *ir1-call-stack*
-                   do (setf (caaadr i) t))))
-  :forms (((%call type name args)
-           (let* ((tag (gensym "tag"))
-                  (flags (list nil))
-                  (r-name (if (eq type :local) (recur name) name))
-                  (*ir1-call-stack* (cons (list tag flags) *ir1-call-stack*))
-
-                  (recurred-args (loop for i in args
-                                       ;; fixme: caadar is ugly, make the structure/access more obvious...
-                                       do (push nil (caadar *ir1-call-stack*))
-                                       collect (recur i))))
-             (multiple-value-bind (spilled-vars spilled-values inline)
-                 ;; flags is reversed list of flag indicating
-                 ;; corresponding arg has a exception block, so we
-                 ;; need to spill it and any preceding args into
-                 ;; locals instead of leaving it on the stack, since
-                 ;; exception handler will clear stack...
-                 (loop for f in (nreverse (loop with spill = nil
-                                                for f in (car flags)
-                                                when f
-                                                do (setf spill t)
-                                                when spill collect t
-                                                else collect nil))
-                       for arg in recurred-args
-                       for sym = (gensym "ARG-TEMP-")
-                       when f
-                       collect sym into spilled-vars
-                       and collect arg into spilled-values
-                       else collect arg into inline
-                       finally (return (values spilled-vars
-                                               spilled-values
-                                               inline)))
-               (if spilled-vars
-                   ;; some args need to be in locals, so replace the
-                   ;; call with a local binding to allocate temp vars,
-                   ;; and a call with the locals as args instead of
-                   ;; the original forms
-                   `(%bind vars ,spilled-vars
-                           values ,spilled-values
-                           closed-vars nil
-                           body ((%call type ,type
-                                        name ,r-name
-                                        args ,(append (loop for i in spilled-vars
-                                                            collect
-                                                            `(%ref type :local
-                                                                   var ,i))
-                                                      inline))))
-                   ;; normal case, just leave args inline (we already
-                   ;; did the recur-all, so don't need it here...)
-                   `(%call type ,type
-                           name ,r-name
-                           args ,recurred-args)))))
-
-          ((block name nlx forms)
-           (when nlx (mark-catch-arg))
-           (super whole))
-          ((tagbody name nlx forms)
-           (when nlx (mark-catch-arg))
-           (super whole))
-          ((catch tag forms)
-           (mark-catch-arg)
-           (super whole))
-          ;; we match local jumps too, to catch stuff like (+ 1 (go 2) 3))
-          ;;  we should probably limit it to forms that actually exit the
-          ;;  arglist, but being conservative for now
-          ;;  (ex: (+ 1 (block x (return-from x 2)) 3) is safe
-          ((return-from name value)
-           (mark-catch-arg)
-           (super whole))
-          ((go tag)
-           (mark-catch-arg)
-           (super whole))
-
-
-          ;; u-w-p possibly shouldn't be here, since f we don't
-          ;; trigger the exception block on normal exits from the
-          ;; block, then the stack is still valid, and when it does
-          ;; get triggered, we are probably going to rethrow it
-          ;; anyway, so the call won't be made either way...
-          ;; (unless we catch it in an enclosing catch/block.tagbody,
-          ;;  in which case we marked the arg anyway)
-          ((unwind-protect protected cleanup)
-           (mark-catch-arg)
-           (super whole))
-
-          ((%compilation-unit lambdas)
-           (let* ((*ir1-call-stack* nil))
-             (super whole)))))
-
-;;; deal with (local?) jumps out of argument lists
-;;;   - convert the outermost call within the scope of the jump target
-;;;     into a lambda?
-;;;     = probably avoids the most verifier hassle, but probably slow
-;;;       and might complicate things in other ways?
-;;;   - use a throw instead of a jump
-;;;     = don't have to clear stack, but might still need to worry about
-;;;       types in locals?
-;;;       probably slow too
-;;;   - or spill to locals, might need to add :kill though
-;;;     = probably not much simpler than popping stack before jump due to
-;;;       needing kills to avoid type check problems on locals
-;;;   - or add code to clean up stack before the jump?
-;;;     = probably best solution, if we can track the stack depth
-;;;       accurately without too much effort?
-
-
 
 ;;; collect/store some info on tag/var usage for later passes
 ;;;   mark vars that are assigned to at some point (after initialization)
@@ -916,7 +811,6 @@
                               ir1-closure-scopes
                               ;;ir1-find-nlx-tags
                               ir1-extract-lambdas
-                              ir1-mark-spilled-args
                               ir1-collect-var/tag-info
                               ir1-optimize1
                               ir1-optimize2))

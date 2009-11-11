@@ -37,16 +37,16 @@
       (%error (+ "type-error: unknown type in " fun ":" (%type-of arg))))
 
     (defun car (a)
-      (if (eq a :null)
-          :null
+      (if (eq a nil)
+          nil
           (if (consp a)
               (%asm (:@ a cons-type)
                     (:get-property %car))
               (%type-error "CAR" a))))
 
     (defun cdr (a)
-      (if (eq a :null)
-          :null
+      (if (eq a nil)
+          nil
           (if (consp a)
               (%asm (:@ a cons-type)
                     (:get-property %cdr))

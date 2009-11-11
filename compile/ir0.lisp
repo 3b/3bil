@@ -122,10 +122,15 @@
            `(%compilation-unit ,@(recur-all lambdas)))
 
           ((%asm &rest forms)
-           `(%asm ,@(loop for i in forms
-                          when (eq (car i) :@)
-                          collect `(:@ ,(recur (second i)) ,@(cddr i))
-                          else collect i)))
+           (labels ((recur-%asm (ops)
+                      (loop for i in ops
+                         when (eq (car i) :@)
+                         collect `(:@ ,(recur (second i)) ,@(cddr i))
+                         else when (eq (car i) :%push-arglist)
+                         collect `(:%push-arglist
+                                   ,@(recur-%asm (cdr i)))
+                         else collect i)))
+             `(%asm ,@(recur-%asm forms))))
 
           ;; anything else, evaluate all args
           (t

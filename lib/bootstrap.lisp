@@ -111,8 +111,9 @@
           ((= 1 (length x)) (car x))
           ;; todo: optimize +1 case, or adding 2 literal numbers
           ((= 2 (length x)) `(%asm
-                              (:@ ,(first x)) ;; types?
-                              (:@ ,(second x)) ;; types?
+                              (:%push-arglist
+                               (:@ ,(first x)) ;; types?
+                               (:@ ,(second x))) ;; types?
                               (:add)))
           (t w)))
 
@@ -303,10 +304,11 @@
                                   ((eq type t) 0)
                                   (t type)))
                    ;; save the var if needed
-                   ,@ (when var
+                   ,@ (if var
                         ;; typed?
                         `((:coerce-any)
-                          (:@ (setf ,var (%asm-top-of-stack-untyped)) :ignored)))
+                          (:@ (setf ,var (%asm-top-of-stack-untyped)) :ignored))
+                        `((:pop)))
                    ;; restore scope stack
                    (:%restore-scope-stack)
                    (:comment "handler body")

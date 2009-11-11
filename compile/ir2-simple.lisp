@@ -48,6 +48,160 @@
             do (set-tag-info i :nlx-index (1- (incf j)))))
     (super whole))))
 
+
+;;; mark function calls needing args in temps due to catch blocks
+;;;  (possibly splitting args into before/after groups so latter set don't
+;;;   need temporaries)
+(defparameter *ir2-call-stack* nil)
+(define-structured-walker ir2-mark-spilled-args null-ir1-walker
+  :form-var whole
+  :labels ((mark-catch-arg ()
+             ;; loop over every call in progress, and mark current arg as
+             ;; having an exception block
+             (loop for i in *ir2-call-stack*
+                   do (setf (caaadr i) t)))
+           (spillable-arglist (args)
+            (let* ((tag (gensym "tag"))
+                   (flags (list nil))
+                   (*ir2-call-stack* (cons (list tag flags) *ir2-call-stack*))
+                   (recurred-args (loop for i in args
+                                     ;; fixme: caadar is ugly, make
+                                     ;; the structure/access more
+                                     ;; obvious...
+                                     do (push nil (caadar *ir2-call-stack*))
+                                     collect (recur i))))
+              ;; flags is reversed list of flag indicating
+              ;; corresponding arg has a exception block, so we need
+              ;; to spill it and any preceding args into locals
+              ;; instead of leaving it on the stack, since exception
+              ;; handler will clear stack...
+              (loop for f in (nreverse (loop with spill = nil
+                                          for f in (car flags)
+                                          when f
+                                          do (setf spill t)
+                                          when spill collect t
+                                          else collect nil))
+                 for arg in recurred-args
+                 for sym = (gensym "ARG-TEMP-")
+                 when f
+                 collect sym into spilled-vars
+                 and collect arg into spilled-values
+                 else collect arg into inline
+                 finally (return (values spilled-vars
+                                         spilled-values
+                                         inline
+                                         recurred-args))))))
+
+
+  :forms (((%call type name args)
+           (let* ((r-name (if (eq type :local) (recur name) name)))
+             (multiple-value-bind (spilled-vars spilled-values inline
+                                                recurred-args)
+                 (spillable-arglist args)
+               (if spilled-vars
+                   ;; some args need to be in locals, so replace the
+                   ;; call with a local binding to allocate temp vars,
+                   ;; and a call with the locals as args instead of
+                   ;; the original forms
+                   `(%bind
+                     vars ,spilled-vars
+                     values ,spilled-values
+                     closed-vars nil
+                     body
+                     ((%call type ,type
+                             name ,r-name
+                             args ,(append
+                                    (loop for i in spilled-vars
+                                       collect
+                                       `(%ref type :local
+                                              var ,i))
+                                    inline))))
+                   ;; normal case, just leave args inline (we already
+                   ;; did the recur-all, so don't need it here...)
+                   `(%call type ,type
+                           name ,r-name
+                           args ,recurred-args)))))
+
+
+          ((%asm forms)
+           ;; we need to handle the same issue for %asm, for example
+           ;; when we inline math ops, or cons or whatever, so we have
+           ;; a special pseudo-opcode for pushing a list of args on
+           ;; the stack with automatic spilling/reloading around
+           ;; exceptions
+           `(%asm
+             forms
+             ,(loop for i in forms
+                 for op = (first i)
+                 when (eq (car i) :@)
+                 collect `(:@ ,(recur (second i)) ,@(cddr i))
+                 else when (eq (car i) :%exception)
+                 do (mark-catch-arg)
+                 and collect i
+                 else when (eq op :%push-arglist)
+                 append
+                 (multiple-value-bind (spilled-vars spilled-values inline)
+                     (spillable-arglist (loop for a in (cdr i)
+                                           collect `(%asm forms (,a))))
+                   (if spilled-vars
+                       `((:@ (%bind vars ,spilled-vars
+                                    values ,spilled-values
+                                    closed-vars nil
+                                    body ((%asm
+                                           forms
+                                           ,(append
+                                             (loop for i in spilled-vars
+                                                collect
+                                                `(:@ (%ref type :local
+                                                           var ,i)))
+                                             ;; we need to remove the
+                                             ;; extra %asm from any
+                                             ;; remaining args
+                                             (mapcar 'caaddr
+                                                     inline)))))))
+                       ;; normal case, just inline the args directly
+                       (cdr i)))
+                 else collect i)))
+
+          ((block name nlx forms)
+           (when nlx (mark-catch-arg))
+           (super whole))
+          ((tagbody name nlx forms)
+           (when nlx (mark-catch-arg))
+           (super whole))
+          ((catch tag forms)
+           (mark-catch-arg)
+           (super whole))
+
+          ;; we match local jumps too, to catch stuff like (+ 1 (go 2) 3))
+          ;;  we should probably limit it to forms that actually exit the
+          ;;  arglist, but being conservative for now
+          ;;  (ex: (+ 1 (block x (return-from x 2)) 3) is safe
+          ((return-from name value)
+           (mark-catch-arg)
+           (super whole))
+          ((go tag)
+           (mark-catch-arg)
+           (super whole))
+
+          ;; u-w-p possibly shouldn't be here, since f we don't
+          ;; trigger the exception block on normal exits from the
+          ;; block, then the stack is still valid, and when it does
+          ;; get triggered, we are probably going to rethrow it
+          ;; anyway, so the call won't be made either way...
+          ;; (unless we catch it in an enclosing catch/block.tagbody,
+          ;;  in which case we marked the arg anyway)
+          ((unwind-protect protected cleanup)
+           (mark-catch-arg)
+           (super whole))
+
+          ((%compilation-unit lambdas)
+           (let* ((*ir2-call-stack* nil))
+             (super whole)))))
+
+
+
+
 ;;; skipping serious optimization/type inference for now, so
 ;;; just compile ir1 directly to asm to try to get something useable
 ;;; if not super-fast for now...
@@ -59,6 +213,7 @@
 (defparameter *current-closure-scope-index* nil)
 (defparameter *activation-local-name* nil)
 (define-structured-walker assemble-ir1 null-ir1-walker
+  :form-var whole
   :labels ((coerce-type ()
                         (cond
                           ((eq *ir1-dest-type* nil) nil)
@@ -268,7 +423,7 @@
                 when closed
                 append `((:get-scope-object ,*current-closure-scope-index*)
                          (:get-local ,(get-local-index var))
-                         ,@(unless (get-closure-index var) (error "error !!"))
+                         ,@(unless (get-closure-index var) (error "error !! ~s" whole))
                          (:set-slot ,(get-closure-index var))))
           ,@(recur-progn body)
           ,@(loop for var in vars
@@ -674,21 +829,28 @@
 
      ((%asm forms)
       ;; fixme: decide correct handling of return type?
-      `(,@(loop for i in forms
-                when (eq (car i) :@)
-                append (let ((*ir1-dest-type* (third i)))
-                         (recur (second i)))
-                else when (eq (car i) :%restore-scope-stack)
-                append `((:get-local 0)
-                         (:push-scope)
-                         ,@ (when *current-closure-vars*
-                              `((:get-local ,(get-local-index
-                                              *activation-local-name*))
-                                (:push-scope))))
-                else when (eq (car i) :@kill)
-                collect `(:kill ,(get-local-index (second i)))
-                else collect i)
-          ,@(coerce-type)))
+      (labels ((recur-%asm (ops)
+                 (loop for i in ops
+                    ;; fixme: convert this into something better
+                    ;; suited for selecting from a list of special
+                    ;; cases...
+                    when (eq (car i) :@)
+                    append (let ((*ir1-dest-type* (third i)))
+                             (recur (second i)))
+                    else when (eq (car i) :%restore-scope-stack)
+                    append `((:get-local 0)
+                             (:push-scope)
+                             ,@ (when *current-closure-vars*
+                                  `((:get-local ,(get-local-index
+                                                  *activation-local-name*))
+                                    (:push-scope))))
+                    else when (eq (car i) :@kill)
+                    collect `(:kill ,(get-local-index (second i)))
+                    else when (eq (car i) :%push-arglist)
+                    append (recur-%asm (cdr i))
+                    else collect i)))
+        `(,@(recur-%asm forms)
+            ,@(coerce-type))))
 
      ;; todo:
 
@@ -727,7 +889,9 @@
   (let* ((*new-compiler* t)
          (form `(%compilation-unit (%named-lambda ,top-level-name (:trait ,top-level-name :trait-type :function) () ,form)))
          (assembled
-          (passes form (append *ir1-passes* '(mark-activations assemble-ir1)))))
+          (passes form (append *ir1-passes* '(mark-activations
+                                              ir2-mark-spilled-args
+                                              assemble-ir1)))))
     (when *ir1-dump-asm* (format t "assembly dump:~%~s~%" assembled))
     assembled))
 
@@ -914,4 +1078,29 @@
 (defun c4 (name form)
   (let ((*top-level-function* name))
     (c3 name form)))
+
+
+#++
+(defun d2 (form)
+  (let ((avm2-asm::*assembler-context* (make-instance 'avm2-asm::assembler-context))
+        (*compiler-context* (make-instance 'compiler-context))
+        (*symbol-table* (make-instance 'symbol-table :inherit
+                                       (list *cl-symbol-table*))))
+    (c2 form)))
+
+
+#++
+(print
+ (d2 '(+ 123 (handler-case (foo) (t (1))) 234)))
+
+#++
+(print
+ (d2 '(+ 123 (handler-case (foo) (t (1))))))
+
+#++
+(print
+ (d2 '(progn (+ 123 (handler-case (foo) (t (1)))) "foo")))
+
+#++
+(print (d2 '(+ (block xxfoo (flet ((bar () (return-from xxfoo 100) 1000)) (bar) 10000)) 1)))
 
