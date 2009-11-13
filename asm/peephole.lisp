@@ -62,7 +62,11 @@ optimized version"
          ,@(loop
               with iargs = (gensym-nils args)
               with lambda = `(lambda (,forms)
-                               (when (>= (length ,forms) ,length)
+                               ;; we just need to verify there are at
+                               ;; least LENGTH elements left in FORMS,
+                               ;; so don' calculate full length of
+                               ;; FORMS here
+                               (when (nthcdr (1- ,length) ,forms)
                                  (destructuring-bind (,@iargs) ,forms
                                    ,@(when arg-syms
                                            `((declare (ignore ,@arg-syms))))
