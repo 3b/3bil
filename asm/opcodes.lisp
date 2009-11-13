@@ -12,6 +12,10 @@ for that here and return count of extra args"
       ((or (= kind avm2-asm::+rt-qname-l+)
            (= kind avm2-asm::+rt-qname-la+))
        2)
+      ;; handle array indexing hack
+      ((and (= kind avm2-asm::+multiname-l+)
+            (= (second mn) 1))
+       1)
       (t 0))))
 
 ;;; opcode lists:
@@ -20,10 +24,10 @@ for that here and return count of extra args"
 ;;; http://www.libspark.org/svn/as3/ByteCodeDisassembler/org/libspark/disassemble/abc/AbcParser.as
 
 (define-ops
-  ;; name   (args)    opcode    pop push   pop-scope push-scope  local  flags
+  ;; name   (args)    opcode    pop push   pop-scope push-scope  local  flags control-flow-flag label more-labels
   (:breakpoint ()                      #x01  0 0) ;
   (:nop        ()                      #x02  0 0) ;
-  (:throw      ()                      #x03  1 0) ;
+  (:throw      ()                      #x03  1 0  0 0 0 0 :throw) ;
   (:get-super  ((multiname multiname-q30)) #x04  (1+ (runtime-name-count multiname)) 1)
   (:set-super  ((multiname multiname-q30)) #x05  (+ 2 (runtime-name-count multiname)))
   (:dxns       ((string string-u30))    #x06  0 0 0 0 0 +set-dxns+)
@@ -32,22 +36,22 @@ for that here and return count of extra args"
   (:label      ()                      #x09  0 0)
   ;; #x0a
   ;; #x0b
-  (:if-nlt     ((offset ofs24))          #x0c  2 0)
-  (:if-nle     ((offset ofs24))          #x0d  2 0)
-  (:if-ngt     ((offset ofs24))          #x0e  2 0)
-  (:if-nge     ((offset ofs24))          #x0f  2 0)
-  (:jump         ((offset ofs24)) #x10  0 0)
-  (:if-true      ((offset ofs24)) #x11  1 0)
-  (:if-false     ((offset ofs24)) #x12  1 0)
-  (:if-eq        ((offset ofs24)) #x13  2 0)
-  (:if-ne        ((offset ofs24)) #x14  2 0)
-  (:if-lt        ((offset ofs24)) #x15  2 0)
-  (:if-le        ((offset ofs24)) #x16  2 0)
-  (:if-gt        ((offset ofs24)) #x17  2 0)
-  (:if-ge        ((offset ofs24)) #x18  2 0)
-  (:if-strict-eq ((offset ofs24)) #x19  2 0)
-  (:if-strict-ne ((offset ofs24)) #x1a  2 0)
-  (:lookup-switch ((default-offset ofs24) (offsets counted-ofs24)) #x1b  1 0)
+  (:if-nlt     ((offset ofs24))          #x0c  2 0   0 0 0 0 nil offset)
+  (:if-nle     ((offset ofs24))          #x0d  2 0   0 0 0 0 nil offset)
+  (:if-ngt     ((offset ofs24))          #x0e  2 0   0 0 0 0 nil offset)
+  (:if-nge     ((offset ofs24))          #x0f  2 0   0 0 0 0 nil offset)
+  (:jump         ((offset ofs24)) #x10  0 0   0 0 0 0 t offset)
+  (:if-true      ((offset ofs24)) #x11  1 0   0 0 0 0 nil offset)
+  (:if-false     ((offset ofs24)) #x12  1 0   0 0 0 0 nil offset)
+  (:if-eq        ((offset ofs24)) #x13  2 0   0 0 0 0 nil offset)
+  (:if-ne        ((offset ofs24)) #x14  2 0   0 0 0 0 nil offset)
+  (:if-lt        ((offset ofs24)) #x15  2 0   0 0 0 0 nil offset)
+  (:if-le        ((offset ofs24)) #x16  2 0   0 0 0 0 nil offset)
+  (:if-gt        ((offset ofs24)) #x17  2 0   0 0 0 0 nil offset)
+  (:if-ge        ((offset ofs24)) #x18  2 0   0 0 0 0 nil offset)
+  (:if-strict-eq ((offset ofs24)) #x19  2 0   0 0 0 0 nil offset)
+  (:if-strict-ne ((offset ofs24)) #x1a  2 0   0 0 0 0 nil offset)
+  (:lookup-switch ((default-offset ofs24) (offsets counted-ofs24)) #x1b  1 0   0 0 0 0 t default-offset offsets)
   (:push-with    ()             #x1c 1 0 0 1)
   (:pop-scope    ()             #x1d 0 0 1 0)
   (:next-name    ()             #x1e  2 1)
@@ -94,8 +98,8 @@ for that here and return count of extra args"
   (:call-static     ((method-index method-u30) (arg-count u30))    #x44  (+ 1 arg-count) 1)
   (:call-super      ((multiname multiname-q30) (arg-count u30)) #x45  (+ 1 arg-count (runtime-name-count multiname)) 1)
   (:call-property   ((multiname multiname-q30) (arg-count u30)) #x46  (+ 1 arg-count (runtime-name-count multiname)) 1)
-  (:return-void     ()                                      #x47 0 0)
-  (:return-value    ()                                      #x48 1 0)
+  (:return-void     ()                                      #x47 0 0  0 0 0 0 :return)
+  (:return-value    ()                                      #x48 1 0  0 0 0 0 :return)
   (:construct-super ((arg-count u30))                       #x49  (1+ arg-count) 0)
   (:construct-prop  ((multiname multiname-q30) (arg-count u30)) #x4a  (+ 1 arg-count (runtime-name-count multiname)) 1)
   ;;(:call-super-id ?                                           #x4b ? ?)

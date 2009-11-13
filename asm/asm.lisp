@@ -12,6 +12,7 @@
 ;;;     opcodes in a hash...
 (defparameter *opcodes* (make-hash-table))
 (defparameter *disassemble-opcodes* (make-hash-table))
+(defparameter *stack-effects-opcodes* (make-hash-table))
 
 (defparameter +need-args+ #x01)
 (defparameter +need-activation+ #x02)
@@ -43,13 +44,13 @@
 (defparameter *current-method* nil)
 (defparameter *code-offset* 0)
 
-(defun assemble (forms)
+(defun %assemble (forms)
   "simple assembler, returns sequence of octets containing the
   bytecode corresponding to forms, interns stuff as needed, or
   optionally uses constant pool indices (with no error checking
   currently) when operand is a list of the form (:id ###). "
   (let ((*code-offset* 0))
-    (loop for i in (peephole forms)
+    (loop for i in forms
        for opcode = (gethash (car i) *opcodes*)
        for octets = (when opcode (apply opcode (cdr i)))
        if opcode
@@ -58,6 +59,117 @@
        ;;               i octets *code-offset* (length octets))
        and do (incf *code-offset* (length octets))
        else do (error "invalid opcode ~s " i))))
+
+(defun assemble (forms)
+  (%assemble (peephole forms)))
+
+;;;; fixme: probably should combine validation with assembly, so we
+;;;; can use it for dead code elimination too
+(defun %avm2-validate (peephole-code &key dump)
+  (declare (optimize debug))
+  (let* ((stack-at (make-array (length peephole-code) :initial-element nil))
+         (label-info (make-hash-table))
+         (min-stack 0)
+         (min-scope 0)
+         (max-stack 0)
+         (max-scope 0)
+         ;; work list = code , index, stack, scope
+         (work-list (list (list peephole-code 0 0 0))))
+    ;; to validate the stack stuff:
+    ;;  first we make a pass through and collect positions of all labels
+    ;;  then we start from beginning, and at each op, update info for that op
+    ;;    if a jump, and label doesn't have info yet, push it onto work list
+    ;;      and update info for dest label
+    ;;    if unconditional jump/throw/ret, or already processed instruction,
+    ;;    if work list is empty, we are done
+    ;;    else pop work list and restart from there
+    (loop for here on peephole-code
+       for (op . args) = (car here)
+       for i from 0
+       for fun = (gethash op *stack-effects-opcodes*)
+       for (pop push pop-scope push-scope local flags
+                control-flow labels)
+       = (multiple-value-list (if fun (apply fun args)))
+       unless fun do (format t "no stack-check fun for op ~s?" op)
+       when (eq control-flow :label)
+       do (setf (gethash labels label-info) (list here i nil))
+       when (eq control-flow :exception)
+       do (setf (gethash labels label-info) (list here i nil))
+         (push (list here i 0 0) work-list))
+
+    (setf work-list (nreverse work-list))
+    (flet ((check-label (label stack scope)
+             (destructuring-bind (here index info) (gethash label label-info)
+               (if info
+                   ;; if we have seen a ref to this label (actual label
+                   ;; or a jump to it) make sure we have the same stack depth
+                   (assert (and (= stack (car info))
+                                (= scope (cdr info)))
+                           () "stack mismatch at label ~s expected ~s/~s got ~s"
+                           label stack scope info)
+                   (progn
+                     ;; if we haven't seen the label yet, add it to worklist
+                     (push (list here index stack scope)
+                           work-list)
+                     ;; and update stack info
+                     (setf (third (gethash label label-info))
+                           (cons stack scope)))))))
+      (loop
+         for (code start stack scope) = (pop work-list)
+         for pass from 0
+         with pass-max =  (length peephole-code)
+         while code
+         do (assert (< pass pass-max))
+         do (loop
+               for (op . args) = (pop code)
+               for i from start
+               for fun = (gethash op *stack-effects-opcodes*)
+               for (pop push pop-scope push-scope local flags
+                        control-flow labels)
+                 = (multiple-value-list
+                    (if fun (apply fun args)))
+               for info = (aref stack-at i)
+               unless fun do (format t "no stack check fun for op ~s?" op)
+               ;; if we have already seen this entry, we are done current scan
+               when info
+               do (assert  (and (= stack (car info))
+                                (= scope (cdr info)))
+                           () "stack mismatch at instr ~s expected ~s/~s got ~s"
+                           (cons op args) stack scope info)
+               and return nil
+               ;; exceptions clear the stack, so handle specially
+               when (eq control-flow :exception)
+               do (setf stack (- push pop)
+                        scope (- push-scope pop-scope))
+               else do
+                 (incf stack (- push pop))
+                 (incf scope (- push-scope pop-scope))
+               ;; update info for this index
+                 (setf (aref stack-at i) (cons stack scope))
+               ;; update min/max
+                 (setf min-stack (min min-stack stack)
+                       min-scope (min min-scope scope)
+                       max-stack (max max-stack stack)
+                       max-scope (max max-scope scope))
+                 (when (< stack 0) (format t "stack underflow? = ~s ~s" stack min-stack))
+
+               ;; check/update label info
+               do (mapcar (lambda (x)
+                            (check-label x stack scope))
+                          (if (listp labels) labels (list labels)))
+               when (member control-flow '(t :throw :return))
+               return nil)))
+    (when (or (minusp min-stack) (minusp min-scope) dump)
+      (format t "min-stack = ~s, min-scope = ~s~%" min-stack min-scope)
+      (loop
+         for op in peephole-code
+         for (stack . scope) across stack-at
+         do (format t "(~{~s~^ ~})   ====  ~s/ ~s~%"
+                         op stack scope)))
+    (values max-stack max-scope)))
+
+(defun avm2-validate (code &key dump)
+  (avm2-validate (peephole code) :dump dump))
 
 (defun assemble-method-body (forms &key (init-scope 0)
                              (max-scope 1 max-scope-p)
@@ -70,9 +182,14 @@
                                          'init-scope-depth init-scope
                                          'max-scope-depth init-scope
                                          'current-scope init-scope
-                                         'traits traits)))
+                                         'traits traits))
+        v-stack
+        v-scope
+        (p-code (peephole forms)))
+    (setf (values v-stack v-scope)
+          (%avm2-validate p-code))
     (setf (code *current-method*)
-          (assemble forms))
+          (%assemble p-code))
     (when max-stack-p
       (setf (max-stack *current-method*) max-stack))
     (when max-scope-p
@@ -95,6 +212,8 @@
             do (setf (from ex)  (ensure-label (from ex))
                      (to ex)    (ensure-label (to ex))
                      (target ex)(ensure-label (target ex)))))
+    (setf (max-stack *current-method*) v-stack)
+    (setf (max-scope-depth *current-method*) v-scope)
     *current-method*))
 
 
@@ -196,7 +315,7 @@
 
 (defun avm2-disassemble (sequence &key (start 0))
   (loop
-     for length = (length sequence)
+     with length = (length sequence)
      with op = nil
      for byte = (elt sequence start)
      for dis = (gethash byte *disassemble-opcodes*)
@@ -213,6 +332,7 @@
      else do (error "invalid byte ~s at ~d " byte start)
      unless start do (error "no start?")
      while (< start length)))
+
 
 
 ;;; these don't actually work in general, since they don't take
@@ -458,7 +578,8 @@
            (exception-u30 decode-variable-length) ;; todo: add lookup
 )))
     (flet ((defop (name args opcode
-                        &optional (pop 0) (push 0) (pop-scope 0) (push-scope 0) (local 0) (flag 0))
+                        &optional (pop 0) (push 0) (pop-scope 0) (push-scope 0) (local 0) (flag 0) &rest ignore)
+             (declare (ignore ignore))
              `(setf (gethash ',name *opcodes*)
                     (flet ((,name (,@(mapcar 'car args))
 			     ,@(when args `((declare (ignorable ,@(mapcar 'car args)))))
@@ -483,7 +604,7 @@
 			     ,@(unless (and (numberp flag) (zerop flag))
 				       `((when *current-method*
 					   (setf (flags *current-method*)
-						 (logior ,local (flags *current-method*))))))
+						 (logior ,flag (flags *current-method*))))))
 			     ,(if (null args)
 				  `(list ,opcode)
 				  `(append
@@ -514,15 +635,54 @@
                                                                    `((,lookup junk))))))))
                                start)))
                       #',name
-))))
+)))
+           ;;
+           (defop-stack (name args opcode &optional (pop 0) (push 0) (pop-scope 0) (push-scope 0) (local nil) (flag 0) control-flow label more-labels &aux ignores)
+             `(setf (gethash ,name *stack-effects-opcodes*)
+                    (flet ((,name (,@(mapcar 'car args))
+                             ,@ (when args
+                                  `((declare (ignorable ,@(mapcar 'car args)))))
+                                (multiple-value-call 'values
+                               (let ,(loop with op-name = name
+                                        for (name type) in args
+                                        for interner = (third (assoc type coders))
+                                        when interner
+                                        collect `(,name (,interner ,name))
+                                        and do (push name ignores)
+                                        when (eq 'ofs24 type)
+                                        collect `(,name (label-to-offset ,name ,op-name))
+                                        and do (push name ignores)
+                                        when (eq 'counted-ofs24 type)
+                                        collect `(,name (labels-to-offsets ,name))
+                                        and do (push name ignores))
+                                 ,@(when ignores
+                                         `((declare (ignorable ,@ignores))))
+                                 (values ,pop ,push
+                                         ,pop-scope ,push-scope
+                                         ,local
+                                         ,flag
+                                         ,control-flow))
+                               ,(if more-labels
+                                    `(cons ,label
+                                           ,more-labels)
+                                    (when label
+                                      `(list ,label))))))
+                      #',name))))
       `(progn
          ,@(loop for op in ops
               collect (apply #'defop op)
-              collect (apply #'defop-disasm op))))))
+              collect (apply #'defop-disasm op)
+              collect (apply #'defop-stack op))))))
 
 
 (defmacro define-asm-macro (name (&rest args) &body body)
   `(setf (gethash ',name *opcodes*)
+         (lambda (,@args)
+           ,@(if (stringp (car body))
+                 (cdr body) ;; drop docstring ;TODO: store docstring somewhere?
+                 body))))
+(defmacro define-asm-macro-stack (name (&rest args) &body body)
+  `(setf (gethash ',name *stack-effects-opcodes*)
          (lambda (,@args)
            ,@(if (stringp (car body))
                  (cdr body) ;; drop docstring ;TODO: store docstring somewhere?
@@ -533,6 +693,9 @@
   (push (cons name *code-offset*) (label *current-method*))
   (assemble `((:label))))
 
+(define-asm-macro-stack :%label (name)
+  (values 0 0  0 0  0 0 :label name))
+
 
 (define-asm-macro :%dlabel (name)
   ;; !!!! if this gets moved somewhere before the peephole optimizer, make
@@ -542,6 +705,9 @@
 jump instruction in the bytecode"
   (push (cons name *code-offset*) (label *current-method*))
   nil)
+(define-asm-macro-stack :%dlabel (name)
+  (values 0 0  0 0  0 0 :label name))
+
 
 (define-asm-macro :%exception (name start end &optional (type-name 0) (var-name 0))
   ;; !!!! if this gets moved somewhere before the peephole optimizer, make
@@ -568,6 +734,10 @@ jump instruction in the bytecode"
     (push (cons name index)
           (exception-names *current-method*)))
   nil)
+(define-asm-macro-stack :%exception (name start end &optional (type-name 0) (var-name 0))
+  (declare (ignorable name start end type-name var-name))
+  ;; fixme: enforce 0 stack depth at beginning of exception block?
+  (values 0 1  0 0  0 0 :exception nil))
 
 
 (defmacro with-assembler-context (&body body)

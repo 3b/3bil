@@ -127,8 +127,9 @@
                      (case (length x)
                        (0 t)
                        (1 `(%asm
-                            (:@ ,a)       ;; types?
-                            (:@ ,(first x)) ;; types?
+                            (:%push-arglist
+                             (:@ ,a)       ;; types?
+                             (:@ ,(first x))) ;; types?
                             (,',opcode)))
                        (t
                         ;; fixme: expand inline for reasonable arglist lengths?

@@ -565,6 +565,7 @@
           a)
         (+ 1 (block xxfoo2 (flet ((bar () (return-from xxfoo2 100) 1000)) (bar) 10000)))
         (+ (block xxfoo3 (flet ((bar () (return-from xxfoo3 100) 1000)) (bar) 10000)) 1)
+        (< 1 (block xxfoo3 (flet ((bar () (return-from xxfoo3 100) 1000)) (bar) 10000)))
         "more tests")
 
 
