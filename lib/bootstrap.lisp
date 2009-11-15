@@ -103,19 +103,54 @@
         `(%setf ,place ,value))
 
 
-      ;; handle 0-2 arg + so we can use incf to implement dotimes and +
-      ;; fixme: genearlize this to more args, other ops
-      (define-compiler-macro + (&whole w &rest x)
-        (cond
-          ((zerop (length x)) `(quote 0))
-          ((= 1 (length x)) (car x))
-          ;; todo: optimize +1 case, or adding 2 literal numbers
-          ((= 2 (length x)) `(%asm
-                              (:%push-arglist
-                               (:@ ,(first x)) ;; types?
-                               (:@ ,(second x))) ;; types?
-                              (:add)))
-          (t w)))
+      ;; inline math ops, we need at least 0-2 arg versions, since the full
+      ;; version is implemented in terms of it
+      (defmacro define-transitive-binops (&body ops)
+        (let ((i (gensym)))
+          `(progn
+             ,@(loop for (op opcode identity unary-op) in ops
+                  collect
+                    `(define-compiler-macro ,op (&whole w &rest x)
+                       (format t "~%expanding compiler macro for ~s~%" w)
+                       (prin1
+                        (case (length x)
+                          (0 ,identity)
+                          (1 ,(cond
+                               ((keywordp unary-op)
+                                ``(%asm
+                                   (:@ ,(first x))
+                                   (,',unary-op)))
+                               ;; fixme: this special case for / is a bit ugly
+                               ((numberp unary-op)
+                                ``(%asm
+                                   (:@ ,(first x))
+                                   (:@ ,unary-op)
+                                   (:swap)
+                                   (,',opcode)))
+                               (unary-op
+                                (error "can't compile unary op ~s in define-transitive-binops?" unary-op))
+                               (t
+                                `(first x))))
+                          (2 `(%asm
+                               (:%push-arglist
+                                (:@ ,(first x))
+                                (:@ ,(second x)))
+                               (,',opcode)))
+                          ;; fixme: should we call stop inlining at some arg count?
+                          (t
+                           `(,',op (,',op ,(first x) ,(second x))
+                                   ,@(nthcdr 2 x))))))))))
+
+      (define-transitive-binops
+          (+ :add 0)
+          (- :subtract nil :negate)
+        (* :multiply 1)
+        (/ :divide nil 1.0)
+        (logior :bit-or 0)
+        (logxor :bit-xor 0)
+        (logand :bit-and -1)
+        ;; (logeqv ??? -1)
+        )
 
       (defmacro define-compare-binops (&body ops)
         (let ((i (gensym))

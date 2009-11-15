@@ -14,7 +14,6 @@
            (ftrace
             (s+ "[" ":" (/ (- (%new- flash:date) ,now) 1000.0) "sec]")))))
 
-
     ;; fixme: use new compiler (see :constructor option to defclass-swf)
     #+nil
     (defmacro swf-constructor (class lambda-list &body body)
@@ -44,6 +43,15 @@
        (:@ array)
        (:@ index)
        (:get-property (:multiname-l "" ""))))
+
+    (defun (setf svref) (value array index)
+      (%asm
+       (:@ array)
+       (:@ index)
+       (:@ value)
+       (:set-property (:multiname-l "" ""))
+       (:push-null))
+      value)
 
     (defun aref (a &arest subscripts)
       (let ((i (%aref-1 subscripts 0)))
@@ -128,7 +136,6 @@
                                         (:@ ,',index)
                                         (:coerce-i)
                                         (:next-value)))))
-                           (ftrace (s+ "hash-it : " next "/" key "/" val))
                            (setf ,',index next)
                            (setf ,',values (%array next-p key val )))))
              ,@body))))

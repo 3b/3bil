@@ -786,15 +786,23 @@
       (let ((start (gensym "UWP-START-"))
             (end (gensym "UWP-END-"))
             (name (gensym "UWP-NAME-"))
-            (jump (gensym "UWP-JUMP-")))
+            (jump (gensym "UWP-JUMP-"))
+            (end-2 (gensym "UWP-END2-")))
         ;;fixme: may need to store value in a temp instead of leaving on stack?
         `((:%dlabel ,start)
           (:comment "body start")
-          ,@(recur protected)
-          ;;,@(coerce-type)
+          ;; fixme: probably should store this in a typed local so it
+          ;; doesn't need to match the exception object on the stack
+          ;; at the cleanup label once we start using more specific
+          ;; types
+          ,@ (let ((*ir1-dest-type* t))
+               (recur protected))
           (:comment "body end")
           (:%dlabel ,end)
-          (:jump ,jump) ;; normal exit
+          ;; normal exit
+          (:push-false)
+          ;;(:set-local ,(get-local-index nlx-flag))
+          (:jump ,jump)
           ;; start exception handler block
           (:%exception ,name ,start ,end 0) ;; catch anything
           ;; restore scope stack
@@ -803,18 +811,22 @@
           ,@(when *current-closure-vars*
                   `((:get-local ,(get-local-index *activation-local-name*))
                     (:push-scope)))
-          ;; exception cleanup body
-          ,@(let ((*ir1-dest-type* :ignored))
-                 (loop for f in cleanup
-                       append (recur f)))
-          ;;(:pop)
-          (:throw)
-          ;; fixme: verify that duplicating uwp cleanup doesn't cause any problems
-          ;; normal exit cleanup body
+          ;; we don't want to duplicate the cleanup code (or if we do
+          ;; duplicate it, we need to deal with duplicated labels in
+          ;; the cleanup code), so we set a flag to indicate it should
+          ;; throw the result instead of returning it at the end
+          (:coerce-any)
+          (:push-true)
+          ;; cleanup
           (:%dlabel ,jump)
           ,@(let ((*ir1-dest-type* :ignored))
                  (loop for f in cleanup
                        append (recur f)))
+          ;; top of stack = exception flag, next = exception or result
+          (:if-false ,end-2)
+          (:throw)
+          (:%dlabel ,end-2)
+          ,@(coerce-type)
           (:comment "handler end"))))
 
      ((%compilation-unit var-info tag-info fun-info lambdas)

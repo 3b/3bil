@@ -90,9 +90,13 @@
       (defun tan (radians)
         (flash:math.tan radians))
 
+      (define-compiler-macro min (&rest x)
+        `(flash:math.min ,@x))
       (defun min (&arest numbers)
         (%apply (function flash:math.min) nil numbers))
 
+      (define-compiler-macro max (&rest x)
+        `(flash:math.max ,@x))
       (defun max (&arest numbers)
         (%apply (function flash:math.max) nil numbers))
 

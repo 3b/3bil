@@ -150,7 +150,11 @@
     (defmacro %get-property-static (class prop)
       `(%asm
         (:get-global-scope)
-        (:get-property ,class)
+        (:get-property ,(or (swf-name (find-swf-class class)) class))
+        (:get-property ,prop)))
+    (defmacro %get-lex-property-static (class prop)
+      `(%asm
+        (:get-lex ,(or (swf-name (find-swf-class class)) class))
         (:get-property ,prop)))
     (defmacro %set-property-static (class prop value)
       `(%asm

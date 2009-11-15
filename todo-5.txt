@@ -1,22 +1,42 @@
+~CAR/CDR NIL (reimplement %type-of)
+~update samples, delete outdated samples/tests
+fix .asd names (combine some of them?)
+clean up commented junk in ctests.lisp
+  convert ctests.lisp to use fu: stuff
+rename %new- -> %new, check for other things named oddly due to
+  conflits with old compiler
+
+fix name/exports of ex. flash::flash.sampler.start-sampling
+static property accessors?
+--
 lambda lists
 ~  &arest
   &optional
   &rest,&key?
 
-clean up boostrap.lisp compiler macros for math ops (convert from
-  old math-ops.lisp?)
+dead code elimination
+  (possibly could do some with peephole, skip everything from jump to
+   label or exception? probably safer to build on validation pass though)
 
-fix .asd names (combine some of them?)
-~?port libs to new compiler
-clean up old junk
-~?remove old compiler
-update tests
-(testing lib? (run on host and target and compare results?))
+fix :kill instructions in dead code ?
+
+
 document ffi gen?
-clean up line endings
 documentation?
 more libs?
 figure out (+ document/prioritize) what is missing from CL
+
+clean up boostrap.lisp compiler macros for math ops (convert from
+  old math-ops.lisp?)
+
+-
+
+~port libs to new compiler
+~clean up old junk
+~remove old compiler
+~update tests
+~(testing lib? (run on host and target and compare results?))
+~clean up line endings
 
 some way to split out host/target function definitions?
 
@@ -62,7 +82,7 @@ figure out if local functions can be safely called with :static-call
 
 ~accessors for ffi
 
-make sure setf is using the macro instead of property hack?
+~make sure setf is using the macro instead of property hack?
 
 package stuff
   make sure ffi classes inherit proper symbols (so stuff from superclasses
@@ -175,9 +195,9 @@ setf
   ~~~flet/labels
   global setf functions
 
-global macros/global environment
+~?global macros/global environment
 
-lambda list keywords (&arest and &optional at least)
+~?lambda list keywords (&arest and &optional at least)
 
 ~~~jumps out of function call arglists
 
@@ -185,10 +205,10 @@ code cleanup
 
 implement CL: stuff
 
-inlining/compiler macros/etc
+~inlining/compiler macros/etc
   inline cl stuff
 
-real test framework, regression tests
+~?real test framework, regression tests
 
 arg count checking?
 
@@ -197,16 +217,16 @@ skip :coerce_foo when value is known to be correct type
 store&use type info, allow type declarations
   (maybe some simple type propagation too?)
 
-enforce same type on all exits from a block, or branches in an if
+~?enforce same type on all exits from a block, or branches in an if
   (lazy way = specify coerce_a when no type specified externally,
    soem minimal type checking would be nicer though)
 
 verifier in asm
   (possibly add fixer for some simple type errors too?)
 
-top level closures?
-    (let ((a 1))
-      (defun a+1 () (incf a)))
+~top level closures?
+~    (let ((a 1))
+~      (defun a+1 () (incf a)))
 
 get rid of unused bindings (exit-point in particular)
 
@@ -221,7 +241,7 @@ http://www.lispworks.com/documentation/HyperSpec/Body/03_af.htm
 http://www.lispworks.com/documentation/HyperSpec/Body/05_b.htm
 
 ---
-ffi constants %flash.ui:+left+, %flash.ui:+right+ conflicting between
-    Keyboard:LEFT and KeyLocation:LEFT
+~ffi constants %flash.ui:+left+, %flash.ui:+right+ conflicting between
+~    Keyboard:LEFT and KeyLocation:LEFT
 
 setf slot-value

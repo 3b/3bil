@@ -113,7 +113,13 @@
                            work-list)
                      ;; and update stack info
                      (setf (third (gethash label label-info))
-                           (cons stack scope)))))))
+                           (cons stack scope))))))
+           (dump-asm ()
+             (loop
+                for op in peephole-code
+                for (stack . scope) across stack-at
+                do (format t "(~{~s~^ ~})   ====  ~s/ ~s~%"
+                           op stack scope))))
       (loop
          for (code start stack scope) = (pop work-list)
          for pass from 0
@@ -132,10 +138,11 @@
                unless fun do (format t "no stack check fun for op ~s?" op)
                ;; if we have already seen this entry, we are done current scan
                when info
-               do (assert  (and (= stack (car info))
-                                (= scope (cdr info)))
-                           () "stack mismatch at instr ~s expected ~s/~s got ~s"
-                           (cons op args) stack scope info)
+               do (unless (and (= stack (car info))
+                               (= scope (cdr info)))
+                    (dump-asm)
+                    (error "stack mismatch at instr ~s expected ~s/~s got ~s"
+                           (cons op args) stack scope info))
                and return nil
                ;; exceptions clear the stack, so handle specially
                when (eq control-flow :exception)
@@ -158,15 +165,11 @@
                             (check-label x stack scope))
                           (if (listp labels) labels (list labels)))
                when (member control-flow '(t :throw :return))
-               return nil)))
-    (when (or (minusp min-stack) (minusp min-scope) dump)
-      (format t "min-stack = ~s, min-scope = ~s~%" min-stack min-scope)
-      (loop
-         for op in peephole-code
-         for (stack . scope) across stack-at
-         do (format t "(~{~s~^ ~})   ====  ~s/ ~s~%"
-                         op stack scope)))
-    (values max-stack max-scope)))
+               return nil))
+      (when (or (minusp min-stack) (minusp min-scope) dump)
+        (format t "min-stack = ~s, min-scope = ~s~%" min-stack min-scope)
+        (dump-asm))
+      (values max-stack max-scope))))
 
 (defun avm2-validate (code &key dump)
   (avm2-validate (peephole code) :dump dump))
