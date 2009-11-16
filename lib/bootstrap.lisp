@@ -110,36 +110,34 @@
           `(progn
              ,@(loop for (op opcode identity unary-op) in ops
                   collect
-                    `(define-compiler-macro ,op (&whole w &rest x)
-                       (format t "~%expanding compiler macro for ~s~%" w)
-                       (prin1
-                        (case (length x)
-                          (0 ,identity)
-                          (1 ,(cond
-                               ((keywordp unary-op)
-                                ``(%asm
-                                   (:@ ,(first x))
-                                   (,',unary-op)))
-                               ;; fixme: this special case for / is a bit ugly
-                               ((numberp unary-op)
-                                ``(%asm
-                                   (:@ ,(first x))
-                                   (:@ ,unary-op)
-                                   (:swap)
-                                   (,',opcode)))
-                               (unary-op
-                                (error "can't compile unary op ~s in define-transitive-binops?" unary-op))
-                               (t
-                                `(first x))))
-                          (2 `(%asm
-                               (:%push-arglist
+                  `(define-compiler-macro ,op (&whole w &rest x)
+                     (case (length x)
+                       (0 ,identity)
+                       (1 ,(cond
+                            ((keywordp unary-op)
+                             ``(%asm
                                 (:@ ,(first x))
-                                (:@ ,(second x)))
-                               (,',opcode)))
-                          ;; fixme: should we call stop inlining at some arg count?
-                          (t
-                           `(,',op (,',op ,(first x) ,(second x))
-                                   ,@(nthcdr 2 x))))))))))
+                                (,',unary-op)))
+                            ;; fixme: this special case for / is a bit ugly
+                            ((numberp unary-op)
+                             ``(%asm
+                                (:@ ,(first x))
+                                (:@ ,unary-op)
+                                (:swap)
+                                (,',opcode)))
+                            (unary-op
+                             (error "can't compile unary op ~s in define-transitive-binops?" unary-op))
+                            (t
+                             `(first x))))
+                       (2 `(%asm
+                            (:%push-arglist
+                             (:@ ,(first x))
+                             (:@ ,(second x)))
+                            (,',opcode)))
+                       ;; fixme: should we call stop inlining at some arg count?
+                       (t
+                        `(,',op (,',op ,(first x) ,(second x))
+                                ,@(nthcdr 2 x)))))))))
 
       (define-transitive-binops
           (+ :add 0)
