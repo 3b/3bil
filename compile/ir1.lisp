@@ -6,116 +6,6 @@
 ;;;   spill stack to locals around catch blocks
 ;;;
 
-;;; convert to ir1:
-;;;   (form . plist) instead of (form . args)
-;;;   ex: (block foo bar baz (hoge piyo)) ->
-;;;       (block name foo body (bar baz (hoge piyo)))
-;;; note: using non-keyword symbols for tags for now, so we can bind
-;;;       them to symbol-macros in define-structured-walker for later passes
-(define-walker ir0->ir1 ()
-  :atoms ((t (error " shouldn't be seeing atoms in ir0->ir1, got ~s" atom)))
-  :form-var whole
-  :forms
-  (((quote form) `(quote value ,form))
-
-   ((%normal-call op &rest args)
-    `(%call type :normal name ,op args ,(recur-all args)))
-   ((%local-call op &rest args)
-    `(%call type :local name ,(recur op) args ,(recur-all args)))
-   ((%setf-call op &rest args)
-    `(%call type :setf name ,op args ,(recur-all args)))
-
-   ((%bind names values body)
-    `(%bind vars ,names values ,(recur-all values) body ,(recur-all body)))
-
-   ((%local-ref name)
-    `(%ref type :local var ,name))
-   ((%lex-ref object name)
-    `(%ref type :lex var (,object ,name)))
-   ((%local-set name value)
-    `(%set type :local var ,name value ,(recur value)))
-
-   ((%named-lambda name flags args &rest body)
-    `(%named-lambda name ,name
-         flags ,flags
-         lambda-list ,args
-         body ,(recur-all body)))
-
-   ((function name)
-    `(function type :normal name ,name))
-   ((%local-function name)
-    `(function type :local name ,name))
-
-   ((block name &rest forms)
-    `(block name ,name forms ,(recur-all forms)))
-   ((return-from name &optional value)
-    `(return-from name ,name value ,(recur value)))
-
-   ((tagbody &rest forms)
-    `(tagbody forms ,(recur-all forms :test #'consp)))
-   ((go tag)
-    `(go tag ,tag))
-
-   ((catch tag &rest forms)
-    `(catch tag ,(recur tag) forms ,(recur-all forms)))
-   ((throw tag result-form)
-    `(throw tag ,(recur tag) result-form ,(recur result-form)))
-
-   ((if a b c)
-    `(if condition ,(recur a) then ,(recur b) else ,(recur c)))
-
-   ((progn &body body)
-    `(progn body ,(recur-all body)))
-
-   ((unwind-protect protected-form &rest cleanup-forms)
-    `(unwind-protect protected ,(recur protected-form)
-                     cleanup ,(recur-all cleanup-forms)))
-
-   ((%compilation-unit &rest lambdas)
-    `(%compilation-unit lambdas ,(recur-all lambdas)))
-
-   ((%asm &rest forms)
-    (labels ((recur-%asm (ops)
-               (loop for i in ops
-                  when (eq (car i) :@)
-                  collect `(:@ ,(recur (second i)) ,@(cddr i))
-                  else when (eq (car i) :%push-arglist)
-                  collect `(:%push-arglist
-                            ,@(recur-%asm (cdr i)))
-                  else collect i)))
-      `(%asm forms ,(recur-%asm forms))))
-
-   ;; todo:
-
-   ;;       ((load-time-value form &optional read-only-p)
-   ;;        `(load-time-value ,(recur form) ,read-only-p))
-   ;;       ((eval-when (&rest when) &rest forms)
-   ;;        `(eval-when ,when ,@(recur-all forms)))
-   ;;       ((locally &rest declarations-and-forms)
-   ;;        `(locally ,@(recur-all declarations-and-forms)))
-   ;;       ((multiple-value-call function-form &rest forms)
-   ;;        ;; fixme: is this right?
-   ;;        `(multiple-value-call ,(recur function-form) ,@(recur-all forms)))
-   ;;       ((the value-type form)
-   ;;        `(the ,value-type ,(recur form)))
-
-   ;;       ((multiple-value-prog1 first-form &rest forms)
-   ;;        `(multiple-value-prog1 ,(recur first-form) ,@(recur-all forms)))
-   ;;       ((progv symbols values &rest forms)
-   ;;        `(progv
-   ;;             (,@(recur-all symbols))
-   ;;             (,@(recur-all values))
-   ;;           ,@(recur-all forms)))
-   ;;
-   ;;       ;; hack to simplify handling of places where declarations are allowed
-   ;;       ;; fixme: add a declaration validation pass or something
-   ;;       ((declare &rest declarations)
-   ;;        `(declare ,declarations))
-   ;;
-   ;;       ;; anything else, evaluate all args
-   ;;       (t
-   ;;        `(,(car whole) ,@(recur-all (cdr whole))))
-))
 (defparameter *ir1-var-info* nil)
 (defparameter *ir1-tag-info* nil)
 (defparameter *ir1-fun-info* nil)
@@ -806,7 +696,6 @@
         do (when *ir1-verbose* (format t "pass ~s :~%~s~%-----~%" p f))
         finally (return f)))
 (defparameter *ir1-passes*  '(ir0-minimal-compilation-etc
-                              ir0->ir1
                               ir1-add-exit-points
                               ir1-closure-scopes
                               ;;ir1-find-nlx-tags
