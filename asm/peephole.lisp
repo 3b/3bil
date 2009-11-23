@@ -115,6 +115,13 @@ optimized version"
       (cons next rest)
       :keep))
 
+;;; new-object 0 + pop -> () ;; (mostly unused exit points)
+(def-peephole :new-object 2 ((nil count) pop &rest rest)
+  (if (and (eql (car pop) :pop)
+           (zerop count))
+      rest
+      :keep))
+
 
 ;;; less-than/greater-than/equals + if-true/if-false -> if-lt/etc
 ;;; fixme: generalize/combine these

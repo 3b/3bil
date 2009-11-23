@@ -107,6 +107,7 @@
                      vars ,spilled-vars
                      values ,spilled-values
                      closed-vars nil
+                     types ,(mapcar (constantly t) spilled-vars)
                      body
                      ((%call type ,type
                              name ,r-name
@@ -147,6 +148,7 @@
                        `((:@ (%bind vars ,spilled-vars
                                     values ,spilled-values
                                     closed-vars nil
+                                    types ,(mapcar (constantly t) spilled-vars)
                                     body ((%asm
                                            forms
                                            ,(append
@@ -215,6 +217,8 @@
 (define-structured-walker assemble-ir1 null-ir1-walker
   :form-var whole
   :labels ((coerce-type ()
+                        (unless (member *ir1-dest-type* '(:ignored t nil))
+                          (format t "coerce type to ~s~%" *ir1-dest-type*))
                         (cond
                           ((eq *ir1-dest-type* nil) nil)
                           ((eq *ir1-dest-type* :ignored) '((:pop)))
@@ -412,14 +416,15 @@
      ;;  if compiler gets smart enough to tell when nothing can be accessing
      ;;  them through the closure for a section of code? (and assuming going
      ;;  through the closure var is slow enough to care in the first place)
-     ((%bind vars values closed-vars body)
+     ((%bind vars values types closed-vars body)
       `(,@(loop for var in vars
                 for val in values
-                for closed = (member var closed-vars)
-                for var-type = (get-var-info var :type t)
+                for closed = (when var (member var closed-vars))
+                for var-type = (if var (get-var-info var :type t)
+                                   :ignored)
                 append (let ((*ir1-dest-type* var-type))
                          (recur val))
-                collect `(:set-local ,(get-local-index var))
+                when var collect `(:set-local ,(get-local-index var))
                 when closed
                 append `((:get-scope-object ,*current-closure-scope-index*)
                          (:get-local ,(get-local-index var))
@@ -427,7 +432,8 @@
                          (:set-slot ,(get-closure-index var))))
           ,@(recur-progn body)
           ,@(loop for var in vars
-                  collect `(:kill ,(get-local-index var)))))
+               when var
+               collect `(:kill ,(get-local-index var)))))
 
      ;; type = :local , :closure , ???
      ((%ref type var)

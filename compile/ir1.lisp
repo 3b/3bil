@@ -1,5 +1,5 @@
 (in-package :avm2-compiler)
-
+(declaim (optimize debug safety))
 ;;; ir1:
 ;;;   convert to slightly more structured form
 ;;;   extract lambdas, mark closures, nlx, etc,
@@ -36,10 +36,13 @@
    ;;  if compiler gets smart enough to tell when nothing can be accessing
    ;;  them through the closure for a section of code? (and assuming going
    ;;  through the closure var is slow enough to care in the first place)
-   ((%bind vars values closed-vars body)
+   ((%bind vars values types closed-vars body)
+    (assert (= (length vars) (length values) (length types))
+            () "missing vars,values or types in %bind?~% ~s ~s ~s" vars values types)
     `(%bind vars ,vars
             values ,(recur-all values)
             closed-vars ,closed-vars
+            types ,types
             body ,(recur-all body)))
 
    ;; type = :local , :closure , ???
@@ -159,26 +162,25 @@
 (define-structured-walker ir1-add-exit-points null-ir1-walker
   :form-var whole
   :labels ((set-tag-info (var flag value)
-                         (setf (getf (getf *ir1-tag-info* var nil) flag) value)))
+                         (setf (getf (getf *ir1-tag-info* var nil) flag) value))
+           (exit-point-code ()
+                            ;; call to %exit-point-value = ~0.6sec / 1M loop
+                            ;; inline new qname = ~0.5
+                            ;; new-array = ~0.36
+                            ;; new-object = ~0.33
+                            ;; new-activation = ~0.26
+                            ;; nothing = ~0.07
+                            ;; -- currently relies on peephole to
+                            ;;    remove unused exit-points, so fix
+                            ;;    that too if this is changed
+                            `((%asm forms ((:new-object 0))))))
   :forms
   (((block name nlx forms)
     (let ((exit-point-sym (gensym (format nil "EXIT-POINT-~s-" name))))
       (set-tag-info name :exit-point-var exit-point-sym)
       `(%bind vars (,exit-point-sym)
-              ;; call to %exit-point-value = ~0.6sec / 1M loop
-              ;; inline new qname = ~0.5
-              ;; new-array = ~0.36
-              ;; new-object = ~0.33
-              ;; new-activation = ~0.26
-              ;; nothing = ~0.07
-              values (#++(%call type :normal name %exit-point-value args nil)
-                         #++(%asm forms ((:find-property-strict "QName")
-                                      (:push-string "exit")
-                                      (:push-string "point")
-                                      (:construct-prop "QName" 2)))
-                         #++(%asm forms ((:new-array 0)))
-                         (%asm forms ((:new-object 0)))
-                         #++(%asm forms ((:new-activation))))
+              values ,(exit-point-code)
+              types (nil)
               body (,(super whole)))))
    ((tagbody name nlx forms)
     ;; assign a name to the tagbody for use with nlx, and mark all tags with it
@@ -188,7 +190,8 @@
             when (atom i)
             do (set-tag-info i :exit-point-var name))
       `(%bind vars (,name)
-              values ((%call type :normal name %exit-point-value args nil))
+              values ,(exit-point-code)
+              types (nil)
               body ((tagbody name ,name nlx ,nlx forms ,(recur-all forms :test #'consp))))))))
 
 
@@ -221,7 +224,7 @@
                              and collect value into bind-values
                              finally (return (values closed-names closed-values bind-names bind-values))))
    )
-  :forms (((%bind vars values closed-vars body)
+  :forms (((%bind vars values types closed-vars body)
            ;; fixme: we probably only need closed-names, so replace this with remove-if-not or something
            (multiple-value-bind (closed-names closed-values
                                  bind-names bind-values)
@@ -240,12 +243,14 @@
                     vars ,(list name)
                     values ((function type :local name ,name))
                     closed-vars nil
+                    types (t)
                     body
                     ((%named-lambda
                              name ,name
                          flags ()
                          lambda-list ,(cons 'this vars)
                          closed-vars ,(union closed-vars closed-names)
+                         ;; fixme: propagate type decls
                          body ,(recur-all body))
                      (%call type :local
                             name (%ref type :local var ,name )
@@ -256,6 +261,7 @@
                   vars ,vars
                   values ,(recur-all values)
                   closed-vars ,(union closed-vars closed-names)
+                  types ,types
                   body ,(recur-all body)))
                ;; no variables closed over, don't change binding
                (t (super whole)))))
@@ -301,11 +307,12 @@
 
 (define-structured-walker ir1-find-free-vars null-ir1-walker
   :form-var whole
-  :forms (((%bind vars values closed-vars body)
+  :forms (((%bind vars values types closed-vars body)
            (let ((*ir1-local-vars* (append vars *ir1-local-vars*)))
              (prog1
                  `(%bind vars ,vars
                          values ,(recur-all values)
+                         types ,types
                          closed-vars ,closed-vars
                          body ,(recur-all body))
                (setf *ir1-locally-free-vars*
@@ -514,6 +521,9 @@
 ;;FIXME: do the var part sooner, so we can avoid creating closures for vars that are never modified
 (defparameter *ir1-current-fun* nil)
 (defun simple-quote-p (value)
+  (setf value (if (and (consp value) (eq (car value) 'quote))
+                  (getf (cdr value) 'value)
+                  value))
   (typecase value
     (integer t) ;; probably should range check...
     (real t)
@@ -533,11 +543,16 @@
            (set-fun-info (var flag value)
              (setf (getf (getf *ir1-fun-info* var nil) flag) value)))
   :forms
-  (((%bind vars values closed-vars body)
+  (((%bind vars values types closed-vars body)
     (loop for var in vars
           for value in values
+          for type in types
           for simple = (simple-quote-p value)
-          do (set-var-info var :simple-init simple))
+          do (set-var-info var :simple-init simple)
+          when simple
+          do (set-var-info var :simple-init-value value)
+          ;; possibly should distinguish between declared and derived types?
+          do (set-var-info var :type type))
     (super whole))
    ((%named-lambda name flags lambda-list closed-vars body)
     (let ((*ir1-current-fun* name))
@@ -600,8 +615,8 @@
 ;;;    optimizations get smart enough to need multiple passes
 ;;;    anyway...)
 ;;;   remove unused blocks
-;;;-  inline trivial constants
-;;;-  remove unused var bindings?
+;;;~  inline trivial constants
+;;;~  remove unused var bindings?
 ;;;     need to make sure we keep any initialization code unless we can
 ;;;     prove no side effects, so need to either limit to simple cases
 ;;;     for now, or convert to a progn or something...
@@ -612,9 +627,57 @@
   :labels ((get-var-info (var flag &optional default)
              (getf (getf *ir1-var-info* var nil) flag default))
            (get-tag-info (tag flag &optional default)
-             (getf (getf *ir1-tag-info* tag nil) flag default)))
+             (getf (getf *ir1-tag-info* tag nil) flag default))
+           (unused-var-p (var)
+             (and (or (and (zerop (get-var-info var :set-count 0))
+                           (get-var-info var :simple-init))
+                      (and (zerop (get-var-info var :ref-count 0))))
+                  (eq (get-var-info var :ref-type :local) :local))))
   :forms
-  (((%compilation-unit var-info tag-info fun-info lambdas)
+  (((%bind vars values types closed-vars body)
+    (multiple-value-bind (vars values closed-vars types)
+        (loop
+           for var in vars
+           for value in values
+           for type in types
+           for closed = (member var closed-vars)
+             ;; we don't need storage for vars that are either:
+             ;; a. never read (may still need to run code called
+             ;;    for initialization or assignment values though)
+             ;; b. initialized by a simple constant and never written
+             ;; (we keep any closed over vars for now, but should probably
+             ;;  eventually optimize those in some form too)
+             ;; fixme: the 'not read' bit isn't 100% correct, since a
+             ;;   weak hash table could potentially detect the
+             ;;   difference in lifetime but ignoring that for now...
+           for unused = (and (unused-var-p var) (not closed))
+           when unused do (format t "unused var ~s = ~s t=~s u=~s~% cv=~s vi=~s~%"
+                                  var value type unused closed-vars
+                                  (getf *ir1-var-info* var nil))
+           else do (format t "used var ~s = ~s t=~s u=~s~% cv=~s vi=~s~%"
+                           var value type unused closed-vars
+                           (getf *ir1-var-info* var nil))
+           when unused do (setf)
+           collect (if unused nil var) into vars*
+           collect value into values*
+           collect type into types*
+           finally (return (values vars* values* closed-vars types*)))
+      `(%bind vars ,vars
+              values ,(recur-all values)
+              closed-vars ,closed-vars
+              types ,types
+              body ,(recur-all body))))
+
+   ((%ref type var)
+    (if (and (eq type :local) (unused-var-p var))
+        (if (get-var-info var :simple-init)
+            (recur (get-var-info var :simple-init-value))
+            (error "reading from unused non-simple var?"))
+        `(%ref type ,type var ,var)))
+   ((%set type var value)
+    `(%set type ,type var ,var value ,(recur value)))
+
+   ((%compilation-unit var-info tag-info fun-info lambdas)
     (let ((*ir1-tag-info* tag-info)
           (*ir1-var-info* var-info)
           (*ir1-fun-info* fun-info))
@@ -662,9 +725,10 @@
            `(progn body ,(flatten-progn body)))
           ;; possibly should make implicit progn explicit so we don't need
           ;; to handle them here?
-          ((%bind vars values closed-vars body)
+          ((%bind vars values types closed-vars body)
            `(%bind vars ,vars
                    values ,(recur-all values)
+                   types ,types
                    closed-vars ,closed-vars
                    body ,(flatten-progn body)))
 

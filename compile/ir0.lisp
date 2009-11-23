@@ -1,4 +1,5 @@
 (in-package :avm2-compiler)
+(declaim (optimize debug safety))
 
 ;;; ir0: minimal compilation, alphatization, etc
 
@@ -55,13 +56,90 @@
 ;;;         (block name foo body (bar baz (hoge piyo)))
 ;;;     note: using non-keyword symbols for tags for now, so we can bind
 ;;;           them to symbol-macros in define-structured-walker for later passes
+;;    extract type declarations and attach to corresponding bindings
+(defun extract-declarations (forms &key allow-docstrings)
+  (let ((var-types nil) ;; plist: var -> (list of types) ?maybe should be hash?
+        ;; rest are lists of symbols (or (setf foo) for function names)
+        ;; unless otherwise notes
+        (special-vars nil)
+        (inlined nil)   ;; functions
+        (notinline nil) ;; functions
+        ;; ignored:
+        (dx-vars nil)
+        (dx-functions nil)
+        (ftypes nil) ;; plist: functions -> type?
+        (ignored-vars nil)
+        (ignored-functions nil)
+        (ignorable-vars nil)
+        (ignorable-functions nil)
+        #++(optimize nil)) ;; not stored for now...
+    (macrolet ((add-fn/var-decl (x var-list fn-list)
+                 `(cond
+                    ((symbolp ,x) (pushnew ,x ,var-list))
+                    ((and (consp ,x) (eq (car ,x) 'function))
+                     (pushnew (cdr ,x) ,fn-list))
+                    (t (error "got declaration on ~s? expected symbol or (FUNCTION ...)" ,x)))))
+      (flet ((process-declaration (d)
+               (case (car d)
+                 ;; var only
+                 ((special)
+                  (loop for i in (cdr d)
+                     do (pushnew i special-vars)))
+                 ((type)
+                  (loop with type = (second d)
+                     for i in (cddr d)
+                     do (pushnew type (getf var-types i nil))))
+                 ;; var or function
+                 ((dynamic-extent)
+                  (loop for i in (cdr d)
+                     do (add-fn/var-decl i dx-vars dx-functions)))
+                 ((ignore)
+                  (loop for i in (cdr d)
+                     do (add-fn/var-decl i ignored-vars ignored-functions)))
+                 ((ignorable)
+                  (loop for i in (cdr d)
+                     do (add-fn/var-decl i ignorable-vars ignorable-functions)))
+                 ;; function only
+                 ((ftype)
+                  (loop with type = (second d)
+                     for i in (cddr d)
+                     do (pushnew type (getf ftypes i nil))))
+                 ((inline)
+                  (loop for i in (cdr d)
+                     do (pushnew i inlined)))
+                 ((notinline)
+                  (loop for i in (cdr d)
+                     do (pushnew i notinline)))
+                 ((optimize)
+                  (format t "ignoring optimize declaration ~s...~%" d))
+                 ;; anything else is assumed to be a typespec
+                 ;; fixme: allow declaring new declaration specs, and
+                 ;; filter those out here...
+                 (t
+                  (loop with type = (first d)
+                     for i in (cdr d)
+                     do (pushnew type (getf var-types i nil)))))))
+        (loop ;; see 3.4.11 for docstring/declaration stuff
+           with doc = nil
+           for rest on forms
+           for i = (car rest)
+           when (and (consp i) (eq (car i) 'declare))
+           do (loop for d in (cdr i)
+                 do (process-declaration d))
+           else when (and (stringp i) allow-docstrings (not doc))
+           do (setf doc i)
+           else
+           return (values rest
+                          special-vars var-types
+                          notinline inlined
+                          ftypes
+                          ignored-vars ignored-functions
+                          ignorable-vars ignorable-functions))))))
 
 (defun expand-lambda (block-name lambda-name flags lambda-list body recur)
   (multiple-value-bind  (required optional rest keys
                                   allow-other-keys aux arest)
       (parse-lambda-list lambda-list)
-    #++(locals required-args arest-var dsb-list)
-    #++(alphatize-and-split-lambda-list lambda-list)
     ;; fixme: we add the arest arg to the required arglist, so that
     ;; later passes don't think it is a free var (and don't have to
     ;; parse flags to handle it explicitly, but then we have to drop
@@ -119,17 +197,27 @@
   :form-var whole
   :forms
   (((let (&rest bindings) &rest declarations-and-forms)
-    (multiple-value-bind (bindings-names bindings-values)
-        (loop for binding in bindings
-              for name = (if (atom binding) binding (car binding))
-              for init = (if (atom binding) nil (second binding))
-              collect name into names
-              collect (recur init) into values
-              finally (return (values (alphatize-var-names names) values)))
-      `(%bind vars ,(mapcar 'second bindings-names)
-              values ,bindings-values
-              body (, (with-local-vars bindings-names
-                        (recur `(progn ,@declarations-and-forms)))))))
+    (multiple-value-bind (body specials dtypes notinline inline)
+        (extract-declarations declarations-and-forms)
+      (when (or specials dtypes notinline inline)
+        (format t "let: body=~s~% special=~s dt=~s ni=~s i=~s~%"
+                body specials dtypes notinline inline))
+      ;; ---- need to store inline/notinline as 1 thing in env, so we can
+      ;;      override properly
+      (multiple-value-bind (bindings-names bindings-values bindings-types)
+          (loop for binding in bindings
+             for name = (if (atom binding) binding (car binding))
+             for init = (if (atom binding) nil (second binding))
+             collect name into names
+             collect (recur init) into values
+             collect (or (getf dtypes name) t) into types
+             finally (return (values (alphatize-var-names names) values types)))
+        `(%bind vars ,(mapcar 'second bindings-names)
+                values ,bindings-values
+                types ,bindings-types
+                body (, (with-local-vars bindings-names
+                          (recur `(progn ,@body))))))))
+
    ((let* (&rest bindings) &rest declarations-and-forms)
     (let* ((bindings-names nil)
            (bindings-values nil))
@@ -147,6 +235,7 @@
                       (setf bindings-values (nreverse bindings-values))))
       `(%bind vars ,(mapcar 'second bindings-names)
               values ,bindings-values
+              types ,(mapcar (constantly t) bindings-names)
               body (, (with-local-vars bindings-names
                         (recur `(progn ,@declarations-and-forms)))))))
 
@@ -190,6 +279,7 @@
           vars ,(mapcar 'second names)
           values ,(loop for (nil i) in names
                      collect `(function type :local name ,i))
+          types ,(mapcar (constantly t) names)
           body ((progn
                   body
                   (,@(loop
@@ -217,6 +307,7 @@
              vars ,(mapcar 'second names)
              values ,(loop for (nil i) in names
                         collect `(function type :local name ,i))
+             types ,(mapcar (constantly t) names)
              body ((progn
                      body
                      (,@lambdas
@@ -388,15 +479,15 @@
                    args ,(recur-all args)))
           ;; compiler macros
           ;; fixme: add an environment param to compile-macro expansion
-          ((and cmacro (not (eq (setf temp (funcall cmacro whole nil))
-                                whole)))
+          ((and cmacro
+                ;; todo: check not declared notinline...
+                (not (eq (setf temp (funcall cmacro whole nil))
+                         whole)))
            (recur temp))
           ;; normal macros
           ;; fixme: add an environment param to macroexpansion
           (macro
            (recur (funcall macro whole nil)))
-
-          ;; todo: known functions (cl:foo, etc)/inlining
 
           ;; special case SETF until macro can handle it...
           ((member operator '(setf %setf))
@@ -428,6 +519,8 @@
           ;; expand fake accessors
           (accessor
            (recur `(slot-value ,@args ,accessor)))
+
+          ;; todo: known functions (cl:foo, etc)/inlining
 
           ;; wrap anything else in %normal-call
           (t `(%call type :normal name ,operator args ,(recur-all args)))))))))
