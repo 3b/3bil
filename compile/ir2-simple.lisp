@@ -19,7 +19,7 @@
            (get-tag-info (var flag &optional default)
                          (getf (getf *ir1-tag-info* var nil) flag default)))
   :forms
-  (((%named-lambda name flags lambda-list closed-vars activation-vars body)
+  (((%named-lambda name flags lambda-list closed-vars types activation-vars body)
     (let ((*ir1-in-tagbody* nil)
           (*current-closure-vars* nil)
           (*current-closure-index* 1))
@@ -33,6 +33,7 @@
           flags ,flags
           lambda-list ,lambda-list
           closed-vars ,closed-vars
+          types ,types
           activation-vars ,*current-closure-vars*
           body ,rbody))))
    ((%bind vars values closed-vars body)
@@ -60,6 +61,10 @@
              ;; having an exception block
              (loop for i in *ir2-call-stack*
                    do (setf (caaadr i) t)))
+           (set-var-info (var flag value)
+             (setf (getf (getf *ir1-var-info* var nil) flag) value))
+           (inc-var-info (var flag value &optional init)
+             (incf (getf (getf *ir1-var-info* var nil) flag init) value))
            (spillable-arglist (args)
             (let* ((tag (gensym "tag"))
                    (flags (list nil))
@@ -109,14 +114,24 @@
                      closed-vars nil
                      types ,(mapcar (constantly t) spilled-vars)
                      body
-                     ((%call type ,type
-                             name ,r-name
-                             args ,(append
-                                    (loop for i in spilled-vars
-                                       collect
-                                       `(%ref type :local
-                                              var ,i))
-                                    inline))))
+                     ((%call
+                       type ,type
+                       name ,r-name
+                       args ,(append
+                              (loop
+                                 for i in spilled-vars
+                                 for v in spilled-values
+                                 do (inc-var-info
+                                     i :ref-count 1 0)
+                                   (set-var-info i :type t )
+                                   (set-var-info i :simple-init
+                                                 (simple-quote-p v))
+                                   (when (simple-quote-p v)
+                                     (set-var-info i :simple-init-value v))
+                                 collect
+                                 `(%ref type :local
+                                        var ,i))
+                              inline))))
                    ;; normal case, just leave args inline (we already
                    ;; did the recur-all, so don't need it here...)
                    `(%call type ,type
@@ -179,6 +194,8 @@
           ;;  we should probably limit it to forms that actually exit the
           ;;  arglist, but being conservative for now
           ;;  (ex: (+ 1 (block x (return-from x 2)) 3) is safe
+          ;;; (we need to catch exits from an arglist so stack depth matches
+          ;;;  might be better to just add some :pop before the jump instead?)
           ((return-from name value)
            (mark-catch-arg)
            (super whole))
@@ -186,12 +203,12 @@
            (mark-catch-arg)
            (super whole))
 
-          ;; u-w-p possibly shouldn't be here, since f we don't
+          ;; u-w-p possibly shouldn't be here, since if we don't
           ;; trigger the exception block on normal exits from the
           ;; block, then the stack is still valid, and when it does
           ;; get triggered, we are probably going to rethrow it
           ;; anyway, so the call won't be made either way...
-          ;; (unless we catch it in an enclosing catch/block.tagbody,
+          ;; (unless we catch it in an enclosing catch/block/tagbody,
           ;;  in which case we marked the arg anyway)
           ((unwind-protect protected cleanup)
            (mark-catch-arg)
@@ -214,21 +231,37 @@
 (defparameter *current-local-index* nil)
 (defparameter *current-closure-scope-index* nil)
 (defparameter *activation-local-name* nil)
+(defparameter *live-locals* nil)
+(defparameter *scope-live-locals* nil)
+(defun upgraded-type (type)
+  (when (and (listp type) (= 1 (length type)))
+    (setf type (car type)))
+  (case type
+    ((fixnum :int) :int)
+    ((real single-float float double-float short-float long-float) :number)
+    (t type)))
+
 (define-structured-walker assemble-ir1 null-ir1-walker
   :form-var whole
   :labels ((coerce-type ()
-                        (unless (member *ir1-dest-type* '(:ignored t nil))
-                          (format t "coerce type to ~s~%" *ir1-dest-type*))
-                        (cond
-                          ((eq *ir1-dest-type* nil) nil)
-                          ((eq *ir1-dest-type* :ignored) '((:pop)))
-                          ((eq *ir1-dest-type* :int) '((:convert-integer)))
-                          ((eq *ir1-dest-type* :uint) '((:convert-unsigned)))
-                          ((eq *ir1-dest-type* :double) '((:convert-double)))
-                          ((eq *ir1-dest-type* :string) '((:convert-string)))
-                          ((eq *ir1-dest-type* :bool) '((:convert-boolean)))
-                          ((eq *ir1-dest-type* t) '((:coerce-any)))
-                          (t '((:coerce-any)))))
+                        (let ((utype (upgraded-type *ir1-dest-type*)))
+                          #++(unless (position utype '(:ignored t nil))
+                               (format t "coerce type to ~s~%" utype))
+                          (cond
+                            ((eq utype nil) nil)
+                            ((eq utype :ignored) '((:pop)))
+                            ((eq utype 'fixnum) '((:convert-integer)))
+                            ((eq utype :int) '((:convert-integer)))
+                            ((eq utype :uint) '((:convert-unsigned)))
+                            ((eq utype :double) '((:convert-double)))
+                            ((eq utype :number) '((:convert-double)))
+                            ;; :coerce-string converts null->"null",
+                            ;;     undefined->"undefined"
+                            ;; :convert-string converts both to NULL
+                            ((eq utype :string) '((:convert-string)))
+                            ((eq utype :bool) '((:convert-boolean)))
+                            ((eq utype t) '((:coerce-any)))
+                            (t '((:coerce-any))))))
            (set-var-info (var flag value)
                          (setf (getf (getf *ir1-var-info* var nil) flag) value))
            (get-var-info (var flag &optional default)
@@ -248,6 +281,7 @@
                             `((:push-null)
                               ,@(coerce-type))))
            (get-local-index (var)
+                            (assert var)
                             (or (get-var-info var :index nil)
                                 (set-var-info var :index (1- (incf *current-local-index*)))))
            (get-closure-index (var)
@@ -376,9 +410,11 @@
                ,@ (let ((*ir1-dest-type* nil))
                     (recur name))
                (:get-local 0)
-               ,@(let ((*ir1-dest-type* nil))
-                      (loop for a in args
-                            append (recur a)))
+               ,@ (let ((*ir1-dest-type* nil))
+                    (let ((foo (loop for a in args
+                                  append (recur a))))
+                      (assert (>= (length foo) (length args)))
+                      foo))
                (:call ,(length args))
                ,@(coerce-type))
 ))
@@ -417,23 +453,28 @@
      ;;  them through the closure for a section of code? (and assuming going
      ;;  through the closure var is slow enough to care in the first place)
      ((%bind vars values types closed-vars body)
-      `(,@(loop for var in vars
-                for val in values
-                for closed = (when var (member var closed-vars))
-                for var-type = (if var (get-var-info var :type t)
-                                   :ignored)
-                append (let ((*ir1-dest-type* var-type))
-                         (recur val))
-                when var collect `(:set-local ,(get-local-index var))
-                when closed
-                append `((:get-scope-object ,*current-closure-scope-index*)
-                         (:get-local ,(get-local-index var))
-                         ,@(unless (get-closure-index var) (error "error !! ~s" whole))
-                         (:set-slot ,(get-closure-index var))))
-          ,@(recur-progn body)
-          ,@(loop for var in vars
-               when var
-               collect `(:kill ,(get-local-index var)))))
+      (let ((*live-locals* *live-locals*))
+       `(,@(loop for var in vars
+              for val in values
+              for closed = (when var (member var closed-vars))
+              for var-type = (if var (get-var-info var :type t)
+                                 :ignored)
+              when var do (push (get-local-index var) *live-locals*)
+              append (let ((*ir1-dest-type* var-type))
+                       (recur val))
+              ;; fixme: don't allocate a local for closure vars?
+              when var collect `(:set-local ,(get-local-index var))
+              when closed
+              append `((:get-scope-object ,*current-closure-scope-index*)
+                       (:get-local ,(get-local-index var))
+                       ,@(unless (get-closure-index var) (error "error !! ~s" whole))
+                       (:set-slot ,(get-closure-index var))))
+           #++(:comment ,(format t "%bind live=~s" (mapcar (lambda (a)
+                                                          (when a (list a (get-local-index a)))))))
+           ,@(recur-progn body)
+           ,@(loop for var in vars
+                when var
+                collect `(:kill ,(get-local-index var))))))
 
      ;; type = :local , :closure , ???
      ((%ref type var)
@@ -503,15 +544,20 @@
                ,@(unless (eq *ir1-dest-type* :ignored)
                          (coerce-type)))))))
 
-     ((%named-lambda name flags lambda-list closed-vars activation-vars body)
+     ((%named-lambda name flags lambda-list closed-vars types
+                     activation-vars body)
       (let ((*ir1-in-tagbody* nil)
             (*current-local-index* 0)
             (*current-closure-vars* activation-vars)
             (*activation-local-name* (gensym "ACTIVATION-RECORD-"))
-            (*current-closure-scope-index* 1))
+            (*current-closure-scope-index* 1)
+            (*live-locals* nil))
         ;; fixme: implement this properly instead of relying on it picking right numbers on its own
         (loop for i in (lambda-list-vars lambda-list)
-              do (get-local-index i))
+             ;; note: (get-local-index i) is needed for side effects
+             ;; in addition to the live locals stuff
+           do (push (get-local-index i) *live-locals*))
+        #++(format t "named lambda ~s vars=~s~%" name (mapcar (lambda (a) (list a (get-local-index a))) (lambda-list-vars lambda-list)))
         (let ((activation
                `(,@(when activation-vars
                    `((:new-activation)
@@ -523,7 +569,23 @@
                                (:get-scope-object ,*current-closure-scope-index*)
                                (:get-local ,(get-local-index var))
                                (:set-slot ,(get-closure-index var))))))
-              (asm (recur-progn body)))
+              (asm (recur-progn body))
+              (arg-types (loop ;for i in (lambda-list-vars lambda-list)
+                            ;for decl = (getf types i)
+                            for decl in types
+                            for utype = (upgraded-type decl)
+                            for type = (cond
+                                         ((find-swf-class utype)
+                                          (swf-name (find-swf-class utype)))
+                                         ((eq utype :double)
+                                             "Number")
+                                         ((eq utype :number)
+                                             "Number")
+                                         (t utype))
+                            collect (if (member type '(t '* :*))
+                                        0
+                                        type))))
+          #++(format t "arg-types = ~s, vars=~s decl=~s~%" arg-types (lambda-list-vars lambda-list) types)
           (setf asm
                 (loop
                    with found = nil
@@ -539,6 +601,7 @@
                    name ,name
                flags ,flags
                lambda-list ,lambda-list
+               types ,arg-types
                closed-vars ,closed-vars
                activation-vars ,activation-vars
                body ,asm))))
@@ -648,7 +711,9 @@
       ;;  branches return a compatible type)
       (let* ((*ir1-dest-type* (or *ir1-dest-type* t))
              (*ir1-block-dest-type* (cons (cons name *ir1-dest-type*)
-                                         *ir1-block-dest-type*)))
+                                         *ir1-block-dest-type*))
+             (*scope-live-locals* (cons (cons name *live-locals*)
+                                        *scope-live-locals*)))
         (if nlx
            ;; fixme: return to correct dynamic scope corresponding to the entry from which the return-from was created...
            (recur
@@ -668,54 +733,76 @@
            `(,@(recur-progn forms)
                (:%dlabel ,name)))))
      ((return-from name value)
-      `((:comment "local return-from" ,name)
-        ,@(let ((*ir1-dest-type* (cdr (assoc name *ir1-block-dest-type*))))
-               (recur value))
-        (:jump ,name)))
+      (let* ((scope-locals (cdr (assoc name *scope-live-locals*)))
+             (live (set-difference *live-locals* scope-locals)))
+        #++(format t "return-from: live=~s~%" live)
+       `((:comment "local return-from" ,name)
+         ,@(let ((*ir1-dest-type* (cdr (assoc name *ir1-block-dest-type*))))
+                (recur value))
+         ,@(when live
+                 (loop for i in live
+                    collect `(:kill ,i)))
+         (:jump ,name))))
 
      ((tagbody name nlx forms)
-      (if nlx
-          (let ((bad-nlx-label (gensym "TAGBODY-BUG-")))
-            (recur
-             `(%catch type go-exception-type
-                      tag-property go-exception-tag
-                      body (,@(loop for i in forms
-                                    when (atom i)
-                                    collect `(:%label ,i)
-                                    else append (let ((*ir1-dest-type* :ignored))
-                                                  (recur i)))
-                              (:push-null)
-                              ,@(coerce-type))
-                      tag-code ,(let ((*ir1-dest-type* nil))
-                                     (recur `(%ref type ,(get-var-info
-                                                          name
-                                                          :ref-type :local)
-                                                   var ,name)))
-                      handler-code
-                      ((:get-property go-exception-index)
-                       (:convert-integer)
-                       (:lookup-switch
-                        ,bad-nlx-label
-                        ,(mapcar 'second
-                                 (sort (loop for i in forms
-                                             when (atom i)
-                                             collect `(,(get-tag-info i :nlx-index)
-                                                        ,i))
-                                       #'< :key #'car)))
-                       (:%dlabel ,bad-nlx-label)
-                       (:push-string "broken tagbody!")
-                       (:throw)
-                       (:push-null)
-                       ,@(coerce-type)))))
-          `(,@(loop for i in forms
-                    when (atom i)
-                    collect `(:%label ,i)
-                    else append (let ((*ir1-dest-type* :ignored))
-                                  (recur i)))
-              (:push-null)
-              ,@(coerce-type))))
+      (loop for i in forms
+         when (atom i)
+         do (push (cons i *live-locals*) *scope-live-locals*))
+      (let ((*scope-live-locals* *scope-live-locals*))
+        (if nlx
+            (let ((bad-nlx-label (gensym "TAGBODY-BUG-")))
+              (recur
+               `(%catch type go-exception-type
+                        tag-property go-exception-tag
+                        body (,@(loop for i in forms
+                                   when (atom i)
+                                   collect `(:%label ,i)
+                                   else append (let ((*ir1-dest-type* :ignored))
+                                                 (recur i)))
+                                (:push-null)
+                                ,@(coerce-type))
+                        tag-code ,(let ((*ir1-dest-type* nil))
+                                       (recur `(%ref type ,(get-var-info
+                                                            name
+                                                            :ref-type :local)
+                                                     var ,name)))
+                        handler-code
+                        ((:get-property go-exception-index)
+                         (:convert-integer)
+                         (:lookup-switch
+                          ,bad-nlx-label
+                          ,(mapcar 'second
+                                   (sort (loop for i in forms
+                                            when (atom i)
+                                            collect `(,(get-tag-info i :nlx-index)
+                                                       ,i))
+                                         #'< :key #'car)))
+                         (:%dlabel ,bad-nlx-label)
+                         (:push-string "broken tagbody!")
+                         (:throw)
+                         (:push-null)
+                         ,@(coerce-type)))))
+            `(,@(loop for i in forms
+                   when (atom i)
+                   collect `(:%label ,i)
+                   else append (let ((*ir1-dest-type* :ignored))
+                                 (recur i)))
+                (:push-null)
+                ,@(coerce-type)))))
      ((go tag)
-      `((:jump ,tag)))
+      (let* ((scope-locals (cdr (assoc tag *scope-live-locals*)))
+             (live (set-difference *live-locals* scope-locals)))
+        #++(format t "go ~s: live=~s~%  tagbody=~s,live=~s,tag-live=~s~%"
+                tag live
+                (get-tag-info tag :exit-point-var)
+                *live-locals*
+                (assoc tag *scope-live-locals*)
+                )
+        #++(format t "sll=~s~%" *scope-live-locals*)
+        `(,@(when live
+                  (loop for i in live
+                     collect `(:kill ,i)))
+            (:jump ,tag))))
 
      ((catch tag forms)
       (recur
@@ -838,7 +925,9 @@
      ((%compilation-unit var-info tag-info fun-info lambdas)
       (let ((*ir1-tag-info* tag-info)
             (*ir1-var-info* var-info)
-            (*ir1-fun-info* fun-info))
+            (*ir1-fun-info* fun-info)
+            (*live-locals* nil)
+            (*scope-live-locals* nil))
         `(%compilation-unit
           var-info ,var-info
           tag-info ,tag-info
@@ -995,7 +1084,7 @@
       var-info ,var-info
       tag-info ,tag-info
       lambdas ,(recur-all lambdas)))
-       ((%named-lambda name flags lambda-list closed-vars activation-vars body)
+       ((%named-lambda name flags lambda-list closed-vars types activation-vars body)
         ;; optionally add a call to this function to the top-level script-init
         ;; fixme: probably should store the name or a flag in the %compilation-unit instead of tracking it separately like this
         (when (eq name *top-level-function*)
@@ -1052,6 +1141,13 @@
                                         `((:return-value))))))
                    (activation-p (find :new-activation asm :key 'car))
                    (anonymous (getf flags :anonymous)))
+              (when *ir1-verbose*
+                (format t "validate = ~s~%"
+                        (multiple-value-list
+                         (avm2-asm::%avm2-validate asm :arg-count
+                                                  (+ 1
+                                                     (if rest-p 1 0)
+                                                     (length names))))))
               (when (or (and activation-p (not activation-vars))
                         (and (not activation-p) activation-vars))
                 ;; not completely sure this is an error, but shouldn't be
@@ -1070,7 +1166,13 @@
                (list
                 (if (symbolp name) (avm2-asm::symbol-to-qname-list name) name)
                 0 ;; name in method struct?
-                (loop repeat count collect 0) ;; arg types, 0 = t/*/any
+                (if types
+                    (loop with nil = (assert (= count (length (cdr types))) ()
+                                             "count ~s, types ~s" count types)
+                       for i in (cdr types)
+                       collect i) ;; arg types, 0 = t/*/any
+                    (loop repeat count collect 0))
+
                 0                             ;; return type, 0 = any
                 (logior (if rest-p #x04 0)    ;; flags, #x04 = &rest
                         (if activation-p #x02 0))

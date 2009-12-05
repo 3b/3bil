@@ -51,11 +51,13 @@
    ((%set type var value)
     `(%set type ,type var ,var value ,(recur value)))
 
-   ((%named-lambda name flags lambda-list closed-vars activation-vars body)
+   ((%named-lambda name flags lambda-list types closed-vars activation-vars
+                   body)
     (let ((*ir1-in-tagbody* nil))
       `(%named-lambda name ,name
                       flags ,flags
                       lambda-list ,lambda-list
+                      types ,types
                       closed-vars ,closed-vars
                       activation-vars ,activation-vars
                       body ,(recur-all body))))
@@ -251,6 +253,7 @@
                          lambda-list ,(cons 'this vars)
                          closed-vars ,(union closed-vars closed-names)
                          ;; fixme: propagate type decls
+                         types ,(cons t (mapcar (constantly t) vars))
                          body ,(recur-all body))
                      (%call type :local
                             name (%ref type :local var ,name )
@@ -266,7 +269,7 @@
                ;; no variables closed over, don't change binding
                (t (super whole)))))
 
-          ((%named-lambda name flags lambda-list body)
+          ((%named-lambda name flags types lambda-list body)
            (let* ((*ir1-in-tagbody* nil)
                   (names (lambda-list-vars lambda-list))
                   (closed
@@ -279,6 +282,7 @@
                      name ,name
                      flags ,flags
                      lambda-list ,lambda-list
+                     types ,types
                      closed-vars ,closed
                      body ,(recur-all body)))
                  ;; no closed vars, leave as-is
@@ -319,7 +323,7 @@
                      (set-difference *ir1-locally-free-vars*
                                      vars)))))
 
-          ((%named-lambda name flags lambda-list body)
+          ((%named-lambda name flags types lambda-list body)
            (let* ((*ir1-local-vars* (lambda-list-vars lambda-list))
                   (walked (super whole)))
              (setf *ir1-locally-free-vars*
@@ -386,7 +390,7 @@
   :form-var whole
   :labels ((get-tag-info (var flag &optional default)
                          (getf (getf *ir1-tag-info* var nil) flag default)))
-  :forms (((%named-lambda name flags lambda-list body)
+  :forms (((%named-lambda name flags types lambda-list body)
            (let ((*ir1-local-tags* nil)
                  (*ir1-in-uwp* nil))
              (super whole)))
@@ -497,7 +501,7 @@
 (defparameter *ir1-lambdas* nil)
 (define-structured-walker ir1-extract-lambdas null-ir1-walker
   :form-var whole
-  :forms (((%named-lambda name flags lambda-list body)
+  :forms (((%named-lambda name flags types lambda-list body)
            (push (super whole) *ir1-lambdas*)
            ;; just replace the lambda with nil for now, later passes
            ;; can optimize it away
@@ -554,7 +558,13 @@
           ;; possibly should distinguish between declared and derived types?
           do (set-var-info var :type type))
     (super whole))
-   ((%named-lambda name flags lambda-list closed-vars body)
+
+   ((%named-lambda name flags lambda-list types closed-vars body)
+    (loop
+       for var in lambda-list
+       for type in types
+       ;; possibly should distinguish between declared and derived types?
+       do (set-var-info var :type type))
     (let ((*ir1-current-fun* name))
       (super whole)))
 
@@ -651,13 +661,12 @@
              ;;   weak hash table could potentially detect the
              ;;   difference in lifetime but ignoring that for now...
            for unused = (and (unused-var-p var) (not closed))
-           when unused do (format t "unused var ~s = ~s t=~s u=~s~% cv=~s vi=~s~%"
-                                  var value type unused closed-vars
-                                  (getf *ir1-var-info* var nil))
-           else do (format t "used var ~s = ~s t=~s u=~s~% cv=~s vi=~s~%"
-                           var value type unused closed-vars
-                           (getf *ir1-var-info* var nil))
-           when unused do (setf)
+           ;;when unused do (format t "unused var ~s = ~s t=~s u=~s~% cv=~s vi=~s~%"
+           ;;                       var value type unused closed-vars
+           ;;                       (getf *ir1-var-info* var nil))
+           ;;else do (format t "used var ~s = ~s t=~s u=~s~% cv=~s vi=~s~%"
+           ;;                var value type unused closed-vars
+           ;;                (getf *ir1-var-info* var nil))
            collect (if unused nil var) into vars*
            collect value into values*
            collect type into types*
@@ -675,7 +684,9 @@
             (error "reading from unused non-simple var?"))
         `(%ref type ,type var ,var)))
    ((%set type var value)
-    `(%set type ,type var ,var value ,(recur value)))
+    (if (and (eq type :local) (unused-var-p var))
+        (recur value)
+        `(%set type ,type var ,var value ,(recur value))))
 
    ((%compilation-unit var-info tag-info fun-info lambdas)
     (let ((*ir1-tag-info* tag-info)
@@ -732,11 +743,12 @@
                    closed-vars ,closed-vars
                    body ,(flatten-progn body)))
 
-          ((%named-lambda name flags lambda-list closed-vars body)
+          ((%named-lambda name flags lambda-list types closed-vars body)
            (let ((*ir1-in-tagbody* nil))
              `(%named-lambda name ,name
                              flags ,flags
                              lambda-list ,lambda-list
+                             types ,types
                              closed-vars ,closed-vars
                              body ,(flatten-progn body))))
 

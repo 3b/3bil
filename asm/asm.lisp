@@ -65,7 +65,7 @@
 
 ;;;; fixme: probably should combine validation with assembly, so we
 ;;;; can use it for dead code elimination too
-(defun %avm2-validate (peephole-code &key dump)
+(defun %avm2-validate (peephole-code &key dump (test-live nil) (arg-count 1))
   (declare (optimize debug))
   (let* ((stack-at (make-array (length peephole-code) :initial-element nil))
          (label-info (make-hash-table))
@@ -73,6 +73,8 @@
          (min-scope 0)
          (max-stack 0)
          (max-scope 0)
+         (max-local arg-count)
+         (local-live nil)
          ;; work list = code , index, stack, scope
          (work-list (list (list peephole-code 0 0 0))))
     ;; to validate the stack stuff:
@@ -87,92 +89,143 @@
        for (op . args) = (car here)
        for i from 0
        for fun = (gethash op *stack-effects-opcodes*)
-       for (pop push pop-scope push-scope local flags
+       for (pop push pop-scope push-scope rlocals wlocals klocals flags
                 control-flow labels)
-       = (multiple-value-list (if fun (apply fun args)))
+         = (multiple-value-list (if fun (apply fun args)))
+       do (loop for a in rlocals do (setf max-local (max max-local a)))
+       do (loop for a in wlocals do (setf max-local (max max-local a)))
+       do (loop for a in klocals do (setf max-local (max max-local a)))
+       #++do (format t "(~s ~s) = ~s ~s ~s => ~s~%" op args rlocals wlocals klocals max-local)
        unless fun do (format t "no stack-check fun for op ~s?" op)
        when (eq control-flow :label)
        do (setf (gethash labels label-info) (list here i nil))
        when (eq control-flow :exception)
        do (setf (gethash labels label-info) (list here i nil))
          (push (list here i 0 0) work-list))
+    (setf local-live (make-array (1+ max-local) :initial-element :u))
+    ;; args are live
+    (loop for i below (max 1 arg-count)
+         do (assert (< i (length local-live)))
+       do (setf (aref local-live i) :live))
 
     (setf work-list (nreverse work-list))
-    (flet ((check-label (label stack scope)
-             (destructuring-bind (here index info) (gethash label label-info)
-               (if info
-                   ;; if we have seen a ref to this label (actual label
-                   ;; or a jump to it) make sure we have the same stack depth
-                   (assert (and (= stack (car info))
-                                (= scope (cdr info)))
-                           () "stack mismatch at label ~s expected ~s/~s got ~s"
-                           label stack scope info)
-                   (progn
-                     ;; if we haven't seen the label yet, add it to worklist
-                     (push (list here index stack scope)
-                           work-list)
-                     ;; and update stack info
-                     (setf (third (gethash label label-info))
-                           (cons stack scope))))))
-           (dump-asm ()
-             (loop
-                for op in peephole-code
-                for (stack . scope) across stack-at
-                do (format t "(~{~s~^ ~})   ====  ~s/ ~s~%"
-                           op stack scope))))
-      (loop
-         for (code start stack scope) = (pop work-list)
-         for pass from 0
-         with pass-max =  (length peephole-code)
-         while code
-         do (assert (< pass pass-max))
-         do (loop
-               for (op . args) = (pop code)
-               for i from start
-               for fun = (gethash op *stack-effects-opcodes*)
-               for (pop push pop-scope push-scope local flags
-                        control-flow labels)
+    (macrolet ((dump-assert (test &rest args)
+                 `(unless ,test
+                   (dump-asm)
+                   (warn ,@(or args `(, (format nil "assert failed ~s" test)))))))
+      (labels ((compatible-locals-p (locals)
+                 (loop for l1 across locals
+                    for l2 across local-live
+                    do (dump-assert (or (eq l1 l2)
+                                        (or (eq l1 :?) (eq l2 :?))
+                                        (and (member l1 '(:k :u))
+                                             (member l2 '(:k :u))))
+                                    "local mismatch ~s / ~s" l1 l2))
+                 t)
+               (check-label (label stack scope)
+                 (destructuring-bind (here index info) (gethash label label-info)
+                   (if info
+                       ;; if we have seen a ref to this label (actual label
+                       ;; or a jump to it) make sure we have the same stack depth
+                       (progn
+                         (dump-assert (and (= stack (first info))
+                                           (= scope (second info)))
+                                      "stack mismatch at label ~s expected ~s/~s got ~s"
+                                      label stack scope info)
+                         (when test-live
+                           (dump-assert (compatible-locals-p (third info))
+                                        "incompatible locals at label ~s,~% expected ~s~% got ~s"
+                                        label local-live (third info))))
+                       (progn
+                         #++(format t "add label ~s to worklist ~s~%" label local-live)
+                         ;; if we haven't seen the label yet, add it to worklist
+                         (push (list here index stack scope (copy-seq local-live))
+                               work-list)
+                         ;; and update stack info
+                         (setf (third (gethash label label-info))
+                               ;; fixme: switch to some setup that can
+                               ;; share state for liveness stuff instead
+                               ;; of copying
+                               (list stack scope (copy-seq local-live)))))))
+               (dump-asm ()
+                 (loop
+                    for op in peephole-code
+                    for (stack scope ) across stack-at
+                    do (format t "(~{~s~^ ~})   ====  ~s/ ~s~%"
+                               op stack scope))))
+        (loop
+           for (code start stack scope %ll) = (pop work-list)
+           for pass from 0
+           with pass-max =  (length peephole-code)
+           while code
+           when %ll do (setf local-live (copy-seq %ll))
+           else do
+             (unless (zerop pass)
+               #++(format t "starting pass ~s with no liveness data?~%" pass)
+               (setf local-live (make-array (1+ max-local) :initial-element :?))
+               (loop for i below arg-count do (setf (aref local-live i) :live)))
+           do (assert (< pass pass-max))
+           do (loop
+                 for (op . args) = (pop code)
+                 for i from start
+                 for fun = (gethash op *stack-effects-opcodes*)
+                 for (pop push pop-scope push-scope rlocals wlocals klocals flags
+                          control-flow labels)
                  = (multiple-value-list
                     (if fun (apply fun args)))
-               for info = (aref stack-at i)
-               unless fun do (format t "no stack check fun for op ~s?" op)
-               ;; if we have already seen this entry, we are done current scan
-               when info
-               do (unless (and (= stack (car info))
-                               (= scope (cdr info)))
-                    (dump-asm)
-                    (error "stack mismatch at instr ~s expected ~s/~s got ~s"
-                           (cons op args) stack scope info))
-               and return nil
-               ;; exceptions clear the stack, so handle specially
-               when (eq control-flow :exception)
-               do (setf stack (- push pop)
-                        scope (- push-scope pop-scope))
-               else do
+                 for info = (aref stack-at i)
+                 unless fun do (format t "no stack check fun for op ~s?" op)
+                 ;; if we have already seen this entry, we are done current scan
+                 when info
+                 do (dump-assert (and (= stack (first info))
+                                      (= scope (second info)))
+                                 "stack mismatch at instr ~s expected ~s/~s got ~s"
+                                 (cons op args) stack scope info)
+                   (when test-live
+                    (dump-assert (compatible-locals-p (third info))
+                                 "incompatible locals at instr ~s,~% expected ~s~% got ~s"
+                                 (cons op args) local-live (third info)))
+                 and return nil
+                 ;; check/update locals
+                 do (loop for a in rlocals
+                       do (dump-assert (or (eq (aref local-live a) :live)
+                                           (eq (aref local-live a) :?))))
+                 do (loop for a in wlocals
+                       do (setf (aref local-live a) :live))
+                 do (loop for a in klocals
+                       do (dump-assert (>= a arg-count)
+                                       "killing arg ~s / ~s" a arg-count)
+                       do (setf (aref local-live a) :k))
+                 ;; exceptions clear the stack, so handle specially
+                 when (eq control-flow :exception)
+                 do (setf stack (- push pop)
+                          scope (- push-scope pop-scope))
+                 else do
                  (incf stack (- push pop))
                  (incf scope (- push-scope pop-scope))
-               ;; update info for this index
-                 (setf (aref stack-at i) (cons stack scope))
-               ;; update min/max
+                 ;; update info for this index
+                 (setf (aref stack-at i) (list stack scope (copy-seq local-live)))
+                 ;; update min/max
+                 (when (< stack 0 min-stack)
+                   (format t "stack underflow? = ~s ~s" stack min-stack))
                  (setf min-stack (min min-stack stack)
                        min-scope (min min-scope scope)
                        max-stack (max max-stack stack)
                        max-scope (max max-scope scope))
-                 (when (< stack 0) (format t "stack underflow? = ~s ~s" stack min-stack))
 
-               ;; check/update label info
-               do (mapcar (lambda (x)
-                            (check-label x stack scope))
-                          (if (listp labels) labels (list labels)))
-               when (member control-flow '(t :throw :return))
-               return nil))
-      (when (or (minusp min-stack) (minusp min-scope) dump)
-        (format t "min-stack = ~s, min-scope = ~s~%" min-stack min-scope)
-        (dump-asm))
-      (values max-stack max-scope))))
+                 ;; check/update label info
+                 do (mapcar (lambda (x)
+                              (check-label x stack scope))
+                            (if (listp labels) labels (list labels)))
+                 when (member control-flow '(t :throw :return))
+                 return nil))
+        (when (or (minusp min-stack) (minusp min-scope) dump)
+          (format t "min-stack = ~s, min-scope = ~s~%" min-stack min-scope)
+          (dump-asm))
+        (values max-stack max-scope max-local)))))
 
-(defun avm2-validate (code &key dump)
-  (avm2-validate (peephole code) :dump dump))
+(defun avm2-validate (code &key dump arg-count)
+  (avm2-validate (peephole code) :dump dump :arg-count arg-count))
 
 (defun assemble-method-body (forms &key (init-scope 0)
                              (max-scope 1 max-scope-p)
@@ -188,9 +241,10 @@
                                          'traits traits))
         v-stack
         v-scope
+        v-local
         (p-code (peephole forms)))
-    (setf (values v-stack v-scope)
-          (%avm2-validate p-code))
+    (setf (values v-stack v-scope v-local)
+          (%avm2-validate p-code :arg-count arg-count))
     (setf (code *current-method*)
           (%assemble p-code))
     (when max-stack-p
@@ -215,7 +269,10 @@
             do (setf (from ex)  (ensure-label (from ex))
                      (to ex)    (ensure-label (to ex))
                      (target ex)(ensure-label (target ex)))))
+    (unless (eql (local-count *current-method*) v-local)
+      (warn "changing local count from ~s to ~s" (local-count *current-method*) v-local))
     (setf (max-stack *current-method*) v-stack)
+    ;(setf (local-count *current-method*) (+ 2 v-local))
     (setf (max-scope-depth *current-method*) v-scope)
     *current-method*))
 
@@ -581,7 +638,13 @@
            (exception-u30 decode-variable-length) ;; todo: add lookup
 )))
     (flet ((defop (name args opcode
-                        &optional (pop 0) (push 0) (pop-scope 0) (push-scope 0) (local 0) (flag 0) &rest ignore)
+                        &optional
+                        (pop 0) (push 0)
+                        (pop-scope 0) (push-scope 0)
+                        (rlocals nil) (wlocals nil) (klocals nil)
+                        (flag 0)
+                        &rest ignore
+                        &aux (l (gensym)))
              (declare (ignore ignore))
              `(setf (gethash ',name *opcodes*)
                     (flet ((,name (,@(mapcar 'car args))
@@ -600,11 +663,29 @@
 			     ,@(unless (and (numberp pop-scope) (numberp push-scope)
 					    (= 0 pop-scope push-scope))
 				       `((adjust-scope ,pop-scope ,push-scope)))
-			     ,@(unless (and (numberp local) (zerop local))
-				       `((when (and *current-method*
-						    (> ,local (local-count *current-method*)))
-					   (setf (local-count *current-method*) ,local))))
-			     ,@(unless (and (numberp flag) (zerop flag))
+                             ;; fixme: get rid of duplication here...
+			     ,@ (when rlocals
+                                  `((let ((,l ,(if (= 1 (length rlocals))
+                                                  (car rlocals)
+                                                  `(reduce 'max ,rlocals :initial-value 0))))
+                                      (when (and *current-method*
+                                                 (> ,l (local-count *current-method*)))
+                                        (setf (local-count *current-method*) ,l)))))
+			     ,@ (when wlocals
+                                  `((let ((,l ,(if (= 1 (length wlocals))
+                                                  (car wlocals)
+                                                  `(reduce 'max ,wlocals :initial-value 0))))
+                                      (when (and *current-method*
+                                                 (> ,l (local-count *current-method*)))
+                                        (setf (local-count *current-method*) ,l)))))
+			     ,@ (when klocals
+                                  `((let ((,l ,(if (= 1 (length klocals))
+                                                  (car klocals)
+                                                  `(reduce 'max ,klocals :initial-value 0))))
+                                      (when (and *current-method*
+                                                 (> ,l (local-count *current-method*)))
+                                        (setf (local-count *current-method*) ,l)))))
+                                ,@(unless (and (numberp flag) (zerop flag))
 				       `((when *current-method*
 					   (setf (flags *current-method*)
 						 (logior ,flag (flags *current-method*))))))
@@ -640,7 +721,14 @@
                       #',name
 )))
            ;;
-           (defop-stack (name args opcode &optional (pop 0) (push 0) (pop-scope 0) (push-scope 0) (local nil) (flag 0) control-flow label more-labels &aux ignores)
+           (defop-stack (name args opcode
+                              &optional
+                              (pop 0) (push 0)
+                              (pop-scope 0) (push-scope 0)
+                              (rlocals nil) (wlocals nil) (klocals nil)
+                              (flag 0) control-flow label more-labels
+                              &aux ignores)
+             (declare (ignore opcode))
              `(setf (gethash ,name *stack-effects-opcodes*)
                     (flet ((,name (,@(mapcar 'car args))
                              ,@ (when args
@@ -662,7 +750,7 @@
                                          `((declare (ignorable ,@ignores))))
                                  (values ,pop ,push
                                          ,pop-scope ,push-scope
-                                         ,local
+                                         ,rlocals ,wlocals ,klocals
                                          ,flag
                                          ,control-flow))
                                ,(if more-labels
@@ -697,7 +785,7 @@
   (assemble `((:label))))
 
 (define-asm-macro-stack :%label (name)
-  (values 0 0  0 0  0 0 :label name))
+  (values 0 0  0 0  nil nil nil  0 :label name))
 
 
 (define-asm-macro :%dlabel (name)
@@ -709,7 +797,10 @@ jump instruction in the bytecode"
   (push (cons name *code-offset*) (label *current-method*))
   nil)
 (define-asm-macro-stack :%dlabel (name)
-  (values 0 0  0 0  0 0 :label name))
+  (values 0 0  0 0  nil nil nil  0 :label name))
+(define-asm-macro-stack :comment (&rest r)
+  (declare (ignore r))
+  (values 0 0  0 0  nil nil nil  0 ))
 
 
 (define-asm-macro :%exception (name start end &optional (type-name 0) (var-name 0))
@@ -740,7 +831,7 @@ jump instruction in the bytecode"
 (define-asm-macro-stack :%exception (name start end &optional (type-name 0) (var-name 0))
   (declare (ignorable name start end type-name var-name))
   ;; fixme: enforce 0 stack depth at beginning of exception block?
-  (values 0 1  0 0  0 0 :exception nil))
+  (values 0 1  0 0  nil nil nil  0 :exception nil))
 
 
 (defmacro with-assembler-context (&body body)

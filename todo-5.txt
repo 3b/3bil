@@ -1,3 +1,16 @@
+declarations in let*,lambda,etc
++  let*
+  lambda
+fix declarations of complicated lambda lists
+  (need to pass declarations to destructuring-bind, etc...)
+%set of unused var in ir1-opt1
+var types
+  get rid of types param on %bind since it gets stored in *ir1-var-info*?
+global declarations
+inlining
+fix :kill after jumps?
+
+---
 ~CAR/CDR NIL (reimplement %type-of)
 ~update samples, delete outdated samples/tests
 fix .asd names (combine some of them?)

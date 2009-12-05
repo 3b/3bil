@@ -136,7 +136,8 @@
                           ignored-vars ignored-functions
                           ignorable-vars ignorable-functions))))))
 
-(defun expand-lambda (block-name lambda-name flags lambda-list body recur)
+(defun expand-lambda (block-name lambda-name flags lambda-list
+                      declarations-and-forms recur)
   (multiple-value-bind  (required optional rest keys
                                   allow-other-keys aux arest)
       (parse-lambda-list lambda-list)
@@ -145,36 +146,42 @@
     ;; parse flags to handle it explicitly, but then we have to drop
     ;; it from the count in the final assembly, possibly should pass
     ;; the count of required args as a flag or something instead?
-    (let* ((arest (when arest (alphatize-var-names (list arest))))
-           (required (append (alphatize-var-names required)
-                             arest)))
-      `(%named-lambda  name ,lambda-name
-           flags (,@flags ,@(if arest `(:arest ,(cadar arest))))
-           lambda-list ,(mapcar 'cadr required)
-           body (,(if (or optional rest keys aux)
-                      (with-local-vars required
-                        (funcall
-                         recur
-                         ;; expanding to a macro call from special
-                         ;; forms is a bit ugly, but better than
-                         ;; adding special forms for no reason, and
-                         ;; we can avoid it easily enough to
-                         ;; bootstrap that far
-                         `(%destructuring-bind-*
-                           (:optional ,optional :key ,keys :aux ,aux
-                                      :allow-other-keys ,allow-other-keys)
-                           ,(cadr arest)
-                           ;; fixme: probably should just add the block/progn in
-                           ;; the caller instead of here?
-                           (,@(if block-name `(block ,block-name) '(progn))
-                              ,@body))))
-                      (with-local-vars required
-                        (funcall
-                         recur
-                         `(,@(if block-name
-                                 `(block ,block-name)
-                                 '(progn))
-                             ,@body)))))))))
+    (multiple-value-bind (body specials dtypes notinline inline)
+        (extract-declarations declarations-and-forms)
+      (declare (ignore specials notinline inline))
+      (let* ((arest (when arest (alphatize-var-names (list arest))))
+             (rtypes (loop for r in required
+                        collect (or (getf dtypes r) t)))
+             (required (append (alphatize-var-names required)
+                               arest)))
+        `(%named-lambda  name ,lambda-name
+             flags (,@flags ,@(if arest `(:arest ,(cadar arest))))
+             lambda-list ,(mapcar 'cadr required)
+             types ,rtypes
+             body (,(if (or optional rest keys aux)
+                        (with-local-vars required
+                          (funcall
+                           recur
+                           ;; expanding to a macro call from special
+                           ;; forms is a bit ugly, but better than
+                           ;; adding special forms for no reason, and
+                           ;; we can avoid it easily enough to
+                           ;; bootstrap that far
+                           `(%destructuring-bind-*
+                             (:optional ,optional :key ,keys :aux ,aux
+                                        :allow-other-keys ,allow-other-keys)
+                             ,(cadr arest)
+                             ;; fixme: probably should just add the block/progn in
+                             ;; the caller instead of here?
+                             (,@(if block-name `(block ,block-name) '(progn))
+                                ,@body))))
+                        (with-local-vars required
+                          (funcall
+                           recur
+                           `(,@(if block-name
+                                   `(block ,block-name)
+                                   '(progn))
+                               ,@body))))))))))
 
 (define-walker ir0-minimal-compilation-etc () ;null-cl-walker
   :atoms (((or number string simple-vector bit-vector (eql t) (eql nil))
@@ -199,7 +206,7 @@
   (((let (&rest bindings) &rest declarations-and-forms)
     (multiple-value-bind (body specials dtypes notinline inline)
         (extract-declarations declarations-and-forms)
-      (when (or specials dtypes notinline inline)
+      #++(when (or specials dtypes notinline inline)
         (format t "let: body=~s~% special=~s dt=~s ni=~s i=~s~%"
                 body specials dtypes notinline inline))
       ;; ---- need to store inline/notinline as 1 thing in env, so we can
@@ -219,25 +226,31 @@
                           (recur `(progn ,@body))))))))
 
    ((let* (&rest bindings) &rest declarations-and-forms)
-    (let* ((bindings-names nil)
-           (bindings-values nil))
-      ;;fixme: this is a bit ugly to avoid depending on guts of env stuff
-      ;; should probably rewrite it...
-      (loop  for binding in bindings
-            for name = (if (atom binding) binding (car binding))
-            for init = (if (atom binding) nil (second binding))
-            do (push (list name (alpha-convert-name name)) bindings-names)
-            do (push (with-local-vars bindings-names
-                       (recur init))
-                     bindings-values)
-            finally (progn
-                      (setf bindings-names (nreverse bindings-names))
-                      (setf bindings-values (nreverse bindings-values))))
-      `(%bind vars ,(mapcar 'second bindings-names)
-              values ,bindings-values
-              types ,(mapcar (constantly t) bindings-names)
-              body (, (with-local-vars bindings-names
-                        (recur `(progn ,@declarations-and-forms)))))))
+    (multiple-value-bind (body specials dtypes notinline inline)
+        (extract-declarations declarations-and-forms)
+      (declare (ignore specials notinline inline))
+      (let* ((bindings-names nil)
+             (bindings-values nil)
+             (types nil))
+        ;;fixme: this is a bit ugly to avoid depending on guts of env stuff
+        ;; should probably rewrite it...
+        (loop for binding in bindings
+           for name = (if (atom binding) binding (car binding))
+           for init = (if (atom binding) nil (second binding))
+           do (push (list name (alpha-convert-name name)) bindings-names)
+           do (push (with-local-vars bindings-names
+                      (recur init))
+                    bindings-values)
+           collect (or (getf dtypes name) t) into %types
+           finally (progn
+                     (setf bindings-names (nreverse bindings-names))
+                     (setf bindings-values (nreverse bindings-values))
+                     (setf types %types)))
+        `(%bind vars ,(mapcar 'second bindings-names)
+                values ,bindings-values
+                types ,types
+                body (, (with-local-vars bindings-names
+                          (recur `(progn ,@body))))))))
 
    ((symbol-macrolet (&rest bindings) &rest declarations-and-forms)
     ;; fixme: don't bind over constants or specials
@@ -385,8 +398,9 @@
     (recur `(function ,whole)))
    ((%named-lambda name flags args &rest body)
     (let* ((this (or (getf flags :this-arg) 'this))
-           (args (cons this args)))
-      (expand-lambda nil name flags args body #'recur)))
+           (args (cons this args))
+           (block (getf flags :block-name)))
+      (expand-lambda block name flags args body #'recur)))
 
 
    ((%local-ref name)

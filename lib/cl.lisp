@@ -23,14 +23,15 @@
            ,(if (and (listp name) (eq (car name) 'setf))
                 `(%named-lambda ,name
                        (:anonymous t
+                                   :blcok-name ,(second name)
                                    :trait ,(second name)
                                    :class-name setf-namespace-type
                                    :class-static t)
                      ,args
-                   (block ,(second name) ,@body))
+                   ,@body)
                 `(%named-lambda ,name
-                       (:trait-type :function :trait ,name)
-                     ,args (block ,name ,@body)))
+                       (:trait-type :function :trait ,name :block-name ,name)
+                     ,args ,@body))
            ',name))
 
 

@@ -47,11 +47,15 @@
                                    'avm2-asm::vindex 0 ;; no value
                                    'avm2-asm::vkind 0 ;; no value
                                    ))))
+           (rest-p (or (logbitp 0 flags)
+                       (logbitp 2 flags)))
            (mid (avm2-asm::avm2-method name nid argtypes return-type flags
                                        :body (avm2-asm::assemble-method-body
                                               asm
                                               :traits traits
-                                              :arg-count (1+ (length argtypes))))))
+                                              :arg-count (+ 1
+                                                            (if rest-p 1 0)
+                                                            (length argtypes))))))
       (when trait
         (setf n (if (symbolp trait)
                     (avm2-asm::symbol-to-qname-list trait)
