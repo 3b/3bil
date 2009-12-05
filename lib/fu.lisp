@@ -171,15 +171,19 @@
 
 
     (defun radians (a)
+      (declare (double-float a))
       (/ (* a flash:+math.pi+) 180.0))
 
     (defun i255 (a)
+      (declare (double-float a))
       (max (min (floor (* a 256)) 255) 0))
 
     (defun rgb (r g b)
+      (declare (double-float r g b))
       (+ (* (i255 r) 65536) (* (i255 g) 256) (i255 b)))
 
     (defun rgba (r g b a)
+      (declare (double-float r g b a))
       (+ (* (i255 a) 65536 256) (rgb r g b)))
 
 

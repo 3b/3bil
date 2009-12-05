@@ -128,6 +128,10 @@
        (:@ x)
        (:not)))
 
+    (defun abs (x)
+      (declare (double-float x))
+      (flash:math.abs x))
+
     (defun mod (x y)
       (%asm
        (:@ x)
