@@ -73,6 +73,7 @@
 
    (defmacro %typep (object type)
      `(%asm
+       (:@mark-class-dependency ,type)
        (:@ ,object)
        (:get-lex ,(or (swf-name (find-swf-class type)) type))
        (:is-type-late)))
@@ -86,10 +87,22 @@
                            (swf-name c)))
                         (t class))))
             `(%asm (:find-property-strict ,name)
-                   ,@(loop for i in args
-                        collect `(:@ ,i))
+                   (:%push-arglist
+                    ,@(loop for i in args
+                         collect `(:@ ,i)))
                    (:comment "%new-")
                    (:construct-prop ,name ,(length args)))))
+
+   (defmacro %construct-class-by-name (class-name &rest args)
+     (let ((class (swf-name (find-swf-class 'flash:class))))
+       `(%asm
+         (:find-property-strict ,class)
+         (:@ (flash::flash.utils.get-definition-by-name ,class-name))
+         (:call-property ,class 1)
+         (:%push-arglist
+          ,@(loop for i in args
+               collect `(:@ ,i)))
+         (:construct ,(length args)))))
 
 
 

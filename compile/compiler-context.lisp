@@ -112,13 +112,16 @@
                        :flags flags)))
 
 (defun find-swf-class (symbol &optional (s *symbol-table*))
-  (let ((c (or (gethash symbol (classes s))
-               (loop for i in (inherited-symbol-tables s)
-                  when (find-swf-class symbol i)
-                  return it))))
-    (unless (or c (eq symbol t))
-      (format t "couldn't find class ~s~%" symbol) #+nil(break))
-    c))
+  (labels ((r (symbol s)
+             (or (gethash symbol (classes s))
+                 (loop for i in (inherited-symbol-tables s)
+                    ;do (format t "checking for ~s in symbol table ~s~%" symbol s)
+                    when (r symbol i)
+                    return it))))
+    (let ((c (r symbol s)))
+      #++(unless (or c (eq symbol t))
+        (format t "couldn't find class ~s (~s)~%" symbol c) #++(break))
+      c)))
 
 ;;; handler for normal form evaluation, evaluate ARGS, and call
 ;;; function/member/whatever identified by OPERATOR

@@ -188,9 +188,16 @@
 (defparameter *break-compile* nil)
 
 
-(defun abc-tag-from-contexts (assembler-context compiler-context symbol-tables)
-  (let ((script-init-scope-setup nil))
+(defun abc-tag-from-contexts (assembler-context compiler-context symbol-tables
+                              tree-shaker-roots)
+  (let ((script-init-scope-setup nil)
+        (tree-shaker-keep-all (eq tree-shaker-roots t))
+        (tree-shaker-keep-function (make-hash-table :test 'equal))
+        (tree-shaker-keep-class (make-hash-table :test 'equal)))
 
+    (when *break-compile* (break "ac=~s cc=~s st=~s tsr=~s"
+                                 assembler-context compiler-context
+                                 symbol-tables tree-shaker-roots))
     ;; reset functions/static functions for symbol-tables since we need
     ;; to recreate them to get correct moethod IDs
     ;; fixme: why do we store these if we aren't going to reuse them?
@@ -201,35 +208,142 @@
              do (setf (functions v) nil)
              do (setf (class-functions v) nil)))
 
-    ;; assemble functions before classes so methods can get added to classes
-    ;; fixme: clean the method stuff up
-    (loop for symbol-table in symbol-tables
-       do (loop for k being the hash-keys of (functions symbol-table)
-             using (hash-value v)
-             do (assemble-function k (car v))))
+    (labels ((normalize-name (n)
+               (cond
+                 ((and (consp n) (eq (car n) :qname)) n)
+                 ;; fixme: handle setf functions...
+                 ((and (consp n) (eq (car n) 'setf)) n)
+                 ((symbolp n) (avm2-asm::symbol-to-qname-list n))
+                 ((stringp n)
+                  (if (find #\: n)
+                      (list :qname
+                            (subseq n 0 (position #\: n))
+                            (subseq n (1+ (position #\: n :from-end t))))
+                      (list :qname "" n )))
+                 (t (error "don't know how to normalize name ~s" n))))
+             (keep-function (k)
+               #++(when (eq k 'vector)
+                    (break "~s ~s" tree-shaker-keep-function tree-shaker-keep-class))
+               #++(format t "check function ~s -> ~s ~s ~s/~s~%"
+                          k tree-shaker-keep-all
+                          (gethash k tree-shaker-keep-function)
+                          (when (symbolp k) (avm2-asm::symbol-to-qname-list k))
+                          (when(symbolp k)
+                            (gethash (avm2-asm::symbol-to-qname-list k) tree-shaker-keep-function)))
+               (or tree-shaker-keep-all
+                   (gethash (normalize-name k) tree-shaker-keep-function)))
+             (keep-class (k)
+               (or tree-shaker-keep-all
+                   (gethash (normalize-name k) tree-shaker-keep-class))))
 
+      ;; tree shaker stuff
+      ;;  loop through all roots, look up as class/function in symbol tables
+      ;;  if found, add to tree-shaker-keep, and iterate through all
+      ;;  classes/functions it depends on
+      (when (consp tree-shaker-roots)
+        ;; we need to be careful about names, since they may end up in a
+        ;; few formats in the code that map to same function (symbol,
+        ;; string, or (:qname ...) ), so normalizing them and looking up
+        ;; in a separate index instead of using the symbol table directly
+        ;; fixme: probably should normalize them at some point during
+        ;;   compilation instead...
+        (let ((function-index (make-hash-table :test 'equal))
+              (class-index (make-hash-table :test 'equal)))
+          (labels ((function-deps (f)
+                     (format t "marking deps for ~s:~%" (car f))
+                     (print
+                      (append (getf (nthcdr 6 f) :function-deps)
+                              (getf (nthcdr 6 f) :class-deps))))
+                   (class-deps (c)
+                     (with-accessors ((functions functions)
+                                      (class-functions class-functions)
+                                      (constructor constructor)) c
+                                        ;(break "adding deps for class ~s~%" c)
+                       (print (append (mapcar 'first functions)
+                                      (mapcar 'first class-functions)
+                                      (list constructor)))))
+                   (mark-used (names)
+                     (when names
+                       (format t "tree shaker marking used: ~s~%" names)
+                       (loop for root in (loop for i in names
+                                            collect (normalize-name i))
+                          for fn = (gethash root function-index)
+                          ;; possibly should handle setf fn differently?
+                          ;;for setf-fn = (find-swf-setf-function root)
+                          for class = (gethash root class-index)
+                          ;; -- no code, so can ignore these...
+                          ;;for method = (find-swf-method root)
+                          ;;for accessor = (find-swf-accessor root)
+                          do
+                          (format t "tree shaker marking used1: ~s =~s ~s~%"
+                                  root (car fn) class)
+                          (when (not (gethash root tree-shaker-keep-function))
+                            (setf (gethash root tree-shaker-keep-function) t)
+                            (when fn (mark-used (function-deps fn))))
+
+                          (when (not (gethash root tree-shaker-keep-class))
+                            (setf (gethash root tree-shaker-keep-class) t)
+                            (when class (mark-used (class-deps class))))
+                          ;;(mark-used (function-deps setf-fn))
+                          )))
+                   (fill-index (symbol-tables)
+                     (loop for symbol-table in symbol-tables
+                        for functions = (functions symbol-table)
+                        for classes = (classes symbol-table)
+                        for inherit = (inherited-symbol-tables symbol-table)
+                        do (loop for k being the hash-keys of functions
+                              using (hash-value v)
+                              do (setf (gethash (normalize-name k) function-index) (car v)))
+                        (loop for k being the hash-keys of classes
+                           using (hash-value v)
+                           do (setf (gethash (normalize-name k) class-index) v))
+                        when inherit do (fill-index inherit))))
+            (fill-index symbol-tables)
+            (format t "shaking tree: ~s~%" tree-shaker-roots)
+            (mark-used tree-shaker-roots))))
+
+
+
+
+
+      ;; assemble functions before classes so methods can get added to classes
+      ;; fixme: clean the method stuff up
+
+
+      (loop for symbol-table in symbol-tables
+         do (loop for k being the hash-keys of (functions symbol-table)
+               using (hash-value v)
+               when (keep-function k)
+               do (assemble-function k (car v))
+               else do (format t "tree shaker dropped function ~s~%" k)))
+
+      (loop for k being the hash-keys of (avm2-asm::method-id-hash assembler-context)
+         using (hash-value v)
+         do (format t "after fns:: ~s->~s = ~s~%" k v (aref (avm2-asm::method-infos assembler-context) v)))
     ;; assemble classes
-    (loop for symbol-table in symbol-tables
-       do (loop for k being the hash-keys of (classes symbol-table)
-             using (hash-value v)
-             do
-             (with-accessors ((swf-name swf-name) (ns ns)
-                              (extends extends) (properties properties)
-                              (constructor constructor)
-                              (functions functions)
-                              (class-properties class-properties)
-                              (class-functions class-functions)
-                              (flags flags)) v
-               (when (or properties constructor)
-                 (assemble-class swf-name ns
-                                 extends
-                                 properties constructor
-                                 functions
-                                 class-properties
-                                 class-functions
-                                 flags)))
-             (setf script-init-scope-setup
-                   (append script-init-scope-setup (new-class+scopes v)))))
+      (loop for symbol-table in symbol-tables
+         do (loop for k being the hash-keys of (classes symbol-table)
+               using (hash-value v)
+               when (keep-class k);; (or tree-shaker-keep-all (gethash k tree-shaker-keep-class))
+               do
+               (with-accessors ((swf-name swf-name) (ns ns)
+                                (extends extends) (properties properties)
+                                (constructor constructor)
+                                (functions functions)
+                                (class-properties class-properties)
+                                (class-functions class-functions)
+                                (flags flags)) v
+                 (when (or properties constructor)
+                   (assemble-class swf-name ns
+                                   extends
+                                   properties constructor
+                                   functions
+                                   class-properties
+                                   class-functions
+                                   flags)
+                   (setf script-init-scope-setup
+                         (append script-init-scope-setup (new-class+scopes v)))))
+               else do (format t "tree shaker dropping class ~s~%" k))))
 
     ;; script boilerplate
     (let ((script-init
@@ -247,16 +361,16 @@
       (vector-push-extend
        `(,script-init
          ,(make-instance
-          'avm2-asm::trait-info
-          'avm2-asm::name
-          (avm2-asm::asm-intern-multiname "%%%%%")
-          'avm2-asm::trait-data
-          (make-instance 'avm2-asm::trait-data-slot/const
-                         'avm2-asm::kind 0
-                         'avm2-asm::slot-id 0
-                         'avm2-asm::type-name 0
-                         'avm2-asm::vindex 0
-                         'avm2-asm::vkind 0))
+           'avm2-asm::trait-info
+           'avm2-asm::name
+           (avm2-asm::asm-intern-multiname "%%%%%")
+           'avm2-asm::trait-data
+           (make-instance 'avm2-asm::trait-data-slot/const
+                          'avm2-asm::kind 0
+                          'avm2-asm::slot-id 0
+                          'avm2-asm::type-name 0
+                          'avm2-asm::vindex 0
+                          'avm2-asm::vkind 0))
          ,@(loop for i in (script-slots compiler-context)
               collect (make-instance
                        'avm2-asm::trait-info
@@ -291,8 +405,12 @@
                                       'avm2-asm::method (second i)))))
        (avm2-asm::scripts assembler-context)))
 
-    (when *break-compile* (break))
-
+    (when *break-compile* (break "ac=~s cc=~s st=~s tsr=~s"
+                                 assembler-context compiler-context
+                                 symbol-tables tree-shaker-roots))
+    (loop for k being the hash-keys of (avm2-asm::method-id-hash assembler-context)
+       using (hash-value v)
+       do (format t "~s->~s = ~s~%" k v (aref (avm2-asm::method-infos assembler-context) v)))
     ;; do something with abc data...
     (make-instance
      '%swf:do-abc-tag
@@ -322,13 +440,19 @@
       collect (list id string))))
 
 ;; still not sure about proper API...
-(defmacro compile-abc-tag ((exports &key inherit) &body body)
+(defmacro compile-abc-tag ((exports &key inherit (tree-shaker-roots nil))
+                           &body body)
+  ;; fixme: possibly should separate tree shaker roots out by type?
+  ;; (function vs class)
   "exports is a list of (tag-id name), where tag-id is a symbol
 matching a tag in the file, or NIL to specify the class for the root
 timeline, and name is either a string, or a symbol, which is converted
 to a string using the same rules as normal code (or similar rules?
 package prefixes might not work, in which case only some symbols will
-work)"
+work)
+TREE-SHAKER-ROOTS is a list of symbols to use as roots for tree shaker
+in adition to those listed in EXPORTS, T to keep everything
+"
   `(let ((avm2-asm::*assembler-context* (make-instance 'avm2-asm::assembler-context))
          (*compiler-context* (make-instance 'compiler-context))
          (*symbol-table* (make-instance 'symbol-table :inherit
@@ -345,7 +469,13 @@ work)"
      (list
       (abc-tag-from-contexts avm2-asm::*assembler-context* *compiler-context*
                              (list ,@(if inherit inherit '(*cl-symbol-table*))
-                                   *symbol-table*))
+                                   *symbol-table*)
+                             ',(if (listp tree-shaker-roots)
+                                   (append (loop for (nil name) in exports
+                                              collect name)
+                                           tree-shaker-roots)
+                                   tree-shaker-roots)
+                             )
       (symbol-class* ',exports))))
 
 

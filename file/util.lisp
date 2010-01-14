@@ -16,6 +16,10 @@
 (defun new-class+scopes (class)
   ;; fixme: allow class lookup instead of using class-id directly?
   (let ((supers (reverse (super-names (extends class)))))
+    (unless (second (assoc (swf-name class) (class-names *compiler-context*)))
+      (break "name ~s = ~s names ~s" (swf-name class)
+              (assoc (swf-name class) (class-names *compiler-context*))
+              (class-names *compiler-context*)))
     `((:get-scope-object 0)
       ,@(loop for i in supers
            append (push-lex-scope i))
@@ -30,8 +34,9 @@
   #+nil(format t "--assemble-function ~s :~%" name)
   (destructuring-bind (n nid argtypes return-type flags asm
                          &key activation-slots class-name class-static
-                         anonymous trait trait-type)
+                         anonymous trait trait-type function-deps class-deps)
       data
+    (declare (ignore function-deps class-deps))
     ;;(format t "--assemble-function ~s : ~s : ~s~%" name n nid)
     (let* ((traits (loop for (name index type) in activation-slots
                          ;;do (format t "trait = ~s ~s ~s ~%" name index type)
@@ -169,4 +174,5 @@
                  ;; todo: class traits
                  ;; :class-traits nil
                  )))
+    (format t "add ~s to compiler context~%" (list name class))
     (push (list name class) (class-names *compiler-context*))))

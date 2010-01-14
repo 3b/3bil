@@ -125,7 +125,7 @@
      (3b-swf:frame-label "frame1"))
 
 
-    (compile-abc-tag (((nil :test-class)))
+    (compile-abc-tag (((nil :test-class)) :tree-shaker-roots nil)
 
       (c3* :setup
         (defclass-swf :test-class (flash:flash.display.sprite)
@@ -281,7 +281,6 @@
         (car nil)
         (cdr nil)
         (if (car nil) "t" "f")
-
         (progn (progn 1 2) 'a (+ 2 3) (progn 3))
         (let ((a 1)) a)
         (tagbody foo (go baz) baz)
@@ -829,7 +828,9 @@
 " s "
 ")))
         (defun run-tests ()
+          ;(ftrace "running tests...")
           (line (list->str (:foo)))
+          ;(ftrace "...")
           (line (list->str ("more-tests")))
           (line (list->str ("old-tests")))
           (line (list->str ("expected-fail")))
@@ -869,6 +870,7 @@
             (setf (flash:.text rfoo) "x")
             (setf (running (app)) rfoo)
             (setf (text (app)) foo)
+            ;(ftrace "calling run-tests...")
             (run-tests)))
 
         (defmacro with-fill (gfx (color alpha &key line-style) &body body)
@@ -899,7 +901,9 @@
                                        matrix)
             (flash:draw-rect gfx 0 0 600 400 )
             (flash:trace "click")
-            (flash:end-fill gfx)))))
+            (flash:end-fill gfx)
+            #++(when evt (run-tests))
+))))
     (list
      (3b-swf:show-frame)))
    :x-twips 600

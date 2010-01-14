@@ -219,6 +219,87 @@
              (super whole)))))
 
 
+;;; extracting function deps from generated code seems like a hassle
+;;; (hard to distinguish method calls from functions on global object,
+;;; etc.), so running a separate pass to collect a list of functions
+;;; called from each function for use by tree shaker
+;; (possibly classes created too, but probably want to pull that from asm
+;;  if possible, since we don't have an object creation primitives yet
+;;  -- for now, just adding a pseudo-op to mark class deps, and calling that
+;;     by hand as needed)
+(defvar *ir2-function-deps*)
+(defvar *ir2-class-deps*)
+;;; we add stuff during assembly, so doesn't really work as a separate pass...
+#++
+(define-structured-walker ir2-collect-function-deps null-ir1-walker
+  :form-var whole
+  :forms
+  (((%named-lambda name flags lambda-list closed-vars types activation-vars body)
+    (let ((*ir2-function-deps* (getf flags :function-deps))
+          (*ir2-class-deps* (getf flags :class-deps)))
+      (let ((rbody (recur-all body)))
+        (setf (getf flags :function-deps) *ir2-function-deps*)
+        (setf (getf flags :class-deps) *ir2-class-deps*)
+        `(%named-lambda
+          name ,name
+          flags ,flags
+          lambda-list ,lambda-list
+          closed-vars ,closed-vars
+          types ,types
+          activation-vars ,activation-vars
+          body ,rbody))))
+   ((%call type name args)
+    (ecase type
+      (:normal
+       ;; for now we only add a dependency for normal functions, and
+       ;; assume methods/static methods will be pulled in by the class
+       (let ((tmp (find-swf-function name *symbol-table*)))
+         (when tmp (pushnew (car tmp) *ir2-function-deps* :test 'equal)))
+       ;; (also add a dep for unknown calls, just in case...)
+       (unless (or (find-swf-static-method name *symbol-table*)
+                   (find-swf-static-method name *symbol-table*))
+          (pushnew name *ir2-function-deps* :test 'equal)))
+      (:local
+       (format t "icfd- local call = ~s~%" whole)
+       ;; for now local calls go through a local var, so they get
+       ;; handled by FUNCTION
+       nil)
+      (:setf
+       ;; known properties get inlined (fixme: is this still valid?)
+       (unless (find-swf-property name)
+         (pushnew (list :setf name) *ir2-function-deps* :test 'equal))))
+    (super whole))
+   ((function type name)
+    (ecase type
+      (:local (pushnew name *ir2-function-deps* :test 'equal))
+      (:normal (let (tmp)
+                 ;; fixme: share code with function calls?
+                 (cond
+                   ;; known methods
+                   ((setf tmp (find-swf-method name *symbol-table*))
+                    nil)
+                   ;; known static methods
+                   ((setf tmp (find-swf-static-method name *symbol-table*))
+                    nil)
+                   ;; known functions
+                   ((setf tmp (find-swf-function name *symbol-table*))
+                    (pushnew (car tmp) *ir2-function-deps* :test 'equal))
+                   ;; unknown function...
+                   (t
+                    (pushnew name *ir2-function-deps* :test 'equal))))))
+    (super whole))
+   ((%asm forms)
+    (labels ((recur-%asm (ops)
+               (loop for i in ops
+                  when (member (car i) '(:construct-prop
+                                         :@mark-class-dependency))
+                  do (pushnew (second i) *ir2-class-deps* :test 'equal)
+                  else when (eq (car i) :%push-arglist)
+                  do (recur-%asm (cdr i)))))
+      (recur-%asm forms)
+      (super whole)))
+))
+
 
 
 ;;; skipping serious optimization/type inference for now, so
@@ -288,7 +369,11 @@
                               (second (assoc var *current-closure-vars*)))
            (call-name (form)
                       (and (eq (car form) '%call)
-                           (getf (cdr form) 'name))))
+                           (getf (cdr form) 'name)))
+           (add-function-ref (name)
+                             (pushnew name *ir2-function-deps* :test 'equal))
+           (add-class-ref (name)
+                             (pushnew name *ir2-class-deps* :test 'equal)))
   :forms
   (((quote value)
     (let ((a `(,@(typecase value
@@ -316,6 +401,7 @@
                                 ((eq value nil)
                                  `((:push-null)))
                                 (t
+                                 (add-function-ref '%intern)
                                  `((:find-property-strict %intern)
                                    ;; fixme: handle symbols properly
                                    (:push-string ,(package-name (or (symbol-package value) :uninterned)))
@@ -323,6 +409,7 @@
                                    (:call-property %intern 2)))))
 ;;;
                              (cons
+                              (add-class-ref 'cons-type)
                               (append
                                `((:find-property-strict cons-type))
                                (recur `(quote value ,(car value)))
@@ -338,6 +425,7 @@
      ;;  on what we pass as THIS arg? :local would get current function's THIS
      ;;  while :static would get global scope or something?)
      ((%call type name args)
+      (format t "call ~s~%" name)
       (ecase type
         ;; todo: void calls if no dest? (or make sure peephole handles it?)
         (:normal
@@ -345,6 +433,7 @@
            (cond
             ;; known methods
             ((setf tmp (find-swf-method name *symbol-table*))
+             #++(format t "normal method call ~s = ~s~%" name tmp)
              `(,@(let ((*ir1-dest-type* nil))
                       (recur (first args)))
                  ,@(let ((*ir1-dest-type* nil))
@@ -354,6 +443,7 @@
                  ,@(coerce-type)))
             ;; known static methods
             ((setf tmp (find-swf-static-method name *symbol-table*))
+             #++(format t "static method call ~s = ~s~%" name tmp)
              `(;#+nil(:find-property-strict ,(car tmp)) ;;??
                (:get-lex ,(if (find-swf-class (car tmp))
                               (swf-name (find-swf-class (car tmp)))
@@ -368,6 +458,8 @@
             ;; for functions known to be on global object, and optimize
             ;; that case if useful
             ((setf tmp (find-swf-function name *symbol-table*))
+             (add-function-ref (car tmp))
+             #++(format t "function call ~s = ~s~%" name tmp)
              ;; :find-property-strict needed for stuff like %flash:trace
              `((:find-property-strict ,(car tmp)) ;(:get-global-scope)
                ,@(let ((*ir1-dest-type* nil))
@@ -377,6 +469,7 @@
                  ,@(coerce-type)))
             ;; unknown function... call directly
             (t
+             (add-function-ref name)
              ;; fixme: is this correct?
              `(#+nil(:find-property-strict ,name)
                     (:get-global-scope)
@@ -439,12 +532,15 @@
                          (:set-property ,(or (find-swf-property name) name))
                          ,@(unless (eq *ir1-dest-type* :ignored)
                                    (coerce-type))))
-                   `((:get-lex setf-namespace-type)
-                     ,@(let ((*ir1-dest-type* nil))
-                            (loop for a in args
-                                  append (recur a)))
-                     (:call-property ,name ,(length args))
-                     ,@(coerce-type))))))
+                   (progn
+                     (add-function-ref `(setf ,name))
+                     (add-class-ref 'setf-namespace-type)
+                     `((:get-lex setf-namespace-type)
+                      ,@(let ((*ir1-dest-type* nil))
+                             (loop for a in args
+                                append (recur a)))
+                      (:call-property ,name ,(length args))
+                      ,@(coerce-type)))))))
 
      ;; possibly should split out closed and normal bindings, but for now
      ;; leaving combined to avoid worrying about order of evaluating the values
@@ -551,7 +647,9 @@
             (*current-closure-vars* activation-vars)
             (*activation-local-name* (gensym "ACTIVATION-RECORD-"))
             (*current-closure-scope-index* 1)
-            (*live-locals* nil))
+            (*live-locals* nil)
+            (*ir2-function-deps* (getf flags :function-deps))
+            (*ir2-class-deps* (getf flags :class-deps)))
         ;; fixme: implement this properly instead of relying on it picking right numbers on its own
         (loop for i in (lambda-list-vars lambda-list)
              ;; note: (get-local-index i) is needed for side effects
@@ -597,6 +695,8 @@
                    finally (return (if found
                                        a
                                        (append activation a)))))
+          (setf (getf flags :function-deps) *ir2-function-deps*)
+          (setf (getf flags :class-deps) *ir2-class-deps*)
           `(%named-lambda
                    name ,name
                flags ,flags
@@ -608,8 +708,10 @@
 
      ((function type name)
       (ecase type
-        (:local `((:new-function ,name)
-                  ,@(coerce-type)))
+        (:local
+         (add-function-ref name)
+         `((:new-function ,name)
+           ,@(coerce-type)))
         (:normal (let (tmp)
                    ;; fixme: share code with function calls?
                    (cond
@@ -627,12 +729,14 @@
                         ,@(coerce-type)))
                      ;; known functions
                      ((setf tmp (find-swf-function name *symbol-table*))
+                      (add-function-ref (car tmp))
                       ;; :find-property-strict needed for stuff like %flash:trace
                       `((:find-property-strict ,(car tmp)) ;(:get-global-scope)
                         (:get-property ,(car tmp))
                         ,@(coerce-type)))
                      ;; unknown function... call directly
                      (t
+                      (add-function-ref name)
                       ;; fixme: is this correct?
                       `(#+nil(:find-property-strict ,name)
                              (:get-global-scope)
@@ -820,31 +924,37 @@
 ;;; combined tag for non-local return-from, go, throw in later passes
      ((%nlx type name exit-point value)
       (ecase type
-        (:go `((:find-property-strict go-exception-type)
+        (:go
+         (add-class-ref 'go-exception-type)
+         `((:find-property-strict go-exception-type)
                ,@(let ((*ir1-dest-type* nil))
                       (recur exit-point))
                ,@(let ((*ir1-dest-type* nil))
                       `((:push-int ,(get-tag-info name :nlx-index))))
                (:construct-prop go-exception-type 2)
                (:throw)))
-        (:return-from `((:comment "nlx return-from" ,name)
-                        (:find-property-strict block-exception-type)
-                        ;; fixme: check these types
-                        ,@(let ((*ir1-dest-type* nil))
-                               (recur exit-point))
-                        ,@(let ((*ir1-dest-type* t))
-                               (recur value))
-                        (:construct-prop block-exception-type 2)
-                        (:throw)))
-        (:throw `((:find-property-strict throw-exception-type)
-                  ;; fixme: should this specify a type (or t)?
-                  ,@(let ((*ir1-dest-type* nil))
-                         (recur exit-point))
-                  ;; fixme: not sure about correct type for this either...
-                  ,@(let ((*ir1-dest-type* t))
-                         (recur value))
-                  (:construct-prop throw-exception-type 2)
-                  (:throw)))))
+        (:return-from
+         (add-class-ref 'block-exception-type)
+          `((:comment "nlx return-from" ,name)
+            (:find-property-strict block-exception-type)
+            ;; fixme: check these types
+            ,@(let ((*ir1-dest-type* nil))
+                   (recur exit-point))
+            ,@(let ((*ir1-dest-type* t))
+                   (recur value))
+            (:construct-prop block-exception-type 2)
+            (:throw)))
+        (:throw
+            (add-class-ref 'throw-exception-type)
+          `((:find-property-strict throw-exception-type)
+            ;; fixme: should this specify a type (or t)?
+            ,@(let ((*ir1-dest-type* nil))
+                   (recur exit-point))
+            ;; fixme: not sure about correct type for this either...
+            ,@(let ((*ir1-dest-type* t))
+                   (recur value))
+            (:construct-prop throw-exception-type 2)
+            (:throw)))))
 
      ((if condition then else)
       (let ((else-label (gensym "IF-ELSE-"))
@@ -934,14 +1044,20 @@
           fun-info ,fun-info
           lambdas ,(recur-all lambdas))))
 
-     ((%asm forms)
+   ((%asm forms)
       ;; fixme: decide correct handling of return type?
       (labels ((recur-%asm (ops)
                  (loop for i in ops
                     ;; fixme: convert this into something better
                     ;; suited for selecting from a list of special
                     ;; cases...
-                    when (eq (car i) :@)
+                    when (eq (car i) :@mark-class-dependency)
+                    do ;; don't collect anything, just mark class as used
+                      (add-class-ref (second i))
+                    else when (eq (car i) :construct-prop)
+                    do (add-class-ref (second i))
+                    and collect i
+                    else when (eq (car i) :@)
                     append (let ((*ir1-dest-type* (third i)))
                              (recur (second i)))
                     else when (eq (car i) :%restore-scope-stack)
@@ -1148,6 +1264,9 @@
                                                   (+ 1
                                                      (if rest-p 1 0)
                                                      (length names))))))
+              (loop for i in asm
+                 when (eq (car i) :construct-prop)
+                 do (pushnew (second i) (getf flags :class-deps) :test 'equal))
               (when (or (and activation-p (not activation-vars))
                         (and (not activation-p) activation-vars))
                 ;; not completely sure this is an error, but shouldn't be
@@ -1178,10 +1297,13 @@
                         (if activation-p #x02 0))
                 asm
                 :anonymous anonymous
+                ;; fixme: should this just dump flags inline?
                 :class-name (getf flags :class-name)
                 :class-static (getf flags :class-static)
                 :trait (getf flags :trait)
                 :trait-type (getf flags :trait-type)
+                :function-deps (getf flags :function-deps)
+                :class-deps (getf flags :class-deps)
                 :activation-slots
                 (when activation-vars
                   (loop for (name index) in activation-vars
