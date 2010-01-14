@@ -23,38 +23,43 @@ for that here and return count of extra args"
 ;;;-- missing some from this one:
 ;;; http://www.libspark.org/svn/as3/ByteCodeDisassembler/org/libspark/disassemble/abc/AbcParser.as
 
-;; fixme: convert this to keywords instead of positional args or something...
+;;; name   (args)    opcode    pop push ;; (should push/pop be &key?)
+;;;    &key (pop-scope 0) (push-scope 0)
+;;;         (read-locals nil) (write-locals nil)  (kill-locals nil)
+;;;         (flags 0)
+;;;         (control-flow-flag nil)
+;;;         (label nil) (more-labels nil)
+;;; most args are defined in terms of code to be evaluated in the scope of the variables in the ARGS param, so can't be used directly
 (define-ops
-  ;; name   (args)    opcode    pop push   pop-scope push-scope  read-locals write-locals  kill-locals flags control-flow-flag label more-labels
   (:breakpoint ()                      #x01  0 0) ;
   (:nop        ()                      #x02  0 0) ;
-  (:throw      ()                      #x03  1 0  0 0 nil nil nil 0 :throw) ;
-  (:get-super  ((multiname multiname-q30)) #x04  (1+ (runtime-name-count multiname)) 1)
-  (:set-super  ((multiname multiname-q30)) #x05  (+ 2 (runtime-name-count multiname)))
-  (:dxns       ((string string-u30))    #x06  0 0 0 0 nil nil nil +set-dxns+)
-  (:dxnslate   ()                      #x07  1 0 0 0 nil nil nil +set-dxns+)
-  (:kill       ((local-index u30))     #x08  0 0  0 0 nil nil (list local-index))
+  (:throw      ()                      #x03  1 0  :control-flow-flag :throw) ;
+  (:get-super  ((multiname multiname-q30)) #x04  (1+ (runtime-name-count multiname))  1) ;; multiname is slot name
+  (:set-super  ((multiname multiname-q30)) #x05  (+ 2 (runtime-name-count multiname)) 0) ;; multiname is slot name
+  (:dxns       ((string string-u30))   #x06  0 0 :flags +set-dxns+)
+  (:dxnslate   ()                      #x07  1 0 :flags +set-dxns+)
+  (:kill       ((local-index u30))     #x08  0 0 :kill-locals (list local-index))
   (:label      ()                      #x09  0 0)
   ;; #x0a
   ;; #x0b
-  (:if-nlt     ((offset ofs24))   #x0c  2 0   0 0 nil nil nil 0 nil offset)
-  (:if-nle     ((offset ofs24))   #x0d  2 0   0 0 nil nil nil 0 nil offset)
-  (:if-ngt     ((offset ofs24))   #x0e  2 0   0 0 nil nil nil 0 nil offset)
-  (:if-nge     ((offset ofs24))   #x0f  2 0   0 0 nil nil nil 0 nil offset)
-  (:jump         ((offset ofs24)) #x10  0 0   0 0 nil nil nil 0 t offset)
-  (:if-true      ((offset ofs24)) #x11  1 0   0 0 nil nil nil 0 nil offset)
-  (:if-false     ((offset ofs24)) #x12  1 0   0 0 nil nil nil 0 nil offset)
-  (:if-eq        ((offset ofs24)) #x13  2 0   0 0 nil nil nil 0 nil offset)
-  (:if-ne        ((offset ofs24)) #x14  2 0   0 0 nil nil nil 0 nil offset)
-  (:if-lt        ((offset ofs24)) #x15  2 0   0 0 nil nil nil 0 nil offset)
-  (:if-le        ((offset ofs24)) #x16  2 0   0 0 nil nil nil 0 nil offset)
-  (:if-gt        ((offset ofs24)) #x17  2 0   0 0 nil nil nil 0 nil offset)
-  (:if-ge        ((offset ofs24)) #x18  2 0   0 0 nil nil nil 0 nil offset)
-  (:if-strict-eq ((offset ofs24)) #x19  2 0   0 0 nil nil nil 0 nil offset)
-  (:if-strict-ne ((offset ofs24)) #x1a  2 0   0 0 nil nil nil 0 nil offset)
-  (:lookup-switch ((default-offset ofs24) (offsets counted-ofs24)) #x1b  1 0   0 0 nil nil nil 0 t default-offset offsets)
-  (:push-with    ()             #x1c 1 0 0 1)
-  (:pop-scope    ()             #x1d 0 0 1 0)
+  (:if-nlt     ((offset ofs24))   #x0c  2 0 :label offset)
+  (:if-nle     ((offset ofs24))   #x0d  2 0 :label offset)
+  (:if-ngt     ((offset ofs24))   #x0e  2 0 :label offset)
+  (:if-nge     ((offset ofs24))   #x0f  2 0 :label offset)
+  (:jump         ((offset ofs24)) #x10  0 0 :control-flow-flag t :label offset)
+  (:if-true      ((offset ofs24)) #x11  1 0 :label offset)
+  (:if-false     ((offset ofs24)) #x12  1 0 :label offset)
+  (:if-eq        ((offset ofs24)) #x13  2 0 :label offset)
+  (:if-ne        ((offset ofs24)) #x14  2 0 :label offset)
+  (:if-lt        ((offset ofs24)) #x15  2 0 :label offset)
+  (:if-le        ((offset ofs24)) #x16  2 0 :label offset)
+  (:if-gt        ((offset ofs24)) #x17  2 0 :label offset)
+  (:if-ge        ((offset ofs24)) #x18  2 0 :label offset)
+  (:if-strict-eq ((offset ofs24)) #x19  2 0 :label offset)
+  (:if-strict-ne ((offset ofs24)) #x1a  2 0 :label offset)
+  (:lookup-switch ((default-offset ofs24) (offsets counted-ofs24)) #x1b  1 0 :control-flow-flag t :label default-offset :more-labels offsets)
+  (:push-with    ()             #x1c 1 0 :pop-scope 0 :push-scope 1)
+  (:pop-scope    ()             #x1d 0 0 :pop-scope 1 :push-scope 0)
   (:next-name    ()             #x1e  2 1)
   (:has-next     ()             #x1f  2 1)
   (:push-null      ()                     #x20  0 1)
@@ -73,9 +78,9 @@ for that here and return count of extra args"
   (:push-int       ((integer  int-u30))  #x2d  0 1)
   (:push-uint      ((uinteger uint-u30)) #x2e  0 1)
   (:push-double    ((double double-u30))         #x2f  0 1)
-  (:push-scope     ()                                             #x30  1 0 0 1)
-  (:push-namespace ((namespace namespace-q30))                        #x31  0 1)
-  (:has-next-2     ((object-local-reg u30) (index-local-reg u30)) #x32  0 1 0 0 (list object-local-reg index-local-reg) nil nil)
+  (:push-scope     ()                                             #x30  1 0 :pop-scope 0 :push-scope 1)
+  (:push-namespace ((namespace namespace-q30))                    #x31  0 1)
+  (:has-next-2     ((object-local-reg u30) (index-local-reg u30)) #x32  0 1 :read-locals (list object-local-reg index-local-reg))
   ;; #x33
   ;; #x34
   ;; #x35-#x3e: flash 10/alchemy instrs
@@ -92,15 +97,15 @@ for that here and return count of extra args"
   (:load-float-32   ()   #x3d 1 1) ;; stack=addr -> value
   (:load-float-64   ()   #x3e 1 1) ;; stack=addr -> value
   ;; #x3f
-  (:new-function    ((method-index method-u30))                    #x40  0 1)
-  (:call            ((arg-count u30))                       #x41  (+ 2 arg-count) 1)
-  (:construct       ((arg-count u30))                       #x42  (1+ arg-count) 1)
-  (:call-method     ((method-index method-u30) (arg-count u30))    #x43  (+ 1 arg-count) 1)
-  (:call-static     ((method-index method-u30) (arg-count u30))    #x44  (+ 1 arg-count) 1)
+  (:new-function    ((method-index method-u30))                 #x40  0 1)
+  (:call            ((arg-count u30))                           #x41  (+ 2 arg-count) 1)
+  (:construct       ((arg-count u30))                           #x42  (+ 1 arg-count) 1)
+  (:call-method     ((method-index method-u30) (arg-count u30)) #x43  (+ 1 arg-count) 1)
+  (:call-static     ((method-index method-u30) (arg-count u30)) #x44  (+ 1 arg-count) 1)
   (:call-super      ((multiname multiname-q30) (arg-count u30)) #x45  (+ 1 arg-count (runtime-name-count multiname)) 1)
   (:call-property   ((multiname multiname-q30) (arg-count u30)) #x46  (+ 1 arg-count (runtime-name-count multiname)) 1)
-  (:return-void     ()                #x47 0 0  0 0 nil nil nil 0 :return)
-  (:return-value    ()                #x48 1 0  0 0 nil nil nil 0 :return)
+  (:return-void     ()                #x47 0 0 :control-flow-flag :return)
+  (:return-value    ()                #x48 1 0 :control-flow-flag :return)
   (:construct-super ((arg-count u30)) #x49  (1+ arg-count) 0)
   (:construct-prop  ((multiname multiname-q30) (arg-count u30)) #x4a  (+ 1 arg-count (runtime-name-count multiname)) 1)
   ;;(:call-super-id ?                                           #x4b ? ?)
@@ -118,7 +123,7 @@ for that here and return count of extra args"
   ;; #x54
   (:new-object           ((arg-count u32))       #x55  (* 2 arg-count) 1)
   (:new-array            ((arg-count u30))       #x56  arg-count 1)
-  (:new-activation       ()                      #x57  0 1 0 0 nil nil nil +need-activation+)
+  (:new-activation       ()                      #x57  0 1 :flags +need-activation+)
   (:new-class            ((class-index u30))     #x58  1 1)  ;; 2->1 ? also see docs about scope stuff
   (:get-descendants      ((multiname multiname-q30)) #x59  (1+ (runtime-name-count multiname)) 1)
   (:new-catch            ((exception-index exception-u30)) #x5a  0 1)
@@ -126,18 +131,18 @@ for that here and return count of extra args"
   ;; #x5c
   (:find-property-strict ((multiname multiname-q30)) #x5d  (runtime-name-count multiname) 1)
   (:find-property        ((multiname multiname-q30)) #x5e  (runtime-name-count multiname) 1)
-  (:find-def             ((string string-u30))    #x5f  0 1) ;; ??
+  (:find-def             ((string string-u30))   #x5f  0 1) ;; ??
   (:get-lex          ((multiname multiname-q30)) #x60  0 1)
   (:set-property     ((multiname multiname-q30)) #x61  (+ 2 (runtime-name-count multiname)) 0)
-  (:get-local        ((local-index u30))     #x62  0 1 0 0 (list local-index) nil nil)
-  (:set-local        ((local-index u30))     #x63  1 0 0 0 nil (list local-index) nil)
+  (:get-local        ((local-index u30))     #x62  0 1 :read-locals (list local-index))
+  (:set-local        ((local-index u30))     #x63  1 0 :write-locals (list local-index))
   (:get-global-scope ()                      #x64  0 1)
   (:get-scope-object ((scope-index u8))      #x65  0 1)
-  (:get-property     ((multiname multiname-q30)) #x66  (1+ (runtime-name-count multiname)) 1)
+  (:get-property     ((multiname multiname-q30)) #x66 (+ 1 (runtime-name-count multiname)) 1)
   ;;(:get-outer-scope (?) #x67 0 1) ??
-  (:init-property    ((multiname multiname-q30)) #x68  (+ 2 (runtime-name-count multiname)) 0)
+  (:init-property    ((multiname multiname-q30)) #x68 (+ 2 (runtime-name-count multiname)) 0)
   ;; #x69
-  (:delete-property  ((multiname multiname-q30)) #x6a (1+ (runtime-name-count multiname)) 1)
+  (:delete-property  ((multiname multiname-q30)) #x6a (+ 1 (runtime-name-count multiname)) 1)
   ;; #x6b
   (:get-slot         ((slot-index u30))      #x6c  1 1)
   (:set-slot         ((slot-index u30))      #x6d  2 0)
@@ -177,9 +182,9 @@ for that here and return count of extra args"
   ;; #x8f
   (:negate    ()                  #x90  1 1)
   (:increment ()                  #x91  1 1)
-  (:inc-local ((local-index u30)) #x92  0 0 0 0 (list local-index) (list local-index))
+  (:inc-local ((local-index u30)) #x92  0 0 :read-locals (list local-index) :write-locals (list local-index))
   (:decrement ()                  #x93  1 1)
-  (:dec-local ((local-index u30)) #x94  0 0 0 0 (list local-index) (list local-index))
+  (:dec-local ((local-index u30)) #x94  0 0 :read-locals (list local-index) :write-locals (list local-index))
   (:type-of    ()                 #x95  1 1)
   (:not       ()                  #x96  1 1)
   (:bit-not   ()                  #x97  1 1)
@@ -225,8 +230,8 @@ for that here and return count of extra args"
   ;; #xbf
   (:increment-i ()                  #xc0  1 1)
   (:decrement-i ()                  #xc1  1 1)
-  (:inc-local-i ((local-index u30)) #xc2  0 0 0 0 (list local-index) (list local-index))
-  (:dec-local-i ((local-index u30)) #xc3  0 0 0 0 (list local-index) (list local-index))
+  (:inc-local-i ((local-index u30)) #xc2  0 0 :read-locals (list local-index) :write-locals (list local-index))
+  (:dec-local-i ((local-index u30)) #xc3  0 0 :read-locals (list local-index) :write-locals (list local-index))
   (:negate-i    ()                  #xc4  1 1)
   (:add-i       ()                  #xc5  2 1)
   (:subtract-i  ()                  #xc6  2 1)
@@ -239,14 +244,14 @@ for that here and return count of extra args"
   ;; #xcd
   ;; #xce
   ;; #xcf
-  (:get-local-0 () #xd0  0 1 0 0 '(0) nil nil)
-  (:get-local-1 () #xd1  0 1 0 0 '(1) nil nil)
-  (:get-local-2 () #xd2  0 1 0 0 '(2) nil nil)
-  (:get-local-3 () #xd3  0 1 0 0 '(3) nil nil)
-  (:set-local-0 () #xd4  1 0 0 0 nil '(0) nil)
-  (:set-local-1 () #xd5  1 0 0 0 nil '(1) nil)
-  (:set-local-2 () #xd6  1 0 0 0 nil '(2) nil)
-  (:set-local-3 () #xd7  1 0 0 0 nil '(3) nil)
+  (:get-local-0 () #xd0  0 1 :read-locals '(0))
+  (:get-local-1 () #xd1  0 1 :read-locals '(1))
+  (:get-local-2 () #xd2  0 1 :read-locals '(2))
+  (:get-local-3 () #xd3  0 1 :read-locals '(3))
+  (:set-local-0 () #xd4  1 0 :write-locals '(0))
+  (:set-local-1 () #xd5  1 0 :write-locals '(1))
+  (:set-local-2 () #xd6  1 0 :write-locals '(2))
+  (:set-local-3 () #xd7  1 0 :write-locals '(3))
   ;; #xd8
   ;; #xd9
   ;; #xda

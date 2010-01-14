@@ -637,15 +637,17 @@
            (method-u30     decode-variable-length lookup-method)
            (exception-u30 decode-variable-length) ;; todo: add lookup
 )))
-    (flet ((defop (name args opcode
-                        &optional
-                        (pop 0) (push 0)
-                        (pop-scope 0) (push-scope 0)
-                        (rlocals nil) (wlocals nil) (klocals nil)
-                        (flag 0)
-                        &rest ignore
+    (flet ((defop (name args opcode pop push
+                        &key (pop-scope 0) (push-scope 0)
+                        (read-locals nil) (write-locals nil) (kill-locals nil)
+                        (flags 0)
+                        &allow-other-keys
+                        ;(control-flow-flag nil)
+                        ;(label nil) (more-labels nil)
+                        ;class-dep
+                        ;function-dep
+                        ;name args opcode
                         &aux (l (gensym)))
-             (declare (ignore ignore))
              `(setf (gethash ',name *opcodes*)
                     (flet ((,name (,@(mapcar 'car args))
 			     ,@(when args `((declare (ignorable ,@(mapcar 'car args)))))
@@ -664,31 +666,31 @@
 					    (= 0 pop-scope push-scope))
 				       `((adjust-scope ,pop-scope ,push-scope)))
                              ;; fixme: get rid of duplication here...
-			     ,@ (when rlocals
-                                  `((let ((,l ,(if (= 1 (length rlocals))
-                                                  (car rlocals)
-                                                  `(reduce 'max ,rlocals :initial-value 0))))
+			     ,@ (when read-locals
+                                  `((let ((,l ,(if (= 1 (length read-locals))
+                                                  (car read-locals)
+                                                  `(reduce 'max ,read-locals :initial-value 0))))
                                       (when (and *current-method*
                                                  (> ,l (local-count *current-method*)))
                                         (setf (local-count *current-method*) ,l)))))
-			     ,@ (when wlocals
-                                  `((let ((,l ,(if (= 1 (length wlocals))
-                                                  (car wlocals)
-                                                  `(reduce 'max ,wlocals :initial-value 0))))
+			     ,@ (when write-locals
+                                  `((let ((,l ,(if (= 1 (length write-locals))
+                                                  (car write-locals)
+                                                  `(reduce 'max ,write-locals :initial-value 0))))
                                       (when (and *current-method*
                                                  (> ,l (local-count *current-method*)))
                                         (setf (local-count *current-method*) ,l)))))
-			     ,@ (when klocals
-                                  `((let ((,l ,(if (= 1 (length klocals))
-                                                  (car klocals)
-                                                  `(reduce 'max ,klocals :initial-value 0))))
+			     ,@ (when kill-locals
+                                  `((let ((,l ,(if (= 1 (length kill-locals))
+                                                  (car kill-locals)
+                                                  `(reduce 'max ,kill-locals :initial-value 0))))
                                       (when (and *current-method*
                                                  (> ,l (local-count *current-method*)))
                                         (setf (local-count *current-method*) ,l)))))
-                                ,@(unless (and (numberp flag) (zerop flag))
+                                ,@(unless (and (numberp flags) (zerop flags))
 				       `((when *current-method*
 					   (setf (flags *current-method*)
-						 (logior ,flag (flags *current-method*))))))
+						 (logior ,flags (flags *current-method*))))))
 			     ,(if (null args)
 				  `(list ,opcode)
 				  `(append
@@ -700,7 +702,7 @@
 					 collect `(,encoder ,name))))))
 		      #',name)))
            ;; fixme: gensyms
-           (defop-disasm (name args opcode &rest ignore)
+           (defop-disasm (name args opcode &rest ignore )
              (declare (ignore ignore))
              `(setf (gethash ,opcode *disassemble-opcodes*)
                     (flet ((,name (sequence &key (start 0))
@@ -721,12 +723,13 @@
                       #',name
 )))
            ;;
-           (defop-stack (name args opcode
-                              &optional
-                              (pop 0) (push 0)
+           (defop-stack (name args opcode pop push
+                              &key
                               (pop-scope 0) (push-scope 0)
-                              (rlocals nil) (wlocals nil) (klocals nil)
-                              (flag 0) control-flow label more-labels
+                              (read-locals nil) (write-locals nil)
+                              (kill-locals nil)
+                              (flags 0) control-flow-flag label more-labels
+                              &allow-other-keys
                               &aux ignores)
              (declare (ignore opcode))
              `(setf (gethash ,name *stack-effects-opcodes*)
@@ -750,9 +753,9 @@
                                          `((declare (ignorable ,@ignores))))
                                  (values ,pop ,push
                                          ,pop-scope ,push-scope
-                                         ,rlocals ,wlocals ,klocals
-                                         ,flag
-                                         ,control-flow))
+                                         ,read-locals ,write-locals ,kill-locals
+                                         ,flags
+                                         ,control-flow-flag))
                                ,(if more-labels
                                     `(cons ,label
                                            ,more-labels)
