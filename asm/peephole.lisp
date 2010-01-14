@@ -85,11 +85,16 @@ optimized version"
                           :push-false :push-nan :push-string :push-int
                           :push-uint :push-double :push-namespace
                           :get-local-0 :get-local-1 :get-local-2 :get-local-3
-                          :get-local :new-function) 2 (nil next &rest rest)
-  (if (eql :pop (car next))
-      (progn #+(or)(format t "drop ~s -> ~s~%" next rest)
-             rest)
-      :keep))
+                          :get-local :new-function) 2 (op next &rest rest)
+  (cond
+    ((eql :pop (car next))
+     (progn #+(or)(format t "drop ~s -> ~s~%" next rest)
+            rest))
+    ;; todo: more of these
+    ((and (eq :coerce-string (car next)) (eq (car op) :push-string))
+     (cons op rest))
+    (t
+     :keep)))
 
 ;;; get-local N (N<4) -> get-local-n
 (def-peephole :get-local 1 ((nil local) &rest rest)
