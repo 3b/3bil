@@ -433,6 +433,7 @@
            (cond
             ;; known methods
             ((setf tmp (find-swf-method name *symbol-table*))
+             (add-function-ref tmp)
              #++(format t "normal method call ~s = ~s~%" name tmp)
              `(,@(let ((*ir1-dest-type* nil))
                       (recur (first args)))
@@ -443,6 +444,7 @@
                  ,@(coerce-type)))
             ;; known static methods
             ((setf tmp (find-swf-static-method name *symbol-table*))
+             (add-class-ref (first tmp))
              #++(format t "static method call ~s = ~s~%" name tmp)
              `(;#+nil(:find-property-strict ,(car tmp)) ;;??
                (:get-lex ,(if (find-swf-class (car tmp))
@@ -469,6 +471,7 @@
                  ,@(coerce-type)))
             ;; unknown function... call directly
             (t
+             #++(format t " unknown function")
              (add-function-ref name)
              ;; fixme: is this correct?
              `(#+nil(:find-property-strict ,name)
