@@ -720,10 +720,12 @@
                    (cond
                      ;; known methods
                      ((setf tmp (find-swf-method name *symbol-table*))
+                      (add-function-ref tmp)
                       `((:get-property ,tmp)
                         ,@(coerce-type)))
                      ;; known static methods
                      ((setf tmp (find-swf-static-method name *symbol-table*))
+                      (add-class-ref (first tmp))
                       `( ;#+nil(:find-property-strict ,(car tmp)) ;;??
                         (:get-lex ,(if (find-swf-class (car tmp))
                                        (swf-name (find-swf-class (car tmp)))
