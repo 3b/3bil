@@ -74,6 +74,7 @@
    :x-twips 400
    :y-twips 300
    :frame-rate 30
+   :compress t
    :flash-version 9)
   )
 
