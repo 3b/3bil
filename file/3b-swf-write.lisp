@@ -187,6 +187,63 @@
 
 (defparameter *break-compile* nil)
 
+(defparameter *progressive-write-context* nil)
+
+(defclass progressive-write-context ()
+  (;; hash (normalized) name -> class for written classes/functions
+   ;; (not just name, since we want to be able to detect when we have
+   ;;  a redefinition in a later tag that should override what is already
+   ;;  written)
+   (written-classes :accessor written-classes
+                    :initform (make-hash-table :test 'equal))
+   (written-functions :accessor written-functions
+                      :initform (make-hash-table :test 'eq))))
+
+(defmacro with-progressive-write-context (() &body body)
+  ;; todo: possibly should allow marking already written stuff?
+  `(let ((*progressive-write-context*
+          (make-instance 'progressive-write-context)))
+     ,@body))
+
+(defun normalize-name (n)
+  (cond
+    ((and (consp n) (eq (car n) :qname)) n)
+    ;; fixme: handle setf functions...
+    ((and (consp n) (eq (car n) 'setf)) n)
+    ((symbolp n) (avm2-asm::symbol-to-qname-list n))
+    ((stringp n)
+     (if (find #\: n)
+         (list :qname
+               (subseq n 0 (position #\: n))
+               (subseq n (1+ (position #\: n :from-end t))))
+         (list :qname "" n )))
+    (t (error "don't know how to normalize name ~s" n))))
+
+(defun class-already-written-p (name obj)
+  (when *progressive-write-context*
+    (eq obj
+        (gethash (normalize-name name)
+                 (written-classes *progressive-write-context*)))))
+
+(defun mark-class-written (name obj)
+  (when *progressive-write-context*
+    (setf (gethash (normalize-name name)
+                   (written-classes *progressive-write-context*))
+          obj)))
+
+
+(defun function-already-written-p (name obj)
+  (when *progressive-write-context*
+    (eq obj
+        (gethash (normalize-name name)
+                 (written-functions *progressive-write-context*)))))
+
+(defun mark-function-written (name obj)
+  (when *progressive-write-context*
+    (setf (gethash (normalize-name name)
+                   (written-functions *progressive-write-context*))
+          obj)))
+
 
 (defun abc-tag-from-contexts (assembler-context compiler-context symbol-tables
                               tree-shaker-roots)
@@ -208,20 +265,7 @@
              do (setf (functions v) nil)
              do (setf (class-functions v) nil)))
 
-    (labels ((normalize-name (n)
-               (cond
-                 ((and (consp n) (eq (car n) :qname)) n)
-                 ;; fixme: handle setf functions...
-                 ((and (consp n) (eq (car n) 'setf)) n)
-                 ((symbolp n) (avm2-asm::symbol-to-qname-list n))
-                 ((stringp n)
-                  (if (find #\: n)
-                      (list :qname
-                            (subseq n 0 (position #\: n))
-                            (subseq n (1+ (position #\: n :from-end t))))
-                      (list :qname "" n )))
-                 (t (error "don't know how to normalize name ~s" n))))
-             (keep-function (k)
+    (labels ((keep-function (k)
                #++(when (eq k 'vector)
                     (break "~s ~s" tree-shaker-keep-function tree-shaker-keep-class))
                #++(format t "check function ~s -> ~s ~s ~s/~s~%"
@@ -302,20 +346,20 @@
             (format t "shaking tree: ~s~%" tree-shaker-roots)
             (mark-used tree-shaker-roots))))
 
-
-
-
-
       ;; assemble functions before classes so methods can get added to classes
       ;; fixme: clean the method stuff up
-
 
       (loop for symbol-table in symbol-tables
          do (loop for k being the hash-keys of (functions symbol-table)
                using (hash-value v)
-               when (keep-function k)
-               do (assemble-function k (car v))
-               else do (format t "tree shaker dropped function ~s~%" k)))
+               when (and (keep-function k)
+                         (not (function-already-written-p k v)))
+               do
+                 (mark-function-written k v)
+                 (assemble-function k (car v))
+               else do (format t "tree shaker dropped function ~s~s~%" k
+                               (if (function-already-written-p k v)
+                                 " (already written)" ""))))
 
       (loop for k being the hash-keys of (avm2-asm::method-id-hash assembler-context)
          using (hash-value v)
@@ -324,8 +368,11 @@
       (loop for symbol-table in symbol-tables
          do (loop for k being the hash-keys of (classes symbol-table)
                using (hash-value v)
-               when (keep-class k);; (or tree-shaker-keep-all (gethash k tree-shaker-keep-class))
+               when (and (keep-class k)
+                         (not (class-already-written-p k v)))
+               ;; (or tree-shaker-keep-all (gethash k tree-shaker-keep-class))
                do
+                 (mark-class-written k v)
                (with-accessors ((swf-name swf-name) (ns ns)
                                 (extends extends) (properties properties)
                                 (constructor constructor)
@@ -343,7 +390,9 @@
                                    flags)
                    (setf script-init-scope-setup
                          (append script-init-scope-setup (new-class+scopes v)))))
-               else do (format t "tree shaker dropping class ~s~%" k))))
+               else do (format t "tree shaker dropping class ~s~s~%" k
+                               (if (class-already-written-p k v)
+                                 " (already written)" "")))))
 
     ;; script boilerplate
     (let ((script-init
