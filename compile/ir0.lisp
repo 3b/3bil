@@ -252,6 +252,12 @@
                 body (, (with-local-vars bindings-names
                           (recur `(progn ,@body))))))))
 
+   ;; hack until there is enough eval-when to implement it properly
+   ((define-symbol-macro symbol expression)
+    (pushnew `(,symbol . (:macro . ,expression))
+             (variables *lexenv*) :test #'equalp)
+    '(quote value nil))
+
    ((symbol-macrolet (&rest bindings) &rest declarations-and-forms)
     ;; fixme: don't bind over constants or specials
     (with-symbol-macros bindings
