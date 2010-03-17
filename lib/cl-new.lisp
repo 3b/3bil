@@ -153,15 +153,20 @@
         (:get-property ,prop)))
     (defmacro %get-property-static (class prop)
       `(%asm
+        (:@mark-class-dependency ,class)
         (:get-global-scope)
         (:get-property ,(or (swf-name (find-swf-class class)) class))
         (:get-property ,prop)))
+
     (defmacro %get-lex-property-static (class prop)
       `(%asm
+        (:@mark-class-dependency ,class)
         (:get-lex ,(or (swf-name (find-swf-class class)) class))
         (:get-property ,prop)))
+
     (defmacro %set-property-static (class prop value)
       `(%asm
+        (:@mark-class-dependency ,class)
         (:@ ,value)
         (:dup)
         (:get-global-scope)
@@ -176,7 +181,8 @@
                        (assert c) ;; fixme: better error reporting
                        (swf-name c)))
                     (t class))))
-        `(%asm (:find-property-strict ,name)
+        `(%asm (:@mark-class-dependency ,class)
+               (:find-property-strict ,name)
                ,@(loop for i in args
                     collect `(:@ ,i))
                (:construct-prop ,name ,(length args)))))
