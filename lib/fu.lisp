@@ -47,6 +47,7 @@
         (defmacro display (object
                            &key (x 0 xp) (y 0 yp) (width 0 wp) (height 0 hp)
                            (visible nil vp) (background-color 0 bgp)
+                           scale-x scale-y scale-z
                            parent
                            &allow-other-keys)
           (let ((o (gensym)))
@@ -55,9 +56,15 @@
                                   flash:.y
                                   flash:.width
                                   flash:.height
-                                  flash:.visible)
-                    for v in (list x y width height visible background-color)
-                    for p in (list xp yp wp hp vp bgp)
+                                  flash:.visible
+                                  flash:.background-color
+                                  flash:.scale-x
+                                  flash:.scale-y
+                                  flash:.scale-z)
+                    for v in (list x y width height visible background-color
+                                   scale-x scale-y scale-z)
+                    for p in (list xp yp wp hp vp bgp
+                                   scale-x scale-y scale-z)
                     when p
                     collect `(setf (,f ,o) ,v))
                ,@(when parent `((flash:add-child ,parent ,o)))
