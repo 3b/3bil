@@ -168,6 +168,56 @@ optimized version"
       (cons this rest)
       :keep))
 
+;;; iffalse-x jump dlabel-x -> iftrue
+(def-peephole :if-false 3 (this next label &rest rest)
+  (if (and (eql (car next) :jump)
+           (eql (car label) :%dlabel)
+           (eq (second this) (second label)))
+      (list* (list :if-true (second next)) rest)
+      :keep))
+
+
+;;; iffalse-x push pop jump dlabel-x -> iftrue
+(def-peephole :if-false 5 (this push pop next label &rest rest)
+  (if (and (eql (car next) :jump)
+           (eql (car label) :%dlabel)
+           (eql (car pop) :pop)
+           (eq (second this) (second label))
+           (member (car push)
+                   '(:push-null :push-undefined :push-byte :push-short
+                     :push-true :push-false :push-nan :push-string :push-int
+                     :push-uint :push-double :push-namespace
+                     :get-local-0 :get-local-1 :get-local-2 :get-local-3
+                     :get-local :new-function)))
+      (list* (list :if-true (second next)) rest)
+      :keep))
+
+
+
+;;; if-true-x jump dlabel-x -> if-false
+(def-peephole :if-true 3 (this next label &rest rest)
+  (if (and (eql (car next) :jump)
+           (eql (car label) :%dlabel)
+           (eq (second this) (second label)))
+      (list* (list :if-false (second next)) rest)
+      :keep))
+
+
+;;; if-true-x push pop jump dlabel-x -> if-false
+(def-peephole :if-true 5 (this push pop next label &rest rest)
+  (if (and (eql (car next) :jump)
+           (eql (car label) :%dlabel)
+           (eql (car pop) :pop)
+           (eq (second this) (second label))
+           (member (car push)
+                   '(:push-null :push-undefined :push-byte :push-short
+                     :push-true :push-false :push-nan :push-string :push-int
+                     :push-uint :push-double :push-namespace
+                     :get-local-0 :get-local-1 :get-local-2 :get-local-3
+                     :get-local :new-function)))
+      (list* (list :if-false (second next)) rest)
+      :keep))
+
 ;; hack to allow comments in generated asm
 (def-peephole :comment 1 (nil &rest rest)
   rest)
