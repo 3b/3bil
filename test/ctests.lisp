@@ -619,7 +619,7 @@
 
 
         )
-      #++
+
       (def-tests "verify-error" ()
         (loop for i below 10
            when (oddp i)
@@ -843,6 +843,10 @@
           (line (list->str ("bad1-abc")))
           (line (list->str ("bad2-abc")))
           ("bad4-abc")
+          (handler-case
+              (line (list->str ("verify-error")))
+            (t (e)
+              (line (s+ "verify error tests failed: " e))))
           (line "done tests..."))
 
         (defun main (arg)

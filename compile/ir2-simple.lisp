@@ -1351,3 +1351,8 @@
 #++
 (print (d2 '(+ (block xxfoo (flet ((bar () (return-from xxfoo 100) 1000)) (bar) 10000)) 1)))
 
+#++
+(let ((*ir1-verbose* t))
+  (d2 '(loop for i below 10
+          when (oddp i)
+          collect i)))
