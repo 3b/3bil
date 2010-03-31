@@ -131,6 +131,7 @@
       #+nil  (swf-defmemfun typep (object type)
                (%typep object type))
 
+      ;; not actually used, compiler expands it directly
       (defmacro let* (bindings &body body)
         `(let (,(car bindings))
            ,@(if (cdr bindings)

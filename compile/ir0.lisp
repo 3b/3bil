@@ -237,10 +237,10 @@
         (loop for binding in bindings
            for name = (if (atom binding) binding (car binding))
            for init = (if (atom binding) nil (second binding))
-           do (push (list name (alpha-convert-name name)) bindings-names)
            do (push (with-local-vars bindings-names
                       (recur init))
                     bindings-values)
+           do (push (list name (alpha-convert-name name)) bindings-names)
            collect (or (getf dtypes name) t) into %types
            finally (progn
                      (setf bindings-names (nreverse bindings-names))
