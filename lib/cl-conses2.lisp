@@ -107,10 +107,7 @@
       (cdr a))
 
     ;;Function MEMBER, MEMBER-IF, MEMBER-IF-NOT
-    (defun member (item list #++ &key #++ key #++ test #++ test-not)
-      (loop for tail on list
-         do (when (eql item (car tail))
-              (return-from member tail))))
+    ;; in cl-late for now...
 
     ;;Function MAPC, MAPCAR, MAPCAN, MAPL, MAPLIST, MAPCON
 

@@ -6,6 +6,11 @@
 (let ((*symbol-table* *cl-symbol-table*))
   (c3* (gensym)
 
+    (defun member (item list #++ &key #++ key #++ test #++ test-not)
+      (loop for tail on list
+         do (when (eql item (car tail))
+              (return-from member tail))))
+    
    (defun equal (a b)
      ;;(ftrace (+ "= " a " " b))
      (%t-or-nil

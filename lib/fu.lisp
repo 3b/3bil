@@ -49,6 +49,7 @@
                            (visible nil vp) (background-color 0 bgp)
                            scale-x scale-y scale-z
                            parent
+                           opaque-background
                            &allow-other-keys)
           (let ((o (gensym)))
             `(let ((,o ,object))
@@ -60,11 +61,14 @@
                                   flash:.background-color
                                   flash:.scale-x
                                   flash:.scale-y
-                                  flash:.scale-z)
+                                  flash:.scale-z
+                                  flash:.opaque-background)
                     for v in (list x y width height visible background-color
-                                   scale-x scale-y scale-z)
+                                   scale-x scale-y scale-z
+                                   opaque-background)
                     for p in (list xp yp wp hp vp bgp
-                                   scale-x scale-y scale-z)
+                                   scale-x scale-y scale-z
+                                   opaque-background)
                     when p
                     collect `(setf (,f ,o) ,v))
                ,@(when parent `((flash:add-child ,parent ,o)))
@@ -125,8 +129,7 @@
         (defmacro text-field (&rest args)
           `(text (%new- flash:flash.text.text-field)
                  ,@args
-                 ;; sbcl doesn't object to duplicate keyword args, so
-                 ;; not worrying about it for now
+                 ;; default settings used if not overridden in args
                  :width 650 :auto-size "none"
                  :text-color #x30e830
                  :word-wrap t :background t
