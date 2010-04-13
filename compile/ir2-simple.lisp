@@ -1261,7 +1261,8 @@
                               ,@(unless (getf flags :no-auto-return)
                                         `((:return-value))))))
                    (activation-p (find :new-activation asm :key 'car))
-                   (anonymous (getf flags :anonymous)))
+                   (anonymous (getf flags :anonymous))
+                   (return-type (getf flags :return-type)))
               (when *ir1-verbose*
                 (format t "validate = ~s~%"
                         (multiple-value-list
@@ -1296,8 +1297,9 @@
                        for i in (cdr types)
                        collect i) ;; arg types, 0 = t/*/any
                     (loop repeat count collect 0))
-
-                0                             ;; return type, 0 = any
+                (if return-type
+                    return-type
+                    0)                        ;; return type, 0 = any
                 (logior (if rest-p #x04 0)    ;; flags, #x04 = &rest
                         (if activation-p #x02 0))
                 asm

@@ -212,7 +212,8 @@
             (constructor-sym (gensym (format nil "~a-CTOR-" class-name)))
             (constructor (cdr (assoc :constructor class-options)))
             (super-args (cdr (assoc :super-args class-options)))
-            (fake-accessors (second (assoc :fake-accessors class-options))))
+            (fake-accessors (second (assoc :fake-accessors class-options)))
+            (implements (cdr (assoc :implements class-options))))
         ;; todo: class options
         ;;  (:swf-flags :sealed <bool> :final <bool> :interface <bool> ...?)
         ;;  :metaclass? :documentation :default-initargs?
@@ -250,7 +251,8 @@
                ;; fixme: should we define a default constructor with
                ;; initform/initarg parsing, and optionally call out to
                ;; a user-defined constructor?
-               :constructor constructor-sym))
+               :constructor constructor-sym
+               :implements implements))
         (loop for p in properties
            do (add-swf-property p p))
         (loop for p in static-properties

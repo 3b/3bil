@@ -356,7 +356,18 @@
                          (not (function-already-written-p k v)))
                do
                  (mark-function-written k v)
-                 (assemble-function k (car v))
+                 (loop with once = nil
+                    with classes = nil
+                    for f in v
+                    for c = (getf (cddr f) :class-name)
+                    do ; (format t "write fun ~s~%" f)
+                      (if c
+                           (when (not (member c classes))
+                             (push c classes)
+                             (assemble-function (list c k) f))
+                           (when (not once)
+                             (setf once t)
+                             (assemble-function k f))))
                else do (format t "tree shaker dropped function ~s~s~%" k
                                (if (function-already-written-p k v)
                                  " (already written)" ""))))
@@ -379,7 +390,8 @@
                                 (functions functions)
                                 (class-properties class-properties)
                                 (class-functions class-functions)
-                                (flags flags)) v
+                                (flags flags)
+                                (implements implements)) v
                  (when (or properties constructor)
                    (assemble-class swf-name ns
                                    extends
@@ -387,7 +399,8 @@
                                    functions
                                    class-properties
                                    class-functions
-                                   flags)
+                                   flags
+                                   implements)
                    (setf script-init-scope-setup
                          (append script-init-scope-setup (new-class+scopes v)))))
                else do (format t "tree shaker dropping class ~s~s~%" k

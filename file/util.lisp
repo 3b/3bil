@@ -87,7 +87,7 @@
             (t
              #++(format t "no trait for function ~s  =~%" name)))))))
 ;++
-(defun assemble-class (name ns super properties constructor instance-functions class-properties class-functions flags)
+(defun assemble-class (name ns super properties constructor instance-functions class-properties class-functions flags implements)
   (let* ((constructor-mid
           (cond
             #++((consp constructor)
@@ -119,8 +119,10 @@
                       super))
                  ;;flags 1=sealed,2=final,4=interface, 8=protectedns?
                  flags ;; (:sealed :final :interface :protected-namespace)
-                 ;; todo: add interfaces
-                 nil ;; interfaces
+                 (loop for i in implements
+                    collect (avm2-asm::asm-intern-multiname
+                             (or (swf-name (find-swf-class i))
+                                 i)))
                  constructor-mid
                  (append
                   (loop for i in properties

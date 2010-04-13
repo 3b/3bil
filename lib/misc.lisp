@@ -25,11 +25,16 @@
 
     (defmacro defmethod-swf (name ((spec-arg spec-type) &rest lambda-list)
                              &body body)
-      `(%named-lambda ,name
+      `(%named-lambda ,name ;;(format nil "~a::~a" spec-type name)
              (:this-arg ,spec-arg :class-name ,spec-type)
            ,lambda-list
-         (block ,name
-           ,@body)))
+         ;; fixme: parse declarations/docstring stuff properly
+         ,@(if (eq (caar body) 'declare)
+               `(,(car body)
+                 (block ,name
+                   ,@(cdr body)))
+               `((block ,name
+                   ,@body)))))
 
     (defmacro %add-swf-accessor (sym &optional flash-name)
       (add-swf-accessor sym (or flash-name sym))

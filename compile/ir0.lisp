@@ -72,6 +72,7 @@
         (ignored-functions nil)
         (ignorable-vars nil)
         (ignorable-functions nil)
+        (returns nil)
         #++(optimize nil)) ;; not stored for now...
     (macrolet ((add-fn/var-decl (x var-list fn-list)
                  `(cond
@@ -112,6 +113,9 @@
                      do (pushnew i notinline)))
                  ((optimize)
                   (format t "ignoring optimize declaration ~s...~%" d))
+                 ;; to allow declaring a return type from inside a function
+                 ((values)
+                  (setf returns (cdr d)))
                  ;; anything else is assumed to be a typespec
                  ;; fixme: allow declaring new declaration specs, and
                  ;; filter those out here...
@@ -134,7 +138,8 @@
                           notinline inlined
                           ftypes
                           ignored-vars ignored-functions
-                          ignorable-vars ignorable-functions))))))
+                          ignorable-vars ignorable-functions
+                          returns))))))
 
 (defun expand-lambda (block-name lambda-name flags lambda-list
                       declarations-and-forms recur)
@@ -146,16 +151,30 @@
     ;; parse flags to handle it explicitly, but then we have to drop
     ;; it from the count in the final assembly, possibly should pass
     ;; the count of required args as a flag or something instead?
-    (multiple-value-bind (body specials dtypes notinline inline)
+    (multiple-value-bind (body specials dtypes notinline inline
+                               ftype ignore-vars ignore-functions
+                               ignorable-vars ignorable-functions
+                               returns)
         (extract-declarations declarations-and-forms)
+        (declare (ignore ftype ignore-vars ignore-functions
+                         ignorable-vars ignorable-functions))
       (declare (ignore specials notinline inline))
       (let* ((arest (when arest (alphatize-var-names (list arest))))
              (rtypes (loop for r in required
                         collect (or (getf dtypes r) t)))
              (required (append (alphatize-var-names required)
                                arest)))
+        (when (or (> (length returns) 2)
+                  (and (not (eq (second returns) '&optional))
+                       (> (length returns) 1)))
+          (format t "declared multiple return types from function ~s/~s, not supported yet.." block-name lambda-name))
+        (when returns (format t "got return type ~s~%" returns))
         `(%named-lambda  name ,lambda-name
-             flags (,@flags ,@(if arest `(:arest ,(cadar arest))))
+             flags (,@flags ,@(if arest `(:arest ,(cadar arest)))
+                            ,@(if returns `(:return-type ,(if (eq (car returns)
+                                                                  '&optional)
+                                                              "void"
+                                                              (car returns)))))
              lambda-list ,(mapcar 'cadr required)
              types ,rtypes
              body (,(if (or optional rest keys aux)
