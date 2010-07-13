@@ -127,6 +127,12 @@ optimized version"
       rest
       :keep))
 
+;;; call-prop + pop -> call-prop-void
+(def-peephole :call-property 2 ((nil dest count) pop &rest rest)
+  (if  (eql (car pop) :pop)
+       (cons (list :call-prop-void dest count) rest)
+       :keep))
+
 
 ;;; less-than/greater-than/equals + if-true/if-false -> if-lt/etc
 ;;; fixme: generalize/combine these
@@ -195,7 +201,9 @@ optimized version"
 
 
 ;;; if-true-x jump dlabel-x -> if-false
-(def-peephole :if-true 3 (this next label &rest rest)
+;;; fixme: track how many jumps go to a label so this can be reenabled
+;;--- not valid if there are other jumps to the dlabel
+#++(def-peephole :if-true 3 (this next label &rest rest)
   (if (and (eql (car next) :jump)
            (eql (car label) :%dlabel)
            (eq (second this) (second label)))
@@ -204,7 +212,9 @@ optimized version"
 
 
 ;;; if-true-x push pop jump dlabel-x -> if-false
-(def-peephole :if-true 5 (this push pop next label &rest rest)
+;;; fixme: track how many jumps go to a label so this can be reenabled
+;;--- not valid if there are other jumps to the dlabel
+#++(def-peephole :if-true 5 (this push pop next label &rest rest)
   (if (and (eql (car next) :jump)
            (eql (car label) :%dlabel)
            (eql (car pop) :pop)
