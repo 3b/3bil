@@ -425,7 +425,7 @@
      ;;  on what we pass as THIS arg? :local would get current function's THIS
      ;;  while :static would get global scope or something?)
      ((%call type name args)
-      (format t "call ~s~%" name)
+      #++(format t "call ~s~%" name)
       (ecase type
         ;; todo: void calls if no dest? (or make sure peephole handles it?)
         (:normal

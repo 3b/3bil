@@ -258,10 +258,6 @@
         do (add (car args))
           (loop for i in (second args)
              do (add i))))
-    #++(when forward
-      (format t "~{~s~%~}" forms))
-    #++(format t "fixing labels:~%fw=~s~% bw=~s~%j=~s~%"
-            forward backwards jump)
     (loop for form in forms
        for (inst . args) = form
        for j = (and (eq inst :%label)
@@ -270,28 +266,15 @@
                             (member (car args) backwards))
        for f = (and (eq inst :%label)
                           (member (car args) forward))
-       if (and j b)
-       do (format t "keep label ~s~%" args) and
-    ;   collect (list :jump (car args) ) and
-       collect form ;; backwards and has a jump, keep as is
-       else if b
-    ;   do (format t "add jump to label ~s~%" args) and
-     ;  collect (list :jump (car args) ) ;; backwards, no jump.. add one
-       ;and
-       collect form
+       if b
+       collect form ;; has a backwards jump/branch, keep as label
        else if f
-       do (format t " label -> dlabel ~s~%" args) and
        collect `(:%dlabel ,@args) ;; forward only, convert to dlabel
        else if (eq inst :%label)
-       do (format t " drop label ~s ~s ~s ~s~%" args f b j) and
-      ; collect `(:%dlabel ,@args) and
        do (assert (not (or j f b))) ;; no jumps, drop it
        else ;; everything else, just keep it
-       collect form
-         )
-)
+       collect form)))
 
-)
 (defun assemble-method-body (forms &key (init-scope 0)
                              (max-scope 1 max-scope-p)
                              (max-stack 1 max-stack-p)

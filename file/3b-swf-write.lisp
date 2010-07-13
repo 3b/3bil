@@ -284,21 +284,22 @@
         (let ((function-index (make-hash-table :test 'equal))
               (class-index (make-hash-table :test 'equal)))
           (labels ((function-deps (f)
-                     (format t "marking deps for ~s:~%" (car f))
-                     (print
-                      (append (getf (nthcdr 6 f) :function-deps)
-                              (getf (nthcdr 6 f) :class-deps))))
+                     #++(format t "marking deps for ~s:~%" (car f))
+                     (append (getf (nthcdr 6 f) :function-deps)
+                             (getf (nthcdr 6 f) :class-deps)))
                    (class-deps (c)
                      (with-accessors ((functions functions)
                                       (class-functions class-functions)
                                       (constructor constructor)) c
                                         ;(break "adding deps for class ~s~%" c)
-                       (print (append (mapcar 'first functions)
-                                      (mapcar 'first class-functions)
-                                      (list constructor)))))
+                       #++(format t "adding deps for class ~s~% ~s ~s ~s~%" (name c)
+                                  functions class-functions (properties c))
+                       (append (mapcar 'first functions)
+                               (mapcar 'first class-functions)
+                               (list constructor))))
                    (mark-used (names)
                      (when names
-                       (format t "tree shaker marking used: ~s~%" names)
+                       #++(format t "tree shaker marking used: ~s~%" names)
                        (loop for root in (loop for i in names
                                             collect (normalize-name i))
                           for fn = (gethash root function-index)
@@ -309,7 +310,7 @@
                           ;;for method = (find-swf-method root)
                           ;;for accessor = (find-swf-accessor root)
                           do
-                          (format t "tree shaker marking used1: ~s =~s ~s~%"
+                            #++(format t "tree shaker marking used1: ~s =~s ~s~%"
                                   root (car fn) class)
                           (when (not (gethash root tree-shaker-keep-function))
                             (setf (gethash root tree-shaker-keep-function) t)
@@ -375,7 +376,7 @@
                                (if (function-already-written-p k v)
                                  " (already written)" ""))))
 
-      (loop for k being the hash-keys of (avm2-asm::method-id-hash assembler-context)
+      #++(loop for k being the hash-keys of (avm2-asm::method-id-hash assembler-context)
          using (hash-value v)
          do (format t "after fns:: ~s->~s = ~s~%" k v (aref (avm2-asm::method-infos assembler-context) v)))
     ;; assemble classes
@@ -473,7 +474,7 @@
     (when *break-compile* (break "ac=~s cc=~s st=~s tsr=~s"
                                  assembler-context compiler-context
                                  symbol-tables tree-shaker-roots))
-    (loop for k being the hash-keys of (avm2-asm::method-id-hash assembler-context)
+    #++(loop for k being the hash-keys of (avm2-asm::method-id-hash assembler-context)
        using (hash-value v)
        do (format t "~s->~s = ~s~%" k v (aref (avm2-asm::method-infos assembler-context) v)))
     ;; do something with abc data...
