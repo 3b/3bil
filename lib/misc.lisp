@@ -25,16 +25,39 @@
 
     (defmacro defmethod-swf (name ((spec-arg spec-type) &rest lambda-list)
                              &body body)
+      (pushnew name ;; fixme: convert to swf name?
+               (gethash name (class-methods *symbol-table*) (list))
+               :test 'equal)
+      (let ((c (find-swf-class spec-type)))
+        (push (list name) (functions c)))
       `(%named-lambda ,name ;;(format nil "~a::~a" spec-type name)
              (:this-arg ,spec-arg :class-name ,spec-type)
            ,lambda-list
          ;; fixme: parse declarations/docstring stuff properly
          ,@(if (eq (caar body) 'declare)
                `(,(car body)
-                 (block ,name
-                   ,@(cdr body)))
+                  (block ,name
+                    ,@(cdr body)))
                `((block ,name
                    ,@body)))))
+
+    (defmacro defmethod-swf-static (name ((spec-arg spec-type) &rest lambda-list)
+                             &body body)
+      (pushnew (list name spec-type) ;; fixme: convert to swf names?
+               (gethash name (class-static-methods *symbol-table*) (list))
+               :test 'equal)
+      (let ((c (find-swf-class spec-type)))
+        (push (list name) (class-functions c)))
+     (print `(%named-lambda ,name ;;(format nil "~a::~a" spec-type name)
+              (:this-arg ,spec-arg :class-name ,spec-type :class-static t)
+            ,lambda-list
+          ;; fixme: parse declarations/docstring stuff properly
+          ,@(if (eq (caar body) 'declare)
+                `(,(car body)
+                   (block ,name
+                     ,@(cdr body)))
+                `((block ,name
+                    ,@body))))))
 
     (defmacro %add-swf-accessor (sym &optional flash-name)
       (add-swf-accessor sym (or flash-name sym))

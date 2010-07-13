@@ -268,6 +268,7 @@
               (:get-local-0)
               ,@(loop for i in super-args
                    collect `(:@ ,i))
+              (:@mark-class-dependency ,superclass-name)
               (:construct-super ,(length super-args))
               (:%activation-record)
               (:push-null))

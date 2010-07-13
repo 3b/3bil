@@ -255,16 +255,6 @@
     (when *break-compile* (break "ac=~s cc=~s st=~s tsr=~s"
                                  assembler-context compiler-context
                                  symbol-tables tree-shaker-roots))
-    ;; reset functions/static functions for symbol-tables since we need
-    ;; to recreate them to get correct moethod IDs
-    ;; fixme: why do we store these if we aren't going to reuse them?
-    ;; should either store symbolic names and map to IDs later, or
-    ;; drop these slots and use something local to the function...
-    (loop for symbol-table in symbol-tables
-       do (loop for v being the hash-values of (classes symbol-table)
-             do (setf (functions v) nil)
-             do (setf (class-functions v) nil)))
-
     (labels ((keep-function (k)
                #++(when (eq k 'vector)
                     (break "~s ~s" tree-shaker-keep-function tree-shaker-keep-class))
@@ -345,6 +335,19 @@
             (fill-index symbol-tables)
             (format t "shaking tree: ~s~%" tree-shaker-roots)
             (mark-used tree-shaker-roots))))
+
+      ;; reset functions/static functions for symbol-tables since we need
+      ;; to recreate them to get correct moethod IDs
+      ;; fixme: why do we store these if we aren't going to reuse them?
+      ;; should either store symbolic names and map to IDs later, or
+      ;; drop these slots and use something local to the function...
+      ;; fixme: recalculate these before running the tree-shaker, so
+      ;; class methods don't get dropped
+      (loop for symbol-table in symbol-tables
+         do (loop for v being the hash-values of (classes symbol-table)
+               do (setf (functions v) nil)
+               do (setf (class-functions v) nil)))
+
 
       ;; assemble functions before classes so methods can get added to classes
       ;; fixme: clean the method stuff up
