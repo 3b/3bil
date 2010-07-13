@@ -12,7 +12,7 @@
    and collect (%3b-swf:name tag)
    and append (%3b-swf:strings (%3b-swf:constant-pool tag)))
 
-(with-open-file (*standard-output* "source/swf2/lib/player-ffi-new.lisp" :direction :output  :if-exists :supersede)
+(with-open-file (*standard-output* "source/3bil/lib/player-ffi-new.lisp" :direction :output  :if-exists :supersede)
   (avm2-compiler::ffi-from-swc "../../tmp/playerglobal.swc"
                                "avm2-compiler::*player-symbol-table*"
                                "flash"
