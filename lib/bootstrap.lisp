@@ -78,6 +78,16 @@
        (:get-lex ,(or (swf-name (find-swf-class type)) type))
        (:is-type-late)))
 
+   (defmacro %type-of (object)
+     `(%asm
+       (:@ ,object)
+       (:type-of)))
+
+   (defmacro %error (object)
+     `(%asm
+       (:@ ,object)
+       (:throw)))
+
 
     (defmacro %new- (class &rest args)
       (let ((name (typecase class

@@ -138,7 +138,8 @@
        (:@ y)
        (:modulo)))
 
-
+    (defun oddp (x)
+      (= (mod x 2) 1))
 
     (defmacro %set-property- (object prop value)
       `(%asm
