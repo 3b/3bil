@@ -223,7 +223,9 @@
             (constructor (cdr (assoc :constructor class-options)))
             (super-args (cdr (assoc :super-args class-options)))
             (fake-accessors (second (assoc :fake-accessors class-options)))
-            (implements (cdr (assoc :implements class-options))))
+            (implements (cdr (assoc :implements class-options)))
+            (final (cdr (assoc :final class-options)
+                        #++(or (assoc :final class-options) '(t . t)))))
         ;; todo: class options
         ;;  (:swf-flags :sealed <bool> :final <bool> :interface <bool> ...?)
         ;;  :metaclass? :documentation :default-initargs?
@@ -262,7 +264,8 @@
                ;; initform/initarg parsing, and optionally call out to
                ;; a user-defined constructor?
                :constructor constructor-sym
-               :implements implements))
+               :implements implements
+               :flags (if final (list :final t))))
         (loop for p in properties
            do (add-swf-property p p))
         (loop for p in static-properties
