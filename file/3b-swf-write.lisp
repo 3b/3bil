@@ -506,7 +506,8 @@
       collect (list id string))))
 
 ;; still not sure about proper API...
-(defmacro compile-abc-tag ((exports &key inherit (tree-shaker-roots nil))
+(defmacro compile-abc-tag ((exports &key inherit (tree-shaker-roots nil)
+                                    (dump-inherited t))
                            &body body)
   ;; fixme: possibly should separate tree shaker roots out by type?
   ;; (function vs class)
@@ -534,7 +535,8 @@ in adition to those listed in EXPORTS, T to keep everything
 
      (list
       (abc-tag-from-contexts avm2-asm::*assembler-context* *compiler-context*
-                             (list ,@(if inherit inherit '(*cl-symbol-table*))
+                             (list ,@(when dump-inherited
+                                           (if inherit inherit '(*cl-symbol-table*)))
                                    *symbol-table*)
                              ',(if (listp tree-shaker-roots)
                                    (append (loop for (nil name) in exports
