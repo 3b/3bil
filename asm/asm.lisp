@@ -227,6 +227,71 @@
 (defun avm2-validate (code &key dump arg-count)
   (avm2-validate (peephole code) :dump dump :arg-count arg-count))
 
+(defun fix-labels (forms)
+  ;; verifier in 10.0 and earlier players seems to object to labels
+  ;; with only conditional (or no? branches to them), so convert them to
+  ;; to dlabel if no backwards jumps, otherwise put a jump right before it
+  ;; -- actually, adding the extra jump seems to break things, and not
+  ;;    be needed, so just converting to dlabel or dropping, need
+  ;;    better tests at some point
+  (let ((forward nil)
+        (jump nil)
+        (backwards nil)
+        (seen nil))
+    (flet ((add (x)
+             (if (member x seen)
+                 (push x backwards)
+                 (push x forward))))
+     (loop
+        for (inst . args) in forms
+        when (eq inst :%label)
+        do (push (car args) seen)
+        when (eq inst :jump)
+        do (add (car args))
+          (push (car args) jump)
+        when (member inst '(:if-nlt :if-nle :if-ngt :if-nge
+                            :if-true :if-false
+                            :if-eq :if-ne :if-lt :if-le :if-gt :if-ge
+                            :if-strict-eq :if-strict-ne))
+        do (add (car args))
+        when (eq inst ':lookup-switch)
+        do (add (car args))
+          (loop for i in (second args)
+             do (add i))))
+    #++(when forward
+      (format t "~{~s~%~}" forms))
+    #++(format t "fixing labels:~%fw=~s~% bw=~s~%j=~s~%"
+            forward backwards jump)
+    (loop for form in forms
+       for (inst . args) = form
+       for j = (and (eq inst :%label)
+                       (member (car args) jump))
+       for b = (and (eq inst :%label)
+                            (member (car args) backwards))
+       for f = (and (eq inst :%label)
+                          (member (car args) forward))
+       if (and j b)
+       do (format t "keep label ~s~%" args) and
+    ;   collect (list :jump (car args) ) and
+       collect form ;; backwards and has a jump, keep as is
+       else if b
+    ;   do (format t "add jump to label ~s~%" args) and
+     ;  collect (list :jump (car args) ) ;; backwards, no jump.. add one
+       ;and
+       collect form
+       else if f
+       do (format t " label -> dlabel ~s~%" args) and
+       collect `(:%dlabel ,@args) ;; forward only, convert to dlabel
+       else if (eq inst :%label)
+       do (format t " drop label ~s ~s ~s ~s~%" args f b j) and
+      ; collect `(:%dlabel ,@args) and
+       do (assert (not (or j f b))) ;; no jumps, drop it
+       else ;; everything else, just keep it
+       collect form
+         )
+)
+
+)
 (defun assemble-method-body (forms &key (init-scope 0)
                              (max-scope 1 max-scope-p)
                              (max-stack 1 max-stack-p)
@@ -242,7 +307,7 @@
         v-stack
         v-scope
         v-local
-        (p-code (peephole forms)))
+        (p-code (peephole (fix-labels forms))))
     (setf (values v-stack v-scope v-local)
           (%avm2-validate p-code :arg-count arg-count))
     (setf (code *current-method*)
