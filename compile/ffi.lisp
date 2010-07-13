@@ -25,10 +25,14 @@
      ;; store properties
      ,@(loop for i in properties
           append (destructuring-bind (pname &key swf-name type access declared-by value static accessor) i
-                     (declare (ignore access type value static declared-by))
-                     `((add-swf-property ',pname ,swf-name)
-                       ,@(when accessor
-                               `((add-swf-accessor ',accessor ,swf-name))))))
+                     (declare (ignore access type value declared-by))
+                     (if static
+                         `((add-swf-class-property ',pname ,swf-name)
+                           ,@(when accessor
+                                   `((add-swf-accessor ',accessor '(,swf-name ,class-swf-name)))))
+                         `((add-swf-property ',pname ,swf-name)
+                           ,@(when accessor
+                                   `((add-swf-accessor ',accessor ,swf-name)))))))
      ;; store methods
      ,@(loop for i in methods
           append (destructuring-bind (mname &key swf-name return-type

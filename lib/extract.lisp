@@ -264,18 +264,20 @@
                       :swf-name (qq (apply 'flash-name name))
                       :type (qq (type-string (%3b-swf:type-name trait) pool))
                       :static static
-                      :accessor (if (some 'lower-case-p (first name))
-                                    (format nil "~a:.~a"
-                                            package
-                                            (funcall renamer (first name)))
-                                    ;; getting files with fooBar and FOO_BAR
-                                    ;; in same class, so try to avoid
-                                    ;; clashing on accessors
-                                    (format nil "~a::.+~a+"
-                                            package
-                                            (funcall renamer (first name)))
-                                    ))
-                properties)
+                      :accessor (if static
+                                    (qualified-name name class-name package renamer :static static)
+                                    (if (some 'lower-case-p (first name))
+                                        (format nil "~a:.~a"
+                                                package
+                                                (funcall renamer (first name)))
+                                        ;; getting files with fooBar and FOO_BAR
+                                        ;; in same class, so try to avoid
+                                        ;; clashing on accessors
+                                        (format nil "~a::.+~a+"
+                                                package
+                                                (funcall renamer (first name)))
+                                        )))
+                 properties)
 
        when (typep trait '%3b-swf:abc-trait-info-constant)
        do (push (list #+nil(make-name name renamer :wrap "+"
@@ -322,9 +324,11 @@
                       :type (qq (return-type (%3b-swf::method-id trait) tag))
                       ;;:get-args (qq (arglist (%3b-swf:method-id trait) tag))
                       :static static
-                      :accessor (format nil "~a:.~a"
-                                        package
-                                        (funcall renamer (first name))))
+                      :accessor (if static
+                                    (qualified-name name class-name package renamer :static static)
+                                    (format nil "~a:.~a"
+                                            package
+                                            (funcall renamer (first name)))))
                 properties)
 
        ;; assuming for now that there are no properties with only setters
@@ -615,8 +619,8 @@
                                   (funcall renamer (first class-name))
                                   (funcall renamer (first name ))))
                          (t
-                          (format nil ".~a"
-                                  (funcall renamer (first name)))))))))
+                          (qualified-name name class-name nil renamer :static t)
+                          #++(funcall renamer (first name))))))))
        #'string<)
       :test #'string=))
     (format t "))~%~%")

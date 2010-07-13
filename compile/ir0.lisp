@@ -557,7 +557,9 @@
 
           ;; expand fake accessors
           (accessor
-           (recur `(slot-value ,@args ,accessor)))
+           (if (consp accessor)
+               (recur `(%get-lex-property-static ,(second accessor) ,(first accessor)))
+               (recur `(slot-value ,@args ,accessor))))
 
           ;; todo: known functions (cl:foo, etc)/inlining
 
