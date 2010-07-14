@@ -534,7 +534,7 @@
           ((and (symbolp operator) (special-operator-p operator))
            (super whole))
           ((and (consp operator) (eq (car operator) 'lambda))
-           (recur `(funcall (function ,operator))))
+           (recur `(funcall (function ,operator) ,@args)))
           ;; expand local macros
           ((and (consp binding) (eq (car binding) :macro))
            (recur (funcall (cdr binding) args)))
