@@ -66,9 +66,17 @@
   (c3* (gensym)
 
     (defmacro %destructuring-bind-* ((&key optional key aux allow-other-keys) arg-form &body body)
-      (error "got complex lambda list, ignoring opt=~s key=~s aux=~s~%"
-             optional key aux)
-      nil)
+      (when (or key aux)
+        (error "got complex lambda list, ignoring opt=~s key=~s aux=~s~%"
+               optional key aux))
+      `(let* (,@(loop for i from 0
+                   for (n v p) in optional
+                   when p
+                   collect `(,p (> (length ,arg-form) ,i))
+                   collect `(,n (if ,(if p p `(> (length ,arg-form) ,i))
+                                    (aref ,arg-form ,i)
+                                    ,v))))
+         ,@body))
 
 
    (defmacro %typep (object type)

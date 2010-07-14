@@ -165,8 +165,7 @@
         (declare (ignore ftype ignore-vars ignore-functions
                          ignorable-vars ignorable-functions))
       (declare (ignore specials notinline inline))
-      (let* ((arest (when arest (alphatize-var-names (list arest))))
-             ;; we can't reliably detect missing args using the VM
+      (let* (;; we can't reliably detect missing args using the VM
              ;; optional args alone, so if we have a
              ;; supplied-p-parameter process &optional manually with
              ;; &rest and &key
@@ -179,6 +178,9 @@
                                    optional
                                    nil))
              (optional (if complex-optional nil optional))
+             (arest (or (when arest (alphatize-var-names (list arest)))
+                        (when (or complex-optional keys aux)
+                          (alphatize-var-names (list  (gensym "..."))))))
              (rtypes (append
                       (loop for r in required
                          collect (or (getf dtypes r) t))
@@ -193,7 +195,7 @@
           (format t "declared multiple return types from function ~s/~s, not supported yet.." block-name lambda-name))
         (when returns (format t "got return type ~s~%" returns))
         `(%named-lambda  name ,lambda-name
-             flags (,@flags ,@(if arest `(:arest ,(cadar arest)))
+             flags (,@flags ,@(if arest `(:arest ,(caar arest)))
                             ,@(when optional
                                     `(:optional
                                       ,(loop for (nil v nil) in optional
@@ -216,7 +218,7 @@
                            `(%destructuring-bind-*
                              (:optional ,complex-optional :key ,keys :aux ,aux
                                         :allow-other-keys ,allow-other-keys)
-                             ,(cadr arest)
+                             ,(caar arest)
                              ;; fixme: probably should just add the block/progn in
                              ;; the caller instead of here?
                              (,@(if block-name `(block ,block-name) '(progn))

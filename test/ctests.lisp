@@ -839,7 +839,9 @@
           (d) (d 456))
         (flet ((s (&optional (a "test")) a))
           (s) (s 567))
-        #++(flet ((cc (a &optional (b (+ a 5))) b))
+        (flet ((cc (a &optional (b (+ a 5))) (list a b)))
+          (cc 12) (cc 12 567))
+        (flet ((cc (a &optional (b 5 p)) (list a b p)))
           (cc 12) (cc 12 567))
         )
 
