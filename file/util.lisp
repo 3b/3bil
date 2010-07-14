@@ -29,12 +29,36 @@
            collect `(:pop-scope))
       (:init-property  ,(swf-name class)))))
 
+(defun intern-constant (x)
+  (etypecase x
+    ((integer 0 #.(expt 2 32))
+     (cons (avm2-asm::avm2-intern-uint x) 4))
+    ((integer #.(- (expt 2 31)) #.(expt 2 31))
+     (cons (avm2-asm::avm2-intern-int x) 3))
+    (number
+     (cons (avm2-asm::avm2-intern-double (float x 0d0)) 6))
+    (string
+     (cons (avm2-asm::avm2-string x) 1))
+    ((eql t)
+     (cons 0 #x0b))
+    ;;(false #x0a)
+    ((eql nil)
+     (cons 0 #x0c))
+    #++(undef 0)
+    #++(ns 8)
+    #++(pks ns x16)
+    #++(pkg internal ns x17)
+    #++(prot ns x18)
+    #++(explicit ns x19)
+    #++(static prot ns x1a)
+    #++(private ns x05)))
 
 (defun assemble-function (name data)
   #+nil(format t "--assemble-function ~s :~%" name)
   (destructuring-bind (n nid argtypes return-type flags asm
                          &key activation-slots class-name class-static
-                         anonymous trait trait-type function-deps class-deps)
+                         anonymous trait trait-type function-deps class-deps
+                         optional-args)
       data
     (declare (ignore function-deps class-deps))
     ;;(format t "--assemble-function ~s : ~s : ~s~%" name n nid)
@@ -55,6 +79,8 @@
            (rest-p (or (logbitp 0 flags)
                        (logbitp 2 flags)))
            (mid (avm2-asm::avm2-method name nid argtypes return-type flags
+                                       :option-params
+                                       (mapcar 'intern-constant optional-args)
                                        :body (avm2-asm::assemble-method-body
                                               asm
                                               :traits traits

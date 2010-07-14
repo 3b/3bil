@@ -141,6 +141,12 @@
                           ignorable-vars ignorable-functions
                           returns))))))
 
+(defun simple-default-p (z)
+  (or (eq z t)
+      (eq z nil)
+      (stringp z)
+      (numberp z)))
+
 (defun expand-lambda (block-name lambda-name flags lambda-list
                       declarations-and-forms recur)
   (multiple-value-bind  (required optional rest keys
@@ -160,9 +166,26 @@
                          ignorable-vars ignorable-functions))
       (declare (ignore specials notinline inline))
       (let* ((arest (when arest (alphatize-var-names (list arest))))
-             (rtypes (loop for r in required
-                        collect (or (getf dtypes r) t)))
+             ;; we can't reliably detect missing args using the VM
+             ;; optional args alone, so if we have a
+             ;; supplied-p-parameter process &optional manually with
+             ;; &rest and &key
+             ;; (and same for more complicated default values)
+             (complex-optional (if (find-if (lambda (a)
+                                              (or (third a)
+                                                  (not (simple-default-p
+                                                        (second a)))))
+                                            optional)
+                                   optional
+                                   nil))
+             (optional (if complex-optional nil optional))
+             (rtypes (append
+                      (loop for r in required
+                         collect (or (getf dtypes r) t))
+                      (loop for (r) in optional
+                         collect (or (getf dtypes r) t))))
              (required (append (alphatize-var-names required)
+                               (alphatize-var-names (mapcar 'first optional))
                                arest)))
         (when (or (> (length returns) 2)
                   (and (not (eq (second returns) '&optional))
@@ -171,13 +194,17 @@
         (when returns (format t "got return type ~s~%" returns))
         `(%named-lambda  name ,lambda-name
              flags (,@flags ,@(if arest `(:arest ,(cadar arest)))
+                            ,@(when optional
+                                    `(:optional
+                                      ,(loop for (nil v nil) in optional
+                                          collect v)))
                             ,@(if returns `(:return-type ,(if (eq (car returns)
                                                                   '&optional)
                                                               "void"
                                                               (car returns)))))
              lambda-list ,(mapcar 'cadr required)
              types ,rtypes
-             body (,(if (or optional rest keys aux)
+             body (,(if (or complex-optional rest keys aux)
                         (with-local-vars required
                           (funcall
                            recur
@@ -187,7 +214,7 @@
                            ;; we can avoid it easily enough to
                            ;; bootstrap that far
                            `(%destructuring-bind-*
-                             (:optional ,optional :key ,keys :aux ,aux
+                             (:optional ,complex-optional :key ,keys :aux ,aux
                                         :allow-other-keys ,allow-other-keys)
                              ,(cadr arest)
                              ;; fixme: probably should just add the block/progn in

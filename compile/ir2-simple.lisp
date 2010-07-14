@@ -1292,7 +1292,7 @@
                 (if (symbolp name) (avm2-asm::symbol-to-qname-list name) name)
                 0 ;; name in method struct?
                 (if types
-                    (loop with nil = (assert (= count (length (cdr types))) ()
+                    (loop initially (assert (= count (length (cdr types))) ()
                                              "count ~s, types ~s" count types)
                        for i in (cdr types)
                        collect i) ;; arg types, 0 = t/*/any
@@ -1311,6 +1311,7 @@
                 :trait-type (getf flags :trait-type)
                 :function-deps (getf flags :function-deps)
                 :class-deps (getf flags :class-deps)
+                :optional-args (getf flags :optional)
                 :activation-slots
                 (when activation-vars
                   (loop for (name index) in activation-vars
