@@ -394,6 +394,24 @@
                     (go ,start-tag))
                 ,end-tag)))))
 
+    (defmacro %dotimes((var to-form) &body body)
+      (let ((start-tag (gensym))
+            (to (gensym))
+            (end-tag (gensym)))
+        `(let ((,to ,to-form)
+               (,var 0))
+           (declare (type integer ,var))
+           (block nil
+             (tagbody
+                (if (>= ,var ,to)
+                    (go ,end-tag))
+                ,start-tag
+                (tagbody ,@body)
+                (setf ,var (+ ,var 1))
+                (if (< ,var ,to)
+                    (go ,start-tag))
+                ,end-tag)))))
+
     (defmacro %oddp (x)
       `(%asm
         (:@ ,x)
@@ -408,99 +426,108 @@
              (:get-property "length")))
 
     (defmacro %destructuring-bind-* ((&key rest optional key aux allow-other-keys) arg-form &body body)
-      (when (or rest aux)
+      (when (or aux)
         (error "got complex lambda list, ignoring rest=~s opt=~s key=~s aux=~s~%"
                rest optional key aux))
-     (print (let ((kw-temps (loop for i in key
+      (let* ((kw-temps (loop for i in key
                           collect (list (gensym "kt") (gensym "st"))))
              (bad-key (gensym "bad"))
              (a-o-k (gensym "aok"))
-             (key-count (gensym))
+             (count (gensym))
              (i (gensym "i"))
              (k (gensym "k"))
              (v (gensym "v"))
-             (end-tag (gensym)))
-         `(let* (,@(loop for i from 0
-                      for (n v p) in optional
-                      when p
-                      collect `(,p (> (%length ,arg-form) ,i))
-                      collect `(,n (if ,(if p p `(> (%length ,arg-form) ,i))
-                                       (%aref-1 ,arg-form ,i)
-                                       ,v)))
-                 ;; in order to get scoping/evaluation odrer stuff right, we
-                 ;; allocate temps for all keyword vars, and add a supplied-p
-                 ;; temp for any keyword with a complicated default that doesn't
-                 ;; have one already
-                 ;; simple defaults get assigned directly to the temp here
-                 ,@(loop for i from (length optional) by 2
-                      for ((k v) d p) in key
-                      for (kt pt) in kw-temps
-                      ;; fixme: ue a less strict test here... should allow
-                      ;; any flushable form, not just literals
-                      when (or p (not (avm2-compiler::simple-default-p d)))
-                      collect `(,pt nil)
-                      when (avm2-compiler::simple-default-p d)
-                      collect `(,kt ,d)
-                      else collect `(,kt nil))
-                   ,@(if (and key (not allow-other-keys))
-                         `((,bad-key nil)
-                           (,a-o-k nil))))
-            ;; process keyword args
-            ,@ (when key
-                 `((let ((,key-count ,(if optional
-                                          `(- (%length ,arg-form) ,(length opt))
-                                          `(%length ,arg-form))))
-                     #++(ftrace (%length ,arg-form))
-                     #++(ftrace ,arg-form)
-                     ;; check for odd # of keys
-                     (if (%oddp ,key-count)
-                         (%error "odd number of key args"))
-                     ;; loop over args, assign temps
-                     (%down-by-2 (,i (- (%length ,arg-form) 2)
-                                     ,(if optional
-                                          (length optional)
-                                          0))
-                                 (let ((,k (%aref-1 ,arg-form ,i))
-                                       (,v (%aref-1 ,arg-form (+ ,i 1))))
-                                   (tagbody
-                                      ,@(loop for i from (length optional) by 2
-                                           for ((kw nil) d p) in key
-                                           for (kt pt) in kw-temps
-                                           collect
-                                           `(when (%key-equal ,k ,kw)
-                                              ,@(when (or p (not (avm2-compiler::simple-default-p d)))
-                                                      `((setf ,pt t)))
-                                              (setf ,kt ,v)
-                                              (go ,end-tag)))
-                                      #++(flash:trace (+ "key " ,k " =" ,v))
-                                      ,@ (unless allow-other-keys
-                                           `((if (eql ,k :allow-other-keys)
-                                                 (setf ,a-o-k t)
-                                                 (setf ,bad-key t))))
-                                      ,end-tag)))
-                     ;; maybe throw unknown key error
-                     ,@ (unless allow-other-keys
-                          `((when (and ,bad-key (not ,a-o-k))
-                              (%error "unknown key")))))))
-               ;; bind keywords
-               ;; for every keyword, bind real name to the temp value, or if
-               ;; complicated default, check supplied-p and bind to default
-               ;; instead if not provided
-            (let* (,@(loop for i from (length optional) by 2
-                        for ((k v) d p) in key
-                        for (kt pt) in kw-temps
-                        ;; fixme: ue a less strict test here... should allow
-                        ;; any flushable form, not just literals
-                        when (avm2-compiler::simple-default-p d)
-                        collect `(,v ,kt)
-                        else collect `(,v (if ,pt
-                                              ,kt
-                                              ,d))
-                        ;; bind supplied-p after evaluating init-form (if any)
-                        when (or p (not (avm2-compiler::simple-default-p d)))
-                        collect `(,p ,pt)
-                        ))
-              ,@body)))))
+             (end-tag (gensym))
+             (count-rest (if optional
+                             `(- ,count ,(length optional))
+                             count)))
+        `(let* ((,count (%length ,arg-form))
+                ,@(loop for i from 0
+                     for (n v p) in optional
+                     when p
+                     collect `(,p (> ,count ,i))
+                     collect `(,n (if ,(if p p `(> ,count ,i))
+                                      (%aref-1 ,arg-form ,i)
+                                      ,v)))
+                ,@ (when rest
+                     `((,rest (let ((l nil))
+                                (%dotimes (i ,count-rest)
+                                  (push (%aref-1 ,arg-form
+                                                 (- ,count i 1))
+                                        l))
+                                l))))
+                ;; in order to get scoping/evaluation odrer stuff right, we
+                ;; allocate temps for all keyword vars, and add a supplied-p
+                ;; temp for any keyword with a complicated default that doesn't
+                ;; have one already
+                ;; simple defaults get assigned directly to the temp here
+                ,@(loop for i from (length optional) by 2
+                     for ((k v) d p) in key
+                     for (kt pt) in kw-temps
+                     ;; fixme: ue a less strict test here... should allow
+                     ;; any flushable form, not just literals
+                     when (or p (not (avm2-compiler::simple-default-p d)))
+                     collect `(,pt nil)
+                     when (avm2-compiler::simple-default-p d)
+                     collect `(,kt ,d)
+                     else collect `(,kt nil))
+                ,@(if (and key (not allow-other-keys))
+                      `((,bad-key nil)
+                        (,a-o-k nil))))
+           ;; process keyword args
+           ,@ (when key
+                `((let (,@ (when optional
+                             `((,count (- ,count ,(length opt))))))
+                    #++(ftrace (%length ,arg-form))
+                    #++(ftrace ,arg-form)
+                    ;; check for odd # of keys
+                    (if (%oddp ,count)
+                        (%error "odd number of key args"))
+                    ;; loop over args, assign temps
+                    (%down-by-2 (,i (- (%length ,arg-form) 2)
+                                    ,(if optional
+                                         (length optional)
+                                         0))
+                                (let ((,k (%aref-1 ,arg-form ,i))
+                                      (,v (%aref-1 ,arg-form (+ ,i 1))))
+                                  (tagbody
+                                     ,@(loop for i from (length optional) by 2
+                                          for ((kw nil) d p) in key
+                                          for (kt pt) in kw-temps
+                                          collect
+                                          `(when (%key-equal ,k ,kw)
+                                             ,@ (when (or p (not (avm2-compiler::simple-default-p d)))
+                                                  `((setf ,pt t))) 
+                                             (setf ,kt ,v)
+                                             (go ,end-tag)))
+                                     #++(flash:trace (+ "key " ,k " =" ,v))
+                                     ,@ (unless allow-other-keys
+                                          `((if (eql ,k :allow-other-keys)
+                                                (setf ,a-o-k t)
+                                                (setf ,bad-key t))))
+                                     ,end-tag)))
+                    ;; maybe throw unknown key error
+                    ,@ (unless allow-other-keys
+                         `((when (and ,bad-key (not ,a-o-k))
+                             (%error "unknown key")))))))
+              ;; bind keywords
+              ;; for every keyword, bind real name to the temp value, or if
+              ;; complicated default, check supplied-p and bind to default
+              ;; instead if not provided
+           (let* (,@(loop for i from (length optional) by 2
+                       for ((k v) d p) in key
+                       for (kt pt) in kw-temps
+                       ;; fixme: ue a less strict test here... should allow
+                       ;; any flushable form, not just literals
+                       when (avm2-compiler::simple-default-p d)
+                       collect `(,v ,kt)
+                       else collect `(,v (if ,pt
+                                             ,kt
+                                             ,d))
+                       ;; bind supplied-p after evaluating init-form (if any)
+                       when (or p (not (avm2-compiler::simple-default-p d)))
+                       collect `(,p ,pt)))
+             ,@body))))
 
 
 ))

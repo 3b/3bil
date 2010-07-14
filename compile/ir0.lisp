@@ -179,7 +179,7 @@
                                    nil))
              (optional (if complex-optional nil optional))
              (arest (or (when arest (alphatize-var-names (list arest)))
-                        (when (or complex-optional keys aux)
+                        (when (or complex-optional keys rest)
                           (alphatize-var-names (list  (gensym "..."))))))
              (rtypes (append
                       (loop for r in required
@@ -217,6 +217,7 @@
                            ;; bootstrap that far
                            `(%destructuring-bind-*
                              (:optional ,complex-optional :key ,keys :aux ,aux
+                                        :rest ,rest
                                         :allow-other-keys ,allow-other-keys)
                              ,(caar arest)
                              ;; fixme: probably should just add the block/progn in
