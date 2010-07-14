@@ -825,6 +825,24 @@
 
         )
 
+      (def-tests "lambda-list-tests" ()
+        ((lambda (a) a) 1)
+        ((lambda (a &optional b) (list a b)) 1)
+        ((lambda (a &optional b) (list a b)) 1 2)
+        (flet ((n (&optional a) a))
+          (list (n) (n 123)))
+        (flet ((ui (&optional (a 123)) a))
+          (ui) (ui 234))
+        (flet ((i (&optional (a -234)) a))
+          (i) (i 345))
+        (flet ((d (&optional (a 456.5d0)) a))
+          (d) (d 456))
+        (flet ((s (&optional (a "test")) a))
+          (s) (s 567))
+        #++(flet ((cc (a &optional (b (+ a 5))) b))
+          (cc 12) (cc 12 567))
+        )
+
 
 
       (c3* (gensym "aaa")
@@ -838,6 +856,7 @@
           ;(ftrace "...")
           (line (list->str ("more-tests")))
           (line (list->str ("old-tests")))
+          (line (list->str ("lambda-list-tests")))
           (line (list->str ("expected-fail")))
           (line (list->str ("expected error")))
           (line (list->str ("bad-abc")))
