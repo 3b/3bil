@@ -204,7 +204,7 @@
                  (incf stack (- push pop))
                  (incf scope (- push-scope pop-scope))
                  ;; update info for this index
-                 (setf (aref stack-at i) (list stack scope (copy-seq local-live)))
+                 (setf (aref stack-at i) (list stack scope (if test-live (copy-seq local-live))))
                  ;; update min/max
                  (when (< stack 0 min-stack)
                    (format t "stack underflow? = ~s ~s" stack min-stack))
