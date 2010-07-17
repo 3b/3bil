@@ -314,6 +314,7 @@
 (defparameter *activation-local-name* nil)
 (defparameter *live-locals* nil)
 (defparameter *scope-live-locals* nil)
+(defparameter *literals-local* nil)
 (defun upgraded-type (type)
   (when (and (listp type) (= 1 (length type)))
     (setf type (car type)))
@@ -373,7 +374,11 @@
            (add-function-ref (name)
                              (pushnew name *ir2-function-deps* :test 'equal))
            (add-class-ref (name)
-                             (pushnew name *ir2-class-deps* :test 'equal)))
+                             (pushnew name *ir2-class-deps* :test 'equal))
+           (literal-ref (value code)
+                        `((:get-local ,*literals-local*)
+                          (:push-int ,(coalesce-literal value code))
+                          (:get-property (:multiname-l "" "")))))
   :forms
   (((quote value)
     (let ((a `(,@(typecase value
@@ -391,9 +396,17 @@
                              (string
                               `((:push-string ,value)))
                              (simple-vector
-                              `(,@(loop for i across value
+                              (literal-ref
+                               value
+                               (let ((*ir1-dest-type* t)
+                                     ;; while initializing literal values,
+                                     ;; the literals object is stored in
+                                     ;; local 1 so we have access to
+                                     ;; previously defined literals
+                                     (*literals-local* 1))
+                                 `(,@(loop for i across value
                                         append (recur `(quote value ,i)))
-                                  (:new-array ,(length value))))
+                                     (:new-array ,(length value))))))
                              (symbol
                               (cond
                                 ((eq value t)
@@ -402,19 +415,35 @@
                                  `((:push-null)))
                                 (t
                                  (add-function-ref '%intern)
-                                 `((:find-property-strict %intern)
-                                   ;; fixme: handle symbols properly
-                                   (:push-string ,(package-name (or (symbol-package value) :uninterned)))
-                                   (:push-string ,(symbol-name value))
-                                   (:call-property %intern 2)))))
+                                 (literal-ref
+                                  value
+                                  `((:find-property-strict %intern)
+                                    ;; fixme: handle symbols properly
+                                    (:push-string ,(package-name (or (symbol-package value) :uninterned)))
+                                    (:push-string ,(symbol-name value))
+                                    (:call-property %intern 2))))))
 ;;;
                              (cons
                               (add-class-ref 'cons-type)
-                              (append
-                               `((:find-property-strict cons-type))
-                               (recur `(quote value ,(car value)))
-                               (recur `(quote value ,(cdr value)))
-                               `((:construct-prop cons-type 2))))
+                              ;; we need to build conses in pieces to handle
+                              ;; circularity
+                              ;; fixme: optimize noncircular lists to build
+                              ;; the conses directly?
+                              (literal-ref
+                               value
+                               (let ((*ir1-dest-type* t)
+                                     (*literals-local* 1))
+                                 (append
+                                  `((:find-property-strict cons-type)
+                                    (:push-null)
+                                    (:push-null)
+                                    (:construct-prop cons-type 2)
+                                    (:dup))
+                                  (recur `(quote value ,(car value)))
+                                  `((:set-property %car)
+                                    (:dup))
+                                  (recur `(quote value ,(cdr value)))
+                                  `((:set-property %cdr))))))
                              (t
                               (error "don't know how to compile quoted value ~s" value)))
                  ,@(coerce-type))))
@@ -660,7 +689,8 @@
             (*current-closure-scope-index* 1)
             (*live-locals* nil)
             (*ir2-function-deps* (getf flags :function-deps))
-            (*ir2-class-deps* (getf flags :class-deps)))
+            (*ir2-class-deps* (getf flags :class-deps))
+            (*literals-local* nil))
         ;; fixme: implement this properly instead of relying on it picking right numbers on its own
         (loop for i in (lambda-list-vars lambda-list)
              ;; note: (get-local-index i) is needed for side effects
@@ -678,7 +708,15 @@
                                (:get-scope-object ,*current-closure-scope-index*)
                                (:get-local ,(get-local-index var))
                                (:set-slot ,(get-closure-index var))))))
-              (asm (recur-progn body))
+              (asm (append
+                    ;; fixme: check for actually using any literals
+                    ;; before caching the object in a local
+                    (when t ;; todo: only cache literals object if used
+                      `((:find-property ,(literals-global-name *compiler-context*))
+                        (:get-property ,(literals-global-name *compiler-context*))
+                        (:set-local
+                         ,(setf *literals-local* (get-local-index (gensym))))))
+                    (recur-progn body)))
               (arg-types (loop ;for i in (lambda-list-vars lambda-list)
                             ;for decl = (getf types i)
                             for decl in types

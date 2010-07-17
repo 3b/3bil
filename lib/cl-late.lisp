@@ -24,8 +24,7 @@
                  always (or (and r r2) (and (not r) (not r2)))
                  finally (progn
                            ;;(ftrace (s+ " === " i " . " r " / " j ". " r2))
-                           (return (or (and r r2 (equal r r2))
-                                       (and (null r) (null r2))))))))
+                           (return (equal r r2))))))
         ((consp b) nil)
         ((and (%typep a flash:string) (%typep b flash:string))
          (string= a b))
@@ -47,12 +46,11 @@
               (loop
                  for (i . r) on a
                  for (j . r2) on b
-                 always (equal i j)
+                 always (equalp i j)
                  always (or (and r r2) (and (not r) (not r2)))
                  finally (progn
                            ;;(ftrace (s+ " === " i " . " r " / " j ". " r2))
-                           (return (or (and r r2 (equal r r2))
-                                       (and (null r) (null r2))))))))
+                           (return (equalp r r2))))))
         ((consp b) nil)
         ((and (%typep a flash:string) (%typep b flash:string))
          (string-equal a b))
@@ -61,6 +59,6 @@
               (= (length a) (length b))
               (loop for i across a
                  for j across b
-                 always (equal i j))))
+                 always (equalp i j))))
         ;; todo: (equal false nil) => ?
         (t (%equals a b)))))))

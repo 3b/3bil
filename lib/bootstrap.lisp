@@ -352,7 +352,7 @@
         (:set-property ,(or (find-swf-property property) property))))
 
     (defmacro %key-equal (a b)
-      `(= ,a ,b))
+      `(eq ,a ,b))
     ;;; some low level exception handling code, mainly intended for
     ;;; use with test framework currently, but may be generally useful
     ;;; at some point

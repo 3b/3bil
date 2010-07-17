@@ -420,6 +420,35 @@
              `((:get-local-0)
                (:push-scope)
                ,@script-init-scope-setup
+               ;; if we have any literals in the code, create them before
+               ;; running top-level
+               ,@ (when (plusp (literals-index compiler-context))
+                    (format t "initializing literals on global ~s~%"
+                            (literals-global-name compiler-context))
+                    `(;; we can't build the literals all at once, since they
+                      ;; might need to refer to previously built literals
+                      ;; for example in '(foo)
+                      (:new-array 0)
+                      (:dup)
+                      (:find-property-strict ,(literals-global-name compiler-context))
+                      (:swap)
+                      (:set-property ,(literals-global-name compiler-context))
+                      (:dup)
+                      ;; we need the literals somewhere the containing literals
+                      ;; can get to them, so using local 1 for now
+                      (:set-local 1) ;; fixme: make sure nothing else will use local 1 (toplevel code in particular)
+                      ;; add the literals to the array
+                      ,@(loop
+                           for (nil . (i code))
+                           in (sort (alexandria:hash-table-alist
+                                     (literals-hash compiler-context))
+                                    #'< :key #'cadr)
+                           collect '(:dup)
+                           collect `(:push-int ,i)
+                           append code
+                           collect '(:set-property (:multiname-l "" "")))
+                      (:pop)))
+               ;; run any top-level code
                ,@(load-top-level compiler-context)
                (:return-void))))))
 
@@ -437,6 +466,22 @@
                           'avm2-asm::type-name 0
                           'avm2-asm::vindex 0
                           'avm2-asm::vkind 0))
+         ;; fixme: make this a slot on the script, so it doesn't
+         ;; need handled specially here...
+         ,@ (when (plusp (literals-index compiler-context))
+              (list
+               (make-instance
+                'avm2-asm::trait-info
+                'avm2-asm::name
+                (avm2-asm::asm-intern-multiname
+                 (literals-global-name compiler-context))
+                'avm2-asm::trait-data
+                (make-instance 'avm2-asm::trait-data-slot/const
+                               'avm2-asm::kind 0
+                               'avm2-asm::slot-id 0
+                               'avm2-asm::type-name 0
+                               'avm2-asm::vindex 0
+                               'avm2-asm::vkind 0))))
          ,@(loop for i in (script-slots compiler-context)
               collect (make-instance
                        'avm2-asm::trait-info

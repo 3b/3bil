@@ -8,9 +8,33 @@
    ;;; not sure if this is right place for this yet, store any code
    ;;; that should be run at load time... (maybe should be a list of
    ;;; functions to call instead of literal code to embed in the script init?)
-   (load-top-level :initform () :accessor load-top-level)))
+   (load-top-level :initform () :accessor load-top-level)
+   ;;; for literals in the code, we compile a reference to a specific
+   ;;; slot on a global object (or maybe array? not sure there is any
+   ;;; benefit to having a specific class for it, aside from maybe
+   ;;; being able to use teh class init to initialize it)
+   ;;; on script init, we fill in the slots of the object/array with
+   ;;; the desired values
+   (literal-global :initform '|%%literals%%| :accessor literals-global-name)
+   ;;; during compilation, we need to track the next unallocated index,
+   ;;; and a mapping of values -> index + code to load the value
+   (literals-index :initform 0 :accessor literals-index)
+   (literals-hash :initform (make-hash-table :test 'equal) :accessor literals-hash)))
 
 (defparameter *compiler-context* (make-instance 'compiler-context))
+
+
+(defun coalesce-literal (value code)
+  (let ((old (gethash value (literals-hash *compiler-context*))))
+    (if old
+        (progn
+          (assert (equal code (second old)) nil "coalesced literals with differing initialization code?~%value ~s~%code ~s -> ~s" value (second old) code)
+          (car old))
+        (progn
+          (setf (gethash value (literals-hash *compiler-context*))
+                (list (literals-index *compiler-context*)
+                      code))
+          (1- (incf (literals-index *compiler-context*)))))))
 
 ;;; track data about a function level scope
 ;;;   (including lambda/flet/labels/defun)
