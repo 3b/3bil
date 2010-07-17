@@ -538,11 +538,19 @@
                    (progn
                      (add-function-ref `(setf ,name))
                      (add-class-ref 'setf-namespace-type)
-                     `((:get-lex setf-namespace-type)
+                     #++`((:get-lex setf-namespace-type)
                       ,@(let ((*ir1-dest-type* nil))
                              (loop for a in args
                                 append (recur a)))
                       (:call-property ,name ,(length args))
+                      ,@(coerce-type))
+                     `((:get-lex setf-namespace-type)
+                       (:get-property ,name)
+                       (:get-global-scope)
+                       ,@(let ((*ir1-dest-type* nil))
+                              (loop for a in args
+                                 append (recur a)))
+                       (:call ,(length args))
                       ,@(coerce-type)))))))
 
      ;; possibly should split out closed and normal bindings, but for now

@@ -100,9 +100,23 @@
                             (let ((c (assoc ,n ,alist :test 'equal)))
                               (if c (rplacd c (list ,mid))
                                   (push (list ,n ,mid) ,alist))))))
-              (if class-static
-                  (add n mid (class-functions class))
-                  (add n mid (functions class)))))
+              (cond
+                ((getf (flags class) :methods-as-properties)
+                 ;; for some stuff like setf, we want functions as
+                 ;; properties instead of actual methods, so we can use
+                 ;; the class as a namespace without it showing up in the
+                 ;; scope for functions in that namespace
+                 ;; so add an anonymous function to be put into the slot later
+                 #++(format t "assemble fun ~s / ~s for namespace ~s~% " name n class-name)
+                 #++(format t "=~s~%" (list (list :qname "|setf|" (format nil "~s" trait)))
+                         n mid)
+                 (push (list (list :qname "|setf|" (format nil "~s" trait)) mid)
+                       (function-names *compiler-context*))
+                 (add n (list :qname "|setf|" (format nil "~s" trait))  (class-functions class)))
+
+                (class-static
+                 (add n mid (class-functions class)))
+                (t (add n mid (functions class))))))
           ;; normal function
           (cond
             ;; fixme: should these use trait instead of n ?
@@ -135,6 +149,11 @@
                                           (avm2-asm::assemble-method-body
                                            `((:get-local-0)
                                              (:push-scope)
+                                             ,@ (when (getf flags :methods-as-properties)
+                                                  (loop for (sn an) in class-functions
+                                                     append `((:get-local-0)
+                                                              (:get-lex ,an)
+                                                              (:set-property ,sn))))
                                              (:return-void))
                                            :init-scope 0)))
          (junk (avm2-asm::avm2-ns-intern ns))
@@ -176,7 +195,7 @@
                  class-init
                  :protected-ns junk
                  :class-traits
-                                  (append
+                 (append
                   (loop for i in class-properties
                         collect
                         (make-instance
@@ -191,14 +210,21 @@
                                         'avm2-asm::vkind 0 ;; no value
                                         )))
                   (loop for (name index) in class-functions
-                        collect
-                        (make-instance
-                         'avm2-asm::trait-info
-                         'avm2-asm::name (avm2-asm::asm-intern-multiname name)
-                         'avm2-asm::trait-data
-                         (make-instance 'avm2-asm::trait-data-method/get/set
-                                        'avm2-asm::slot-id 0 ;; none
-                                        'avm2-asm::method index))))
+                     collect
+                     (make-instance
+                      'avm2-asm::trait-info
+                      'avm2-asm::name (avm2-asm::asm-intern-multiname name)
+                      'avm2-asm::trait-data
+                      (if (getf flags :methods-as-properties)
+                          (make-instance 'avm2-asm::trait-data-slot/const
+                                         'avm2-asm::kind 0
+                                         'avm2-asm::slot-id 0 ;; auto-assign
+                                         'avm2-asm::type-name 0 ;; */t
+                                         'avm2-asm::vindex 0 ;; no value
+                                         'avm2-asm::vkind 0) ;; no value
+                          (make-instance 'avm2-asm::trait-data-method/get/set
+                                         'avm2-asm::slot-id 0 ;; none
+                                         'avm2-asm::method index)))))
                  ;; todo: class traits
                  ;; :class-traits nil
                  )))

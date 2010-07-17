@@ -220,6 +220,7 @@
 
     (defclass-swf setf-namespace-type (flash:object)
       (baz)
+      (:methods-as-properties t)
       (:constructor ()
         (%asm (:push-null))))
 
