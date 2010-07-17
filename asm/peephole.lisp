@@ -243,3 +243,7 @@ optimized version"
                     (equals) (if-false) ;; -> (if-ne)
                     (less-than) (if-true) ;; -> (if-lt)
                     (push-null) (pop))))  ;; -> nil
+
+
+;; todo: :get-local push_int 1 add dup coerce-any set-local -> inclocal getlocal
+;; todo: :get-local push_int 1 add dup coerce-int set-local -> inclocal_i getlocal

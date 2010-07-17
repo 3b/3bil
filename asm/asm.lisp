@@ -224,8 +224,8 @@
           (dump-asm))
         (values max-stack max-scope max-local)))))
 
-(defun avm2-validate (code &key dump arg-count)
-  (avm2-validate (peephole code) :dump dump :arg-count arg-count))
+#++(defun avm2-validate (code &key dump arg-count)
+  (%avm2-validate (peephole code) :dump dump :arg-count arg-count))
 
 (defun fix-labels (forms)
   ;; verifier in 10.0 and earlier players seems to object to labels
