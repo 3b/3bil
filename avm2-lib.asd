@@ -13,13 +13,14 @@
                           (:file "cl-conses")
                           (:file "sicl-conditionals")
                           (:file "sicl-iteration")
-                          (:file "cl-conses2")
+                          ;(:file "cl-conses2")
                           (:file "cl-arrays")
-                          (:file "cl-sequences")
                           ;; temprorary hack for new compiler
                           (:file "misc")
                           (:file "cl-new")
                           (:file "sacla-loop")
+                          (:file "sicl-cons-high")
+                          (:file "cl-sequences")
                           (:file "cl-late")
                           ;; misc extra stuff...
                           (:file "fu")

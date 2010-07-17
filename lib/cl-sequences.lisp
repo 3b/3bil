@@ -7,6 +7,12 @@
   (c3* (gensym)
 ;;; fixme: handle strings in sequence functions
     ;; reverse string = (flash:join (flash:reverse (flash:split str "")) "")?
+
+    (defmacro %reverse-list (list)
+      `(let ((reversed nil))
+         (dolist (value ,list reversed)
+           (push value reversed))))
+
     (defun reverse (sequence)
       (typecase sequence
         (cons-type (%reverse-list sequence))

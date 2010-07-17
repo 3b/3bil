@@ -172,6 +172,11 @@
              ,@body
              ,temp)))
 
+      (defmacro assert (test-form &optional places datum-form &rest arguments)
+        `(unless ,test-form
+           (%error (%new- flash:error (+ "assert failed" ,datum-form))))
+)
+
 
       #+nil(let ((*symbol-table* (make-instance 'symbol-table :inherit (list *cl-symbol-table* *player-symbol-table*))))
              (dump-defun-asm (&arest rest)

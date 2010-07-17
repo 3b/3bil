@@ -82,6 +82,32 @@
        (:@ ,object)
        (:throw)))
 
+   (defmacro check-type (object type &optional (string (format nil "~s" type)))
+     (cond
+       ((eq type 'null)
+        `(when ,object
+           (%error (%new- flash:error (+ "check-type failed, expected " ,string " got " (%type-of ,object))))))
+       ((eq type 'cons)
+        `(unless (%typep ,object cons-type)
+           (%error (%new- flash:error (+ "check-type failed, expected " ,string " got " (%type-of ,object))))))
+       ((eq type 'list)
+        `(unless (or (eq ,object nil) (%typep ,object cons-type))
+           (%error (%new- flash:error (+ "check-type failed, expected " ,string " got " (%type-of ,object))))))
+       ((and (consp type) (eq (car type) 'integer))
+        `(unless (and (%typep ,object flash:number)
+                      ,@ (when (second type)
+                           `((>= ,object ,(second type))))
+                      ,@ (when (third type)
+                           `((<= ,object ,(third type)))))
+           (%error (%new- flash:error (+ "check-type failed, expected " ,string
+                       " got " (%type-of ,object))))))
+       (t
+        `(unless  (%typep ,object ,type)
+           (%error (%new- flash:error (+ "check-type failed, expected " ,string
+                       " got " (%type-of ,object)))))
+        ))
+     )
+
 
     (defmacro %new- (class &rest args)
       (let ((name (typecase class
@@ -480,7 +506,7 @@
            ;; process keyword args
            ,@ (when key
                 `((let (,@ (when optional
-                             `((,count (- ,count ,(length opt))))))
+                             `((,count (- ,count ,(length optional))))))
                     #++(ftrace (%length ,arg-form))
                     #++(ftrace ,arg-form)
                     ;; check for odd # of keys

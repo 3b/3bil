@@ -167,10 +167,14 @@
 
 
 (defun parsed-qname (name)
-  (let ((p (position #\: name :test 'char=)))
-    (if p
-        (qname (subseq name 0 p) (subseq name (position #\: name :start p :test-not 'char=)))
-        (qname "" name))))
+  (let ((p (if (stringp name) (position #\: name :test 'char=))))
+    (cond
+      ;; fixme: combine parsing of (:qname-foo ...) with asm-intern-multiname
+      ((and (consp name) (eq (car name) :qname-l))
+       (intern-multiname +rt-qname-l+ "" ""))
+      (p
+       (qname (subseq name 0 p) (subseq name (position #\: name :start p :test-not 'char=))))
+      (t (qname "" name)))))
 
 ;;; instance_info.flags values
 

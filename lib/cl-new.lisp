@@ -32,54 +32,63 @@
 
   (c3* (gensym)
     (defun funcall (x &arest args)
-         (flash:apply x nil args ))
+      ;(flash:trace (+ "funcall " x " = " (%type-of x)))
+      #++(if (%typep x "QName")
+          (flash:apply (%asm
+                        (:get-global-scope)
+                        (:@ x)
+                        (:@ x)
+                        (:get-property (:qname-l)))
+                       nil args)
+          (flash:apply x nil args ))
+      (flash:apply x nil args ))
 
     ;;; most of these depend on compiler macros in bootstrap.lisp for the
     ;;; 0-2 arg case
 
     (defun + (&arest x)
       (let ((sum 0))
-        (dotimes (i (length x) sum)
-          (incf sum (aref x i)))))
+        (dotimes (i (%length x) sum)
+          (incf sum (%aref-1 x i)))))
 
     (defun s+ (&arest x)
          (let ((sum ""))
-           (dotimes (i (length x) sum)
-             (incf sum (aref x i)))))
+           (dotimes (i (%length x) sum)
+             (incf sum (%aref-1 x i)))))
 
     (defun = (a &arest x)
-      (dotimes (i (length x) t)
-        (unless (eq a (aref x i)) ;; eql?
+      (dotimes (i (%length x) t)
+        (unless (eq a (%aref-1 x i)) ;; eql?
           (return nil))))
 
     (defun < (a &arest x)
-      (dotimes (i (length x) t)
-        (when (>= a (aref x i)) (return nil))
-        (setf a (aref x i))))
+      (dotimes (i (%length x) t)
+        (when (>= a (%aref-1 x i)) (return nil))
+        (setf a (%aref-1 x i))))
 
     (defun <= (a &arest x)
-      (dotimes (i (length x) t)
-        (when (> a (aref x i)) (return nil))
-        (setf a (aref x i))))
+      (dotimes (i (%length x) t)
+        (when (> a (%aref-1 x i)) (return nil))
+        (setf a (%aref-1 x i))))
 
     (defun > (a &arest x)
-      (dotimes (i (length x) t)
-        (when (<= a (aref x i)) (return nil))
-        (setf a (aref x i))))
+      (dotimes (i (%length x) t)
+        (when (<= a (%aref-1 x i)) (return nil))
+        (setf a (%aref-1 x i))))
 
     (defun >= (a &arest x)
-      (dotimes (i (length x) t)
-        (when (< a (aref x i)) (return nil))
-        (setf a (aref x i))))
+      (dotimes (i (%length x) t)
+        (when (< a (%aref-1 x i)) (return nil))
+        (setf a (%aref-1 x i))))
 
     (defun - (a &arest x)
       (let ((sum a))
-        (if (= (length x) 0)
+        (if (= (%length x) 0)
             (%asm (:@ a)
                   (:negate)
                   (:coerce-any))
             (dotimes (i (length x) sum)
-              (let ((y (aref x i)))
+              (let ((y (%aref-1 x i)))
                 (%asm (:@ sum)
                       (:@ y)
                       (:subtract)
@@ -89,13 +98,13 @@
                       #++(:@! sum)))))))
     (defun / (a &arest x)
       (let ((sum a))
-        (if (= (length x) 0)
+        (if (= (%length x) 0)
             (%asm (:push-int 1)
                   (:@ a)
                   (:divide)
                   (:coerce-any))
-            (dotimes (i (length x) sum)
-              (let ((y (aref x i)))
+            (dotimes (i (%length x) sum)
+              (let ((y (%aref-1 x i)))
                 (%asm (:@ sum)
                       (:@ y)
                       (:divide)
@@ -106,8 +115,8 @@
 
     (defun * (&arest x)
       (let ((sum 1))
-        (dotimes (i (length x) sum)
-          (let ((y (aref x i)))
+        (dotimes (i (%length x) sum)
+          (let ((y (%aref-1 x i)))
             (%asm (:@ sum)
                   (:@ y)
                   (:multiply)
@@ -140,6 +149,37 @@
 
     (defun oddp (x)
       (= (mod x 2) 1))
+    (defun evenp (x)
+      (= (mod x 2) 0))
+
+    (defun plusp (x)
+      (> x 0))
+    (defun minusp (x)
+      (< x 0))
+    (defun zerop (x)
+      (= x 0))
+    (defun numberp (x)
+      (%typep x flash:Number))
+
+    (defun string= (x y)
+      (= x y))
+
+    (defun string-equal (x y)
+      (= (flash:to-locale-upper-case x) (flash:to-locale-upper-case y)))
+
+    ;; chars are just 1 element strings for now...
+    (defun char (string index)
+      (flash:char-at string index))
+    (defun char= (x y)
+      (= x y))
+    (defun char-equal (x y)
+      (= (flash:to-locale-upper-case x) (flash:to-locale-upper-case y)))
+
+
+    (defun identity (x) x)
+
+    (defun complement (f)
+      (lambda (&arest r) (not (%apply f this r))))
 
     (defmacro %set-property- (object prop value)
       `(%asm
