@@ -61,6 +61,16 @@
                       (%asm (:@ vf) (:new-array 1)))))
          (loop for i across va
             collect i)))
+    (defmacro nth-value (n values-form)
+      `(let* ((vf ,values-form))
+         (if (%typep vf %multiple-value-return-type)
+             (let ((n ,n)
+                   (v (%values vf)))
+               (if (< n (%length v))
+                   (%aref-1 v n)
+                   nil))
+             (if (= ,n 0) vf nil))))
+
 
     ;; special operator multiple-value-call
     #++(defmacro multiple-value-call (function forms)
