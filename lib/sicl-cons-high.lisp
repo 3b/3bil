@@ -255,14 +255,14 @@
              `(progn (check-type remaining cons "a cons cell")
                      (setf remaining
                            (,(primitive letter) remaining)))))
-      (print`(defun (setf ,function-name) (new-object list)
-          (let ((remaining list))
-            ,@(append (loop for letter across (reverse (subseq letters 1))
-                         collect (one-iteration letter prefix)
-                         collect letter into prefix)
-                      `((check-type remaining cons "a cons cell")
-                        (setf (,(primitive (aref letters 0)) remaining)
-                              new-object)))))))))
+      `(defun (setf ,function-name) (new-object list)
+         (let ((remaining list))
+           ,@(append (loop for letter across (reverse (subseq letters 1))
+                        collect (one-iteration letter prefix)
+                        collect letter into prefix)
+                     `((check-type remaining cons "a cons cell")
+                       (setf (,(primitive (aref letters 0)) remaining)
+                             new-object))))))))
 
 
 ;;; These are commented out for now because they
