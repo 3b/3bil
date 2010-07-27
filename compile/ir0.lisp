@@ -29,6 +29,13 @@
 ;;progv
 ;;let
 ;;quote
+(defun 3bil-special-operator-p (x)
+  ;; fixme: adjust this list to match what is actually implemented
+  ;; maybe add %asm
+  (member x '(block let* return-from catch load-time-value setq eval-when
+              locally symbol-macrolet flet macrolet tagbody function
+              multiple-value-call the go multiple-value-prog1 throw
+              if progn unwind-protect labels progv let quote)))
 
 ;;;; minimal compilation pass:
 ;;; expand macros, compiler macros, macrolets, ?
@@ -406,7 +413,7 @@
                     (function type :local name ,temp-name))))
         (let ((binding (lexenv-get-function-binding name)))
           (cond
-            ((and (symbolp name) (special-operator-p name))
+            ((and (symbolp name) (3bil-special-operator-p name))
              (error "calling FUNCTION on special operator: ~s" name))
             ((and (consp binding) (eq (car binding) :macro))
              (error "calling FUNCTION on macrolet: ~s" name))
@@ -534,7 +541,7 @@
             (accessor (find-swf-accessor operator))
             (temp))
         (cond
-          ((and (symbolp operator) (special-operator-p operator))
+          ((and (symbolp operator) (3bil-special-operator-p operator))
            (super whole))
           ((and (consp operator) (eq (car operator) 'lambda))
            (recur `(funcall (function ,operator) ,@args)))
