@@ -148,7 +148,8 @@
                                ;; of copying
                                (list stack scope (copy-seq local-live)))))))
                (dump-asm ()
-                 (loop
+                 (format t "<dump asm>~%")
+                 #++(loop
                     for op in peephole-code
                     for (stack scope ) across stack-at
                     do (format t "(~{~s~^ ~})   ====  ~s/ ~s~%"
@@ -818,6 +819,8 @@
 
 
 (defmacro define-asm-macro (name (&rest args) &body body)
+  ;; should return values : (pop push pop-scope push-scope rlocals
+  ;;  wlocals klocals flags control-flow labels)
   `(setf (gethash ',name *opcodes*)
          (lambda (,@args)
            ,@(if (stringp (car body))

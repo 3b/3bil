@@ -18,7 +18,7 @@
        do (return-from %peephole j))
     :keep))
 
-
+;; fixme: dropping last instruction sometimes?
 (defun peephole (forms)
   "avm2 asm peephole optimizer, pass in list of asm forms, returns
 optimized version"

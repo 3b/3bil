@@ -538,7 +538,7 @@
                     ;; maybe throw unknown key error
                     ,@ (unless allow-other-keys
                          `((when (and ,bad-key (not ,a-o-k))
-                             (%error "unknown key")))))))
+                             (%error (%new- flash:error "unknown key") )))))))
               ;; bind keywords
               ;; for every keyword, bind real name to the temp value, or if
               ;; complicated default, check supplied-p and bind to default
@@ -558,6 +558,4 @@
                        collect `(,p ,pt)))
              ,@body))))
 
-
 ))
-
