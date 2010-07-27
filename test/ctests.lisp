@@ -122,7 +122,7 @@
                     (,',bad 0)
                     (,',errors 0))
                (labels ,',calls
-                 (macrolet ((test (tname form &optional result sides)
+                 (macrolet ((test (tname form &optional sides)
                               `(progn
                                  (reset-side-effects)
                                  (setf (flash:.text (running (app)))
@@ -137,12 +137,12 @@
                                      (err
                                       (incf ,',',errors)
                                       (mark-error ,tname err))
-                                     ((and (match res ,result)
+                                     ((and res
                                            (match (reverse (get-side-effects))
-                                                  ,sides))
+                                             ,sides))
                                       (mark-pass ,tname res)
                                       (incf ,',',good))
-                                     (t (mark-fail ,tname res ,result
+                                     (t (mark-fail ,tname res T
                                                    (reverse (get-side-effects))
                                                    ,sides)
                                         (incf ,',',bad)))))))
@@ -158,9 +158,8 @@
                                                      sb-ext:compiler-note))
                               (labels ,calls
                                 (reset-side-effects)
-                                (let ((res t))
-                                  `(test ,',string ,',i ',res
-                                         ',(reverse (get-side-effects)))))))
+                                `(test ,',string ,',i
+                                       ',(reverse (get-side-effects))))))
                          )
 
                    (ftrace (s+ ,',name ": passed=" ,',good "  failed=" ,',bad " errored=" ,',errors))
@@ -958,6 +957,8 @@
 
         (consp (cons 'a 'b))
 
+        '(2 3 4 5)
+
         (consp '(1 . 2))
 
         (consp (list nil))
@@ -1003,7 +1004,7 @@
 
         (listp (cons 'a 'b))
 
-        ;(listp '#1=(1 2 . #1#))
+        (listp '#1=(1 2 . #1#))
 
         (not (listp 1))
 
@@ -1049,7 +1050,7 @@
         (let ((a (cons 1 2)))
           (eq (car (list a)) a))
 
-        ;(eq (car '#2=(a . #2#)) 'a)
+        (eq (car '#2=(a . #2#)) 'a)
 
         (eq (cdr '(a . b)) 'b)
         (eq (rest '(a . b)) 'b)
@@ -1062,9 +1063,9 @@
         (let ((a (cons 1 2)))
           (eq (rest (cons 1 a)) a))
 
-        #++(let ((x '#3=(a . #3#)))
+        (let ((x '#3=(a . #3#)))
           (eq (cdr x) x))
-        #++(let ((x '#4=(a . #4#)))
+        (let ((x '#4=(a . #4#)))
           (eq (rest x) x))
 
         (eq (caar '((a) b c)) 'a)
@@ -1284,7 +1285,7 @@
 
         (let ((x (list 'a 'b 'c 'd)))
           (and (equal (sublis '((a . 1) (b . 2) (c . 3)) x)
-                      '(1 2 3 d))
+                      (copy-tree '(1 2 3 d)))
                (equal x '(a b c d))))
 
         (let* ((n (cons 'n nil))
@@ -1631,6 +1632,8 @@
 
         (tree-equal '(a (b (c))) '(a (b (c))) :test-not (complement #'eq))
 
+        ;; not valid, strings are literals so can be combined
+        #++
         (not (tree-equal '("a" ("b" ("c"))) '("a" ("b" ("c")))))
 
         (tree-equal '("a" ("b" ("c"))) '("a" ("b" ("c"))) :test #'equal)
@@ -1689,7 +1692,7 @@
 
         (eql (list-length '(1 2)) 2)
 
-        #++(null (list-length '#5=(1 2 3 4 . #5#)))
+        (null (list-length '#5=(1 2 3 4 . #5#)))
 
 
         (equal (make-list 5) '(nil nil nil nil nil))
@@ -1744,7 +1747,7 @@
         (let ((a (cons 1 2)))
           (eq (first (list a)) a))
 
-        #++(eq (first '#6=(a . #6#)) 'a)
+        (eq (first '#6=(a . #6#)) 'a)
 
         (eql (first   '(1 2 3)) '1)
         (eql (second  '(1 2 3)) '2)
@@ -3150,6 +3153,7 @@
         (subsetp '(1) '(2 1 3))
         (subsetp '(1 2) '(1 2 3 4 5 6 7 8))
         (subsetp '(1 2 3 4 5) '(8 7 6 5 4 3 2 1))
+        #++ ;; assumes literal strings are not eql
         (null (subsetp '("car" "ship" "airplane" "submarine")
                        '("car" "ship" "horse" "airplane" "submarine" "camel")))
 
