@@ -160,38 +160,38 @@
       ;; inline math ops, we need at least 0-2 arg versions, since the full
       ;; version is implemented in terms of it
       (defmacro define-transitive-binops (&body ops)
-        (let ((i (gensym)))
-          `(progn
-             ,@(loop for (op opcode identity unary-op) in ops
-                  collect
-                  `(define-compiler-macro ,op (&whole w &rest x)
-                     (case (length x)
-                       (0 ,identity)
-                       (1 ,(cond
-                            ((keywordp unary-op)
-                             ``(%asm
-                                (:@ ,(first x))
-                                (,',unary-op)))
-                            ;; fixme: this special case for / is a bit ugly
-                            ((numberp unary-op)
-                             ``(%asm
-                                (:@ ,(first x))
-                                (:@ ,unary-op)
-                                (:swap)
-                                (,',opcode)))
-                            (unary-op
-                             (error "can't compile unary op ~s in define-transitive-binops?" unary-op))
-                            (t
-                             `(first x))))
-                       (2 `(%asm
-                            (:%push-arglist
-                             (:@ ,(first x))
-                             (:@ ,(second x)))
-                            (,',opcode)))
-                       ;; fixme: should we call stop inlining at some arg count?
-                       (t
-                        `(,',op (,',op ,(first x) ,(second x))
-                                ,@(nthcdr 2 x)))))))))
+        `(progn
+           ,@(loop for (op opcode identity unary-op) in ops
+                collect
+                `(define-compiler-macro ,op (&whole w &rest x)
+                   (declare (ignorable w))
+                   (case (length x)
+                     (0 ,identity)
+                     (1 ,(cond
+                          ((keywordp unary-op)
+                           ``(%asm
+                              (:@ ,(first x))
+                              (,',unary-op)))
+                          ;; fixme: this special case for / is a bit ugly
+                          ((numberp unary-op)
+                           ``(%asm
+                              (:@ ,(first x))
+                              (:@ ,',unary-op)
+                              (:swap)
+                              (,',opcode)))
+                          (unary-op
+                           (error "can't compile unary op ~s in define-transitive-binops?" unary-op))
+                          (t
+                           `(first x))))
+                     (2 `(%asm
+                          (:%push-arglist
+                           (:@ ,(first x))
+                           (:@ ,(second x)))
+                          (,',opcode)))
+                     ;; fixme: should we call stop inlining at some arg count?
+                     (t
+                      `(,',op (,',op ,(first x) ,(second x))
+                              ,@(nthcdr 2 x))))))))
 
       (define-transitive-binops
           (+ :add 0)
@@ -205,22 +205,21 @@
         )
 
       (defmacro define-compare-binops (&body ops)
-        (let ((i (gensym))
-              (j (gensym)))
-          `(progn
-             ,@(loop for (op opcode) in ops
-                  collect
-                  `(define-compiler-macro ,op (&whole w a &rest x)
-                     (case (length x)
-                       (0 t)
-                       (1 `(%asm
-                            (:%push-arglist
-                             (:@ ,a)       ;; types?
-                             (:@ ,(first x))) ;; types?
-                            (,',opcode)))
-                       (t
-                        ;; fixme: expand inline for reasonable arglist lengths?
-                        w)))))))
+        `(progn
+           ,@(loop for (op opcode) in ops
+                collect
+                `(define-compiler-macro ,op (&whole w a &rest x)
+                   (declare (ignorable w))
+                   (case (length x)
+                     (0 t)
+                     (1 `(%asm
+                          (:%push-arglist
+                           (:@ ,a)            ;; types?
+                           (:@ ,(first x)))   ;; types?
+                          (,',opcode)))
+                     (t
+                      ;; fixme: expand inline for reasonable arglist lengths?
+                      w))))))
 
       (define-compare-binops
         (< :less-than)
