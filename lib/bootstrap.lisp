@@ -26,23 +26,32 @@
         (list* '&whole (second lambda-list) op-var (cddr lambda-list))
         (cons op-var lambda-list)))
 
+  (defun remove-&environment-from-macro-lambda-list (lambda-list)
+    (loop for (a . rest) on lambda-list
+       when (eq a '&environment)
+       return (values (append ll (cdr rest)) (car rest))
+       else collect a into ll
+       finally (return (values ll nil))))
+
   ;; defmacro
   (add-swf-macro-function
    'defmacro
    (lambda (form environment)
      (declare (ignore environment))
      (destructuring-bind (name args &body body) (cdr form)
-       (let* ((bform (gensym))
-              (benvironment (gensym))
-              (op-var (gensym))
-              (lambda-list (add-op-var-to-macro-lambda-list op-var args)))
-         (add-swf-macro-function
-          name
-          (coerce `(lambda (,bform ,benvironment)
-                     (declare (ignore ,benvironment))
-                     (destructuring-bind ,lambda-list ,bform
-                       (declare (ignore ,op-var))
-                       ,@body)) 'function))))
+       (multiple-value-bind (args env-var)
+           (remove-&environment-from-macro-lambda-list args)
+         (let* ((bform (gensym))
+                (benvironment (or env-var (gensym)))
+                (op-var (gensym))
+                (lambda-list (add-op-var-to-macro-lambda-list op-var args)))
+           (add-swf-macro-function
+            name
+            (coerce `(lambda (,bform ,benvironment)
+                       (declare (ignore ,benvironment))
+                       (destructuring-bind ,lambda-list ,bform
+                         (declare (ignore ,op-var))
+                         ,@body)) 'function)))))
      nil))
 
   (add-swf-macro-function
@@ -50,17 +59,19 @@
    (lambda (form environment)
      (declare (ignore environment))
      (destructuring-bind (name args &body body) (cdr form)
-       (let* ((bform (gensym))
-              (benvironment (gensym))
-              (op-var (gensym))
-              (lambda-list (add-op-var-to-macro-lambda-list op-var args)))
-         (add-swf-cmacro-function
-          name
-          (coerce `(lambda (,bform ,benvironment)
-                     (declare (ignore ,benvironment))
-                     (destructuring-bind ,lambda-list ,bform
-                       (declare (ignore ,op-var))
-                       ,@body)) 'function))))
+       (multiple-value-bind (args env-var)
+           (remove-&environment-from-macro-lambda-list args)
+         (let* ((bform (gensym))
+                (benvironment (or env-var (gensym)))
+                (op-var (gensym))
+                (lambda-list (add-op-var-to-macro-lambda-list op-var args)))
+           (add-swf-cmacro-function
+            name
+            (coerce `(lambda (,bform ,benvironment)
+                       (declare (ignore ,benvironment))
+                       (destructuring-bind ,lambda-list ,bform
+                         (declare (ignore ,op-var))
+                         ,@body)) 'function)))))
      nil))
 
   (c3* (gensym)
