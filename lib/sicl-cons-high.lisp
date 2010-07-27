@@ -17,25 +17,24 @@
   (defun null (object)
     (eq object '())))
 
-
 ;;; We want for error messages to be phrased in terms of a construct
 ;;; that was directly used by the user's code.  So for instance, if
 ;;; the user code had a call to CADDR, giving it a list where the CDDR
 ;;; is not a list, we would like the error message to mention that,
 ;;; and not for instance that CAR was given a non-list. 
 
-
-(defun generate-c*r-message (function-name prefix)
-  (if (null prefix)
-      (format nil
-              "The function ~a was given an argument~@
+(eval-when (:compile-toplevel :load-toplevel)
+  (defun generate-c*r-message (function-name prefix)
+    (if (null prefix)
+        (format nil
+                "The function ~a was given an argument~@
                that is neither NIL nor a CONS cell"
-              function-name)
-      (format nil
-              "The function ~a was given a list whose ~@
+                function-name)
+        (format nil
+                "The function ~a was given a list whose ~@
                C~{~a~}R is neither NIL nor a CONS cell"
-              function-name
-              (reverse prefix))))
+                function-name
+                (reverse prefix)))))
 
 (eval-when (:compile-toplevel :load-toplevel)
   (defun generate-setf-c*r-message (function-name prefix)
@@ -78,7 +77,6 @@
 (let ((*symbol-table* *cl-symbol-table*))
   (c3* (gensym)
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Function append
@@ -94,24 +92,25 @@
 ;;; a buggy loop to still use this module without first replacing
 ;;; loop by ours. 
 
-(defun append (&rest lists)
-  (let ((result nil)
-        (frontier nil))
-    (loop for list in lists
-       do (if (null result)
-              (setf result list)
-              (progn (when (null frontier)
-                       (setf result (cons (car result) (cdr result))
-                             frontier result))
-                     (let ((next (cdr frontier)))
-                       (loop until (atom next)
-                          do (setf next (cons (car next) (cdr next)))
-                          (setf (cdr frontier) next)
-                          (setf frontier next)
-                          (setf next (cdr next)))
-                       (check-type next null "nil"))
-                     (setf (cdr frontier) list))))
-    result))
+
+  (defun append (&rest lists)
+    (let ((result nil)
+          (frontier nil))
+      (loop for list in lists
+            do (if (null result)
+                   (setf result list)
+                   (progn (when (null frontier)
+                            (setf result (cons (car result) (cdr result))
+                                  frontier result))
+                          (let ((next (cdr frontier)))
+                            (loop until (atom next)
+                                  do (setf next (cons (car next) (cdr next)))
+                                     (setf (cdr frontier) next)
+                                     (setf frontier next)
+                                     (setf next (cdr next)))
+                            (check-type next null "nil"))
+                          (setf (cdr frontier) list))))
+      result))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -123,8 +122,10 @@
 ;;; this implementation assumes that there is no 
 ;;; structure sharing between the &rest argument
 ;;; and the last argument to apply
-(defun list (&rest elements)
-  elements)
+
+
+  (defun list (&rest elements)
+    elements)
 
 (define-compiler-macro list (&rest args)
   (if (null args)
@@ -137,10 +138,10 @@
 
 ;;; We need the push macro in the implementation of other functions
 ;;; and or macros in this module, so we define it early.
-#++
+
 (defmacro push (item place &environment env)
   (multiple-value-bind (vars vals store-vars writer-form reader-form)
-      (get-setf-expansion place env)
+      (%get-setf-expansion place env)
     (let ((item-var (gensym)))
       `(let* ((,item-var ,item)
 	      ,@(mapcar #'list vars vals)
@@ -153,12 +154,12 @@
 
 ;;; We need the pop macro in the implementation of other functions
 ;;; and or macros in this module, so we define it early.
-#++
+
 (defmacro pop (place &environment env)
   (multiple-value-bind (vars vals store-vars writer-form reader-form)
-      (get-setf-expansion place env)
-    `(let (,@(mapcar #'list vars vals)
-	   (,(car store-vars) ,reader-form))
+      (%get-setf-expansion place env)
+    `(let* (,@(mapcar #'list vars vals)
+	    (,(car store-vars) ,reader-form))
        (prog1 (car ,(car store-vars))
 	 (setq ,(car store-vars) (cdr ,(car store-vars)))
 	 ,writer-form))))
@@ -189,7 +190,6 @@
                                    (setf next (cdr next))))
                         (setf (cdr frontier) list))))
     result))
-
 
 (defmacro define-c*r-function (function-name letters)
   (flet ((primitive (letter)
@@ -248,28 +248,28 @@
 (define-c*r-function ninth  "ADDDDDDDD")
 (define-c*r-function tenth   "ADDDDDDDDD")
 
-(defmacro define-setf-c*r-function (function-name letters)
-  (flet ((primitive (letter)
-           (if (eql letter #\A) 'car 'cdr)))
-    (flet ((one-iteration (letter prefix)
-             `(progn (check-type remaining cons "a cons cell")
-                     (setf remaining
-                           (,(primitive letter) remaining)))))
-      `(defun (setf ,function-name) (new-object list)
-         (let ((remaining list))
-           ,@(append (loop for letter across (reverse (subseq letters 1))
-                        collect (one-iteration letter prefix)
-                        collect letter into prefix)
-                     `((check-type remaining cons "a cons cell")
-                       (setf (,(primitive (aref letters 0)) remaining)
-                             new-object))))))))
 
+  (defmacro define-setf-c*r-function (function-name letters)
+    (flet ((primitive (letter)
+             (if (eql letter #\A) 'car 'cdr)))
+      (flet ((one-iteration (letter prefix)
+               `(progn (check-type remaining cons "a cons cell")
+                       (setf remaining
+                             (,(primitive letter) remaining)))))
+        `(defun (setf ,function-name) (new-object list)
+           (let ((remaining list))
+             ,@(append (loop for letter across (reverse (subseq letters 1))
+			     collect (one-iteration letter prefix)
+			     collect letter into prefix)
+		       `((check-type remaining cons "a cons cell")
+                         (setf (,(primitive (aref letters 0)) remaining)
+                               new-object))))))))
 
 ;;; These are commented out for now because they
 ;;; trip the package lock of the CL package.
 (defun (setf car) (object cons)
-   (rplaca cons object)
-   object)
+  (rplaca cons object)
+  object)
 
 (defun (setf cdr) (object cons)
   (rplacd cons object)
@@ -325,7 +325,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Setf expander for rest
-#++
+
 (define-setf-expander rest (x)
   (let ((subform-temp (gensym))
 	(store-temp (gensym)))
@@ -338,6 +338,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; type list
+
 #++
 (deftype list () '(or cons null))
 
@@ -601,6 +602,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Function maplist
+
+
 
 (defun maplist (function &rest lists)
   ;; FIXME: do this better
@@ -944,7 +947,7 @@
                   (subst-not-eq-key new old tree key)
                   (if (or (eq test-not #'eql) (eq test-not 'eql))
                       (subst-not-eql-key new old tree key)
-                      (subst-test-not-key  new old tree test key)))
+                      (subst-test-not-key  new old tree test-not key)))
               (subst-eql-key new old tree key)))
       (if test
           (if (or (eq test #'eq) (eq test 'eq))
@@ -957,7 +960,7 @@
                   (subst-not-eq-identity new old tree)
                   (if (or (eq test-not #'eql) (eq test-not 'eql))
                       (subst-not-eql-identity new old tree)
-                      (subst-test-not-identity  new old tree test)))
+                      (subst-test-not-identity  new old tree test-not)))
               (subst-eql-identity new old tree)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1283,7 +1286,7 @@
                   (nsubst-not-eq-key new old tree key)
                   (if (or (eq test-not #'eql) (eq test-not 'eql))
                       (nsubst-not-eql-key new old tree key)
-                      (nsubst-test-not-key  new old tree test key)))
+                      (nsubst-test-not-key  new old tree test-not key)))
               (nsubst-eql-key new old tree key)))
       (if test
           (if (or (eq test #'eq) (eq test 'eq))
@@ -1296,7 +1299,7 @@
                   (nsubst-not-eq-identity new old tree)
                   (if (or (eq test-not #'eql) (eq test-not 'eql))
                       (nsubst-not-eql-identity new old tree)
-                      (nsubst-test-not-identity  new old tree test)))
+                      (nsubst-test-not-identity  new old tree test-not)))
               (nsubst-eql-identity new old tree)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1776,140 +1779,188 @@
 ;;; Special case when test is eq and key is identity
 
 (defun sublis-eq-identity (alist tree)
-  (labels ((traverse (tree)
-             (let ((entry (assoc-eq-identity tree alist)))
-               (cond ((not (null entry)) (cdr entry))
-                     ((atom tree) tree)
-                     (t (cons (traverse (car tree))
-                              (traverse (cdr tree))))))))
-    (traverse tree)))
-
+  (let ((substitution-p nil))
+    (labels ((traverse (tree)
+	       (let ((entry (assoc-eq-identity tree alist)))
+		 (cond ((not (null entry))
+			(setf substitution-p t)
+			(cdr entry))
+		       ((atom tree) tree)
+		       (t (cons (traverse (car tree))
+				(traverse (cdr tree))))))))
+      (let ((new-tree (traverse tree)))
+	(if substitution-p new-tree tree)))))
+  
 ;;; Special case when test is eql and key is identity
 
 (defun sublis-eql-identity (alist tree)
-  (labels ((traverse (tree)
-             (let ((entry (assoc-eql-identity tree alist)))
-               (cond ((not (null entry)) (cdr entry))
-                     ((atom tree) tree)
-                     (t (cons (traverse (car tree))
-                              (traverse (cdr tree))))))))
-    (traverse tree)))
-
+  (let ((substitution-p nil))
+    (labels ((traverse (tree)
+	       (let ((entry (assoc-eql-identity tree alist)))
+		 (cond ((not (null entry))
+			(setf substitution-p t)
+			(cdr entry))
+		       ((atom tree) tree)
+		       (t (cons (traverse (car tree))
+				(traverse (cdr tree))))))))
+      (let ((new-tree (traverse tree)))
+	(if substitution-p new-tree tree)))))
+  
 ;;; Special case when test is eq and key is given.
 
 (defun sublis-eq-key (alist tree key)
-  (labels ((traverse (tree)
-             (let ((entry (assoc-eq-identity (funcall key tree) alist)))
-               (cond ((not (null entry)) (cdr entry))
-                     ((atom tree) tree)
-                     (t (cons (traverse (car tree))
-                              (traverse (cdr tree))))))))
-    (traverse tree)))
-
+  (let ((substitution-p nil))
+    (labels ((traverse (tree)
+	       (let ((entry (assoc-eq-identity (funcall key tree) alist)))
+		 (cond ((not (null entry))
+			(setf substitution-p t)
+			(cdr entry))
+		       ((atom tree) tree)
+		       (t (cons (traverse (car tree))
+				(traverse (cdr tree))))))))
+      (let ((new-tree (traverse tree)))
+	(if substitution-p new-tree tree)))))
+  
 ;;; Special case when test is eql and key is given.
 
 (defun sublis-eql-key (alist tree key)
-  (labels ((traverse (tree)
-             (let ((entry (assoc-eql-identity (funcall key tree) alist)))
-               (cond ((not (null entry)) (cdr entry))
-                     ((atom tree) tree)
-                     (t (cons (traverse (car tree))
-                              (traverse (cdr tree))))))))
-    (traverse tree)))
-
+  (let ((substitution-p nil))
+    (labels ((traverse (tree)
+	       (let ((entry (assoc-eql-identity (funcall key tree) alist)))
+		 (cond ((not (null entry))
+			(setf substitution-p t)
+			(cdr entry))
+		       ((atom tree) tree)
+		       (t (cons (traverse (car tree))
+				(traverse (cdr tree))))))))
+      (let ((new-tree (traverse tree)))
+	(if substitution-p new-tree tree)))))
+  
 ;;; Special case when test is given and key is identity.
 
 (defun sublis-test-identity (alist tree test)
-  (labels ((traverse (tree)
-             (let ((entry (assoc-test-identity tree alist test)))
-               (cond ((not (null entry)) (cdr entry))
-                     ((atom tree) tree)
-                     (t (cons (traverse (car tree))
-                              (traverse (cdr tree))))))))
-    (traverse tree)))
-
+  (let ((substitution-p nil))
+    (labels ((traverse (tree)
+	       (let ((entry (assoc-test-identity tree alist test)))
+		 (cond ((not (null entry))
+			(setf substitution-p t)
+			(cdr entry))
+		       ((atom tree) tree)
+		       (t (cons (traverse (car tree))
+				(traverse (cdr tree))))))))
+      (let ((new-tree (traverse tree)))
+	(if substitution-p new-tree tree)))))
+  
 ;;; Special case when test and key are both given.
 
 (defun sublis-test-key (alist tree test key)
-  (labels ((traverse (tree)
-             (let ((entry (assoc-test-identity (funcall key tree)
-                                               alist
-                                               test)))
-               (cond ((not (null entry)) (cdr entry))
-                     ((atom tree) tree)
-                     (t (cons (traverse (car tree))
-                              (traverse (cdr tree))))))))
-    (traverse tree)))
+  (let ((substitution-p nil))
+    (labels ((traverse (tree)
+	       (let ((entry (assoc-test-identity (funcall key tree)
+						 alist
+						 test)))
+		 (cond ((not (null entry))
+			(setf substitution-p t)
+			(cdr entry))
+		       ((atom tree) tree)
+		       (t (cons (traverse (car tree))
+				(traverse (cdr tree))))))))
+      (let ((new-tree (traverse tree)))
+	(if substitution-p new-tree tree)))))
 
 ;;; Special case when test-not is eq and key is identity
 
 (defun sublis-not-eq-identity (alist tree)
-  (labels ((traverse (tree)
-             (let ((entry (assoc-not-eq-identity tree alist)))
-               (cond ((not (null entry)) (cdr entry))
-                     ((atom tree) tree)
-                     (t (cons (traverse (car tree))
-                              (traverse (cdr tree))))))))
-    (traverse tree)))
-
+  (let ((substitution-p nil))
+    (labels ((traverse (tree)
+	       (let ((entry (assoc-not-eq-identity tree alist)))
+		 (cond ((not (null entry))
+			(setf substitution-p t)
+			(cdr entry))
+		       ((atom tree) tree)
+		       (t (cons (traverse (car tree))
+				(traverse (cdr tree))))))))
+      (let ((new-tree (traverse tree)))
+	(if substitution-p new-tree tree)))))
+  
 ;;; Special case when test-not is eql and key is identity
 
 (defun sublis-not-eql-identity (alist tree)
-  (labels ((traverse (tree)
-             (let ((entry (assoc-not-eql-identity tree alist)))
-               (cond ((not (null entry)) (cdr entry))
-                     ((atom tree) tree)
-                     (t (cons (traverse (car tree))
-                              (traverse (cdr tree))))))))
-    (traverse tree)))
-
+  (let ((substitution-p nil))
+    (labels ((traverse (tree)
+	       (let ((entry (assoc-not-eql-identity tree alist)))
+		 (cond ((not (null entry))
+			(setf substitution-p t)
+			(cdr entry))
+		       ((atom tree) tree)
+		       (t (cons (traverse (car tree))
+				(traverse (cdr tree))))))))
+      (let ((new-tree (traverse tree)))
+	(if substitution-p new-tree tree)))))
+  
 ;;; Special case when test-not is eq and key is given.
 
 (defun sublis-not-eq-key (alist tree key)
-  (labels ((traverse (tree)
-             (let ((entry (assoc-not-eq-identity (funcall key tree)
-                                                 alist)))
-               (cond ((not (null entry)) (cdr entry))
-                     ((atom tree) tree)
-                     (t (cons (traverse (car tree))
-                              (traverse (cdr tree))))))))
-    (traverse tree)))
+  (let ((substitution-p nil))
+    (labels ((traverse (tree)
+	       (let ((entry (assoc-not-eq-identity (funcall key tree)
+						   alist)))
+		 (cond ((not (null entry))
+			(setf substitution-p t)
+			(cdr entry))
+		       ((atom tree) tree)
+		       (t (cons (traverse (car tree))
+				(traverse (cdr tree))))))))
+      (let ((new-tree (traverse tree)))
+	(if substitution-p new-tree tree)))))
 
 ;;; Special case when test-not is eql and key is given.
 
 (defun sublis-not-eql-key (alist tree key)
-  (labels ((traverse (tree)
-             (let ((entry (assoc-not-eql-identity (funcall key tree)
-                                                  alist)))
-               (cond ((not (null entry)) (cdr entry))
-                     ((atom tree) tree)
-                     (t (cons (traverse (car tree))
-                              (traverse (cdr tree))))))))
-    (traverse tree)))
+  (let ((substitution-p nil))
+    (labels ((traverse (tree)
+	       (let ((entry (assoc-not-eql-identity (funcall key tree)
+						    alist)))
+		 (cond ((not (null entry))
+			(setf substitution-p t)
+			(cdr entry))
+		       ((atom tree) tree)
+		       (t (cons (traverse (car tree))
+				(traverse (cdr tree))))))))
+      (let ((new-tree (traverse tree)))
+	(if substitution-p new-tree tree)))))
 
 ;;; Special case when test-not is given and key is identity.
 
 (defun sublis-test-not-identity (alist tree test)
-  (labels ((traverse (tree)
-             (let ((entry (assoc-test-not-identity tree alist test)))
-               (cond ((not (null entry)) (cdr entry))
-                     ((atom tree) tree)
-                     (t (cons (traverse (car tree))
-                              (traverse (cdr tree))))))))
-    (traverse tree)))
-
+  (let ((substitution-p nil))
+    (labels ((traverse (tree)
+	       (let ((entry (assoc-test-not-identity tree alist test)))
+		 (cond ((not (null entry))
+			(setf substitution-p t)
+			(cdr entry))
+		       ((atom tree) tree)
+		       (t (cons (traverse (car tree))
+				(traverse (cdr tree))))))))
+      (let ((new-tree (traverse tree)))
+	(if substitution-p new-tree tree)))))
+  
 ;;; Special case when test-not and key are both given.
 
 (defun sublis-test-not-key (alist tree test key)
-  (labels ((traverse (tree)
-             (let ((entry (assoc-test-not-identity (funcall key tree)
-                                                   alist
-                                                   test)))
-               (cond ((not (null entry)) (cdr entry))
-                     ((atom tree) tree)
-                     (t (cons (traverse (car tree))
-                              (traverse (cdr tree))))))))
-    (traverse tree)))
+  (let ((substitution-p nil))
+    (labels ((traverse (tree)
+	       (let ((entry (assoc-test-not-identity (funcall key tree)
+						     alist
+						     test)))
+		 (cond ((not (null entry))
+			(setf substitution-p t)
+			(cdr entry))
+		       ((atom tree) tree)
+		       (t (cons (traverse (car tree))
+				(traverse (cdr tree))))))))
+      (let ((new-tree (traverse tree)))
+	(if substitution-p new-tree tree)))))
 
 (defun sublis (alist tree &key key test test-not)
   ;; FIXME: do this better
@@ -1985,12 +2036,12 @@
 (defun nsublis-eq-key (alist tree key)
   (labels ((traverse (tree)
              (let ((entry (assoc-eq-identity (funcall key (car tree))
-                                             alist)))
+					     alist)))
                (cond ((not (null entry)) (setf (car tree) (cdr entry)))
                      ((atom (car tree)) nil)
                      (t (traverse (car tree)))))
 	     (let ((entry (assoc-eq-identity (funcall key (cdr tree))
-                                             alist)))
+					     alist)))
                (cond ((not (null entry)) (setf (cdr tree) (cdr entry)))
                      ((atom tree) nil)
                      (t (traverse (cdr tree)))))))
@@ -2004,12 +2055,12 @@
 (defun nsublis-eql-key (alist tree key)
   (labels ((traverse (tree)
              (let ((entry (assoc-eql-identity (funcall key (car tree))
-                                              alist)))
+					      alist)))
                (cond ((not (null entry)) (setf (car tree) (cdr entry)))
                      ((atom (car tree)) nil)
                      (t (traverse (car tree)))))
 	     (let ((entry (assoc-eql-identity (funcall key (cdr tree))
-                                              alist)))
+					      alist)))
                (cond ((not (null entry)) (setf (cdr tree) (cdr entry)))
                      ((atom tree) nil)
                      (t (traverse (cdr tree)))))))
@@ -2040,14 +2091,14 @@
 (defun nsublis-test-key (alist tree test key)
   (labels ((traverse (tree)
              (let ((entry (assoc-test-identity (funcall key (car tree))
-                                               alist
-                                               test)))
+					       alist
+					       test)))
                (cond ((not (null entry)) (setf (car tree) (cdr entry)))
                      ((atom (car tree)) nil)
                      (t (traverse (car tree)))))
 	     (let ((entry (assoc-test-identity (funcall key (cdr tree))
-                                               alist
-                                               test)))
+					       alist
+					       test)))
                (cond ((not (null entry)) (setf (cdr tree) (cdr entry)))
                      ((atom tree) nil)
                      (t (traverse (cdr tree)))))))
@@ -2095,12 +2146,12 @@
 (defun nsublis-not-eq-key (alist tree key)
   (labels ((traverse (tree)
              (let ((entry (assoc-not-eq-identity (funcall key (car tree))
-                                                 alist)))
+						 alist)))
                (cond ((not (null entry)) (setf (car tree) (cdr entry)))
                      ((atom (car tree)) nil)
                      (t (traverse (car tree)))))
 	     (let ((entry (assoc-not-eq-identity (funcall key (cdr tree))
-                                                 alist)))
+						 alist)))
                (cond ((not (null entry)) (setf (cdr tree) (cdr entry)))
                      ((atom tree) nil)
                      (t (traverse (cdr tree)))))))
@@ -2114,12 +2165,12 @@
 (defun nsublis-not-eql-key (alist tree key)
   (labels ((traverse (tree)
              (let ((entry (assoc-not-eql-identity (funcall key (car tree))
-                                                  alist)))
+						  alist)))
                (cond ((not (null entry)) (setf (car tree) (cdr entry)))
                      ((atom (car tree)) nil)
                      (t (traverse (car tree)))))
 	     (let ((entry (assoc-not-eql-identity (funcall key (cdr tree))
-                                                  alist)))
+						  alist)))
                (cond ((not (null entry)) (setf (cdr tree) (cdr entry)))
                      ((atom tree) nil)
                      (t (traverse (cdr tree)))))))
@@ -2150,14 +2201,14 @@
 (defun nsublis-test-not-key (alist tree test key)
   (labels ((traverse (tree)
              (let ((entry (assoc-test-not-identity (funcall key (car tree))
-                                                   alist
-                                                   test)))
+						   alist
+						   test)))
                (cond ((not (null entry)) (setf (car tree) (cdr entry)))
                      ((atom (car tree)) nil)
                      (t (traverse (car tree)))))
 	     (let ((entry (assoc-test-not-identity (funcall key (cdr tree))
-                                                   alist
-                                                   test)))
+						   alist
+						   test)))
                (cond ((not (null entry)) (setf (cdr tree) (cdr entry)))
                      ((atom tree) nil)
                      (t (traverse (cdr tree)))))))
@@ -3682,13 +3733,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Setf expander for getf
-#++
+
 (define-setf-expander getf (place indicator &optional default &environment env)
   (let ((indicator-var (gensym))
 	(default-var (gensym))
 	(value-var (gensym)))
     (multiple-value-bind (vars vals store-vars writer-form reader-form)
-	(get-setf-expansion place env)
+	(%get-setf-expansion place env)
       (values (append vars (list indicator-var default-var))
 	      (append vals (list indicator default))
 	      (list value-var)
@@ -3722,27 +3773,27 @@
 
 ;;; FIXME, I guess macros such as remf should check that 
 ;;; store-vars has a length of 1.
-#++
+
 (defmacro remf (place indicator &environment env)
   (let ((indicator-var (gensym)))
     (multiple-value-bind (vars vals store-vars writer-form reader-form)
-	(get-setf-expansion place env)
+	(%get-setf-expansion place env)
       `(let (,@(mapcar #'list vars vals)
 	     (,indicator-var ,indicator))
-	 (setq ,(car store-vars) ,reader-form)
-	 (if (null ,(car store-vars))
-	     nil
-	     (if (eq (car ,(car store-vars)) ,indicator-var)
-		 (progn (setf ,(car store-vars) (cddr ,(car store-vars)))
-			,writer-form
-			t)
-		 (loop for rest on (cdr ,(car store-vars)) by #'cddr
-		       when (null (cdr rest))
-			 return nil
-		       do (assert (consp (cddr rest)))
-		       when (eq (cadr rest) ,indicator-var)
-			 do (setf (cdr rest) (cdddr rest))
-			    (return t))))))))
+	 (let ((,(car store-vars) ,reader-form))
+	   (if (null ,(car store-vars))
+	       nil
+	       (if (eq (car ,(car store-vars)) ,indicator-var)
+		   (progn (setf ,(car store-vars) (cddr ,(car store-vars)))
+			  ,writer-form
+			  t)
+		   (loop for rest on (cdr ,(car store-vars)) by #'cddr
+			 when (null (cdr rest))
+			   return nil
+			 do (assert (consp (cddr rest)))
+			 when (eq (cadr rest) ,indicator-var)
+			   do (setf (cdr rest) (cdddr rest))
+			      (return t)))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -3753,7 +3804,7 @@
 ;;; it out, but then I would introduce some dependencies, so keep it like
 ;;; this for now.  Also see the sequences module for an explanation on
 ;;; how it works. 
-#++
+
 (defmacro pushnew (item place
 		   &environment env
 		   &rest args
@@ -3761,16 +3812,16 @@
 		   (key nil key-p)
 		   (test nil test-p)
 		   (test-not nil test-not-p))
-  (declare (ignore key))
   (assert (or (null test) (null test-not)))
   (let ((item-var (gensym)))
     (multiple-value-bind (vars vals store-vars writer-form reader-form)
-	(get-setf-expansion place env)
+	(%get-setf-expansion place env)
       `(let ((,item-var ,item)
 	     ,@(mapcar #'list vars vals)
 	     ,@(make-bindings args))
+	 ,@(if key-p `((declare (ignorable key))) `())
 	 (let ((,(car store-vars) ,reader-form))
-	   ,(if key-p
+	   ,(if key
 		(if test-p
 		    `(unless (member (funcall key ,item-var) ,(car store-vars)
 				     :test test :key key)
@@ -3783,14 +3834,14 @@
 					 :key key)
 			   (push ,item-var ,(car store-vars)))))
 		(if test-p
-		    `(unless (member (funcall key ,item-var) ,(car store-vars)
+		    `(unless (member ,item-var ,(car store-vars)
 				     :test test)
 		       (push ,item-var ,(car store-vars)))
 		    (if test-not-p
-			`(unless (member (funcall key ,item-var) ,(car store-vars)
+			`(unless (member ,item-var ,(car store-vars)
 					 :test-not test-not)
 			   (push ,item-var ,(car store-vars)))
-			`(unless (member (funcall key ,item-var) ,(car store-vars))
+			`(unless (member ,item-var ,(car store-vars))
 			   (push ,item-var ,(car store-vars))))))
 	   ,writer-form)))))
 
