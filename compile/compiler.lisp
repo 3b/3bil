@@ -12,28 +12,69 @@
    ;;; for literals in the code, we compile a reference to a specific
    ;;; slot on a global object (or maybe array? not sure there is any
    ;;; benefit to having a specific class for it, aside from maybe
-   ;;; being able to use teh class init to initialize it)
+   ;;; being able to use the class init to initialize it)
    ;;; on script init, we fill in the slots of the object/array with
    ;;; the desired values
    (literal-global :initform '|%%literals%%| :accessor literals-global-name)
    ;;; during compilation, we need to track the next unallocated index,
    ;;; and a mapping of values -> index + code to load the value
    (literals-index :initform 0 :accessor literals-index)
+   ;; we track 2 sets of mappings:
+   ;;   1 using EQL, so we can make sure things that are EQL stay EQL in the
+   ;;   compiled code, and another using EQUAL, which is used to coalesce
+   ;;   non-circular literals
+   (eql-literals-hash :initform (make-hash-table :test 'eql) :accessor eql-literals-hash)
    (literals-hash :initform (make-hash-table :test 'equal) :accessor literals-hash)))
 
 (defparameter *compiler-context* (make-instance 'compiler-context))
 
+(defun circular-p (value)
+  ;; fixme: clean up circularity handling
+  ;; possibly look at sb-fasl::dump-object (src/compiler/fasl.lisp) for ideas?
+  (let ((circ-hash (make-hash-table :test 'eql)))
+    (labels ((walk (value)
+               (when (gethash value circ-hash)
+                 (return-from circular-p t))
+               (typecase value
+                 (cons
+                  (setf (gethash value circ-hash) value)
+                  (walk (car value))
+                  (walk (cdr value)))
+                 (vector
+                  (setf (gethash value circ-hash) value)
+                  (loop for i across value
+                     do (walk i)))
+                 (t
+                  nil))))
+      (walk value))))
+
+(defun find-literal (value)
+  (let ((old (or (gethash value (eql-literals-hash *compiler-context*))
+                 (unless (circular-p value)
+                   (gethash value (literals-hash *compiler-context*))))))
+    #++(format t "~%find literal ~s (~s) -> ~s~%" value (circular-p value) old)
+    (if old
+        (car old)
+        (error "couldn't find literal ~s" value))))
 
 (defun coalesce-literal (value code)
-  (let ((old (gethash value (literals-hash *compiler-context*))))
+  (let* ((circ (circular-p value))
+         (old (or (gethash value (eql-literals-hash *compiler-context*))
+                  (unless circ
+                    (gethash value (literals-hash *compiler-context*))))))
+    #++(format t "~%coalescing ~s (~s) to ~s~%" value circ (or old (list (literals-index *compiler-context*)
+                         code)))
+
     (if old
         (progn
           (assert (equal code (second old)) nil "coalesced literals with differing initialization code?~%value ~s~%code ~s -> ~s" value (second old) code)
           (car old))
         (progn
-          (setf (gethash value (literals-hash *compiler-context*))
-                (list (literals-index *compiler-context*)
-                      code))
+          (let ((l (list (literals-index *compiler-context*)
+                         code)))
+            (setf (gethash value (eql-literals-hash *compiler-context*)) l)
+            (unless circ
+              (setf (gethash value (literals-hash *compiler-context*)) l)))
           (1- (incf (literals-index *compiler-context*)))))))
 
 ;;; track data about a function level scope

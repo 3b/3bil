@@ -315,6 +315,9 @@
 (defparameter *live-locals* nil)
 (defparameter *scope-live-locals* nil)
 (defparameter *literals-local* nil)
+;; we don't combine literals at compile time anymore, so keep track
+;; of which have been seen so far for breaking circularity
+(defparameter *literals-seen* nil)
 (defun upgraded-type (type)
   (when (and (listp type) (= 1 (length type)))
     (setf type (car type)))
@@ -323,27 +326,259 @@
     ((real single-float float double-float short-float long-float) :number)
     (t type)))
 
+#++
+(defun oldcompile-literal (value)
+  `(,@(typecase value
+                (integer
+                 (cond
+                   ((< (- (expt 2 31)) value (expt 2 31))
+                    `((:push-int ,value)))
+                   ((< 0 value (expt 2 32))
+                    `((:push-uint ,value)))
+                   (t
+                    (warn "storing integer ~s as double" value)
+                    `((:push-double ,(float value 1d0))))))
+                (real
+                 `((:push-double ,(float value 1d0))))
+                (string
+                 `((:push-string ,value)))
+                (simple-vector
+                 (setf (gethash value *literals-seen*) t)
+                 (literal-ref
+                  value
+                  (let ((*ir1-dest-type* t)
+                        ;; while initializing literal values,
+                        ;; the literals object is stored in
+                        ;; local 1 so we have access to
+                        ;; previously defined literals
+                        (*literals-local* 1))
+                    `(,@(loop for i across value
+                           append (recur `(quote value ,i)))
+                        (:new-array ,(length value))))))
+                (symbol
+                 (cond
+                   ((eq value t)
+                    `((:push-true)))
+                   ((eq value nil)
+                    `((:push-null)))
+                   (t
+                    (add-function-ref '%intern)
+                    (setf (gethash value *literals-seen*) t)
+                    (literal-ref
+                     value
+                     `((:find-property-strict %intern)
+                       ;; fixme: handle symbols properly
+                       (:push-string ,(package-name (or (symbol-package value) :uninterned)))
+                       (:push-string ,(symbol-name value))
+                       (:call-property %intern 2))))))
+;;;
+                (cons
+                 (add-class-ref 'cons-type)
+                 ;; we need to build conses in pieces to handle
+                 ;; circularity
+                 ;; fixme: optimize noncircular lists to build
+                 ;;   the conses directly?
+                 ;; fixme: make this iterative instead of recursive
+                 ;;   to avoid problems with long lists?
+                 (cond
+                   ((gethash value *literals-seen*)
+                    (literal-ref* value))
+                   (t
+                    (setf (gethash value *literals-seen*) t)
+                    (literal-ref
+                     value
+                     (let ((*ir1-dest-type* t)
+                           (*literals-local* 1))
+                       (append
+                        `((:find-property-strict cons-type)
+                          (:push-null)
+                          (:push-null)
+                          (:construct-prop cons-type 2)
+                          (:dup))
+                        (recur `(quote value ,(car value)))
+                        `((:set-property %car)
+                          (:dup))
+                        (recur `(quote value ,(cdr value)))
+                        `((:set-property %cdr))))))))
+                (t
+                 (error "don't know how to compile quoted value ~s" value)))
+      ,@(coerce-type)))
+
+(defun coerce-type ()
+  (let ((utype (upgraded-type *ir1-dest-type*)))
+    #++(unless (position utype '(:ignored t nil))
+         (format t "coerce type to ~s~%" utype))
+    (cond
+      ((eq utype nil) nil)
+      ((eq utype :ignored) '((:pop)))
+      ((eq utype 'fixnum) '((:convert-integer)))
+      ((eq utype :int) '((:convert-integer)))
+      ((eq utype :uint) '((:convert-unsigned)))
+      ((eq utype :double) '((:convert-double)))
+      ((eq utype :number) '((:convert-double)))
+      ;; :coerce-string converts null->"null",
+      ;;     undefined->"undefined"
+      ;; :convert-string converts both to NULL
+      ((eq utype :string) '((:convert-string)))
+      ((eq utype :bool) '((:convert-boolean)))
+      ((eq utype t) '((:coerce-any)))
+      (t '((:coerce-any))))))
+
+(defun add-function-ref (name)
+  (pushnew name *ir2-function-deps* :test 'equal))
+
+(defun add-class-ref (name)
+  (pushnew name *ir2-class-deps* :test 'equal))
+
+(defun literal-add (value code)
+  #++(coalesce-literal value code)
+  `(;(:get-local ,*literals-local*)
+    #++(:push-int ,(coalesce-literal value code))
+    (:%literal-add ,value ,code)
+    #++(:get-property (:multiname-l "" ""))))
+
+(defun literal-ref* (value)
+  ;; for literals we have already seen
+  `((:get-local ,*literals-local*)
+    (:%literal-ref* ,value)
+    (:get-property (:multiname-l "" ""))))
+
+(defun compile-literal (value)
+  ;;; literals are a bit messy, since we want to be able to have
+  ;;; multiple references to the same literal in the code (and to
+  ;;; combine 'similar' literals into one to save space. Currently,
+  ;;; literals are stored in a global array at script-init time so we
+  ;;; need to wait to assign indices until the final file is being
+  ;;; built
+  ;;; we also need to be careful about circularity, and making sure
+  ;;; things are built in the right order
+  ;;
+  ;;; to write a literal:
+  ;;;   if simple, just return code
+  ;;;   if compound
+  ;;;     walk children, accumulating a list of literals it it depends on
+  ;;;     then build code to ensure the deps and parent exist
+  ;;;     and finally add code to get a ref to the parent
+  (let ((refs nil)
+        (*literals-seen* (make-hash-table :test #'eq)))
+   (labels ((collect-refs (value)
+              ;; add all complex values to refs
+              (typecase value
+                (simple-vector
+                 (unless (gethash value *literals-seen*)
+                   (setf (gethash value *literals-seen*) t)
+                   (loop for i across value
+                      unless (gethash i *literals-seen*)
+                      do (collect-refs i))
+                   (push value refs)))
+                (symbol
+                 (unless (or (eq value t) (eq value nil)
+                             (gethash value *literals-seen*))
+                   ;; todo: should probably also add a dep on the package here?
+                   (setf (gethash value *literals-seen*) t)
+                   (push value refs)))
+                (cons
+                 (unless (gethash value *literals-seen*)
+                   (setf (gethash value *literals-seen*) t)
+                   (collect-refs (car value))
+                   (collect-refs (cdr value))
+                   (push value refs)))))
+            (compile-simple (value)
+              (typecase value
+                (integer
+                 (cond
+                   ((< (- (expt 2 31)) value (expt 2 31))
+                    `((:push-int ,value)))
+                   ((< 0 value (expt 2 32))
+                    `((:push-uint ,value)))
+                   (t
+                    (warn "storing integer ~s as double" value)
+                    `((:push-double ,(float value 1d0))))))
+                (real
+                 `((:push-double ,(float value 1d0))))
+                (string
+                 `((:push-string ,value)))
+                (simple-vector
+                 (literal-ref* value))
+                (symbol
+                 (cond
+                   ((eq value t)
+                    `((:push-true)))
+                   ((eq value nil)
+                    `((:push-null)))
+                   (t
+                    (literal-ref* value))))
+                (cons
+                 (literal-ref* value))
+                (t
+                 (error "don't know how to compile quoted value ~s" value))))
+            (compile-compound (value)
+              (typecase value
+                (simple-vector
+                 (literal-add
+                  value
+                  `(,@(loop for i across value
+                         append (compile-simple i)
+                         collect '(:coerce-any))
+                      (:new-array ,(length value)))))
+                (symbol
+                 (cond
+                   ((eq value t)
+                    `((:push-true)))
+                   ((eq value nil)
+                    `((:push-null)))
+                   (t
+                    (add-function-ref '%intern)
+                    (literal-add
+                     value
+                     `((:find-property-strict %intern)
+                       ;; fixme: handle symbols properly
+                       (:push-string ,(package-name (or (symbol-package value) :uninterned)))
+                       (:push-string ,(symbol-name value))
+                       (:call-property %intern 2))))))
+                (cons
+                 (add-class-ref 'cons-type)
+                 ;; we need to build conses in pieces to handle
+                 ;; circularity
+                 ;; fixme: optimize noncircular lists to build
+                 ;;   the conses directly?
+                 ;; fixme: make this iterative instead of recursive
+                 ;;   to avoid problems with long lists?
+                 (literal-add
+                  value
+                  (let ((*ir1-dest-type* t)
+                        (*literals-local* 1))
+                    (append
+                     `((:find-property-strict cons-type)
+                       (:push-null)
+                       (:push-null)
+                       (:construct-prop cons-type 2)
+                       (:dup))
+                     (if (eq (car value) value)
+                         '((:dup))
+                         (compile-simple (car value)))
+                     `((:set-property %car)
+                       (:dup))
+                     (if (eq (cdr value) value)
+                         '((:dup))
+                         (compile-simple (cdr value)))
+                     `((:set-property %cdr))))))
+                (t (compile-simple value)))))
+     (collect-refs value)
+     (setf refs (nreverse refs))
+     ;;(format t "~%---~%compile quote ~s~%" value)
+     ;;(format t "refs: ~%~{  ~s~%~}" refs)
+     `(,@(loop for i in refs
+            ;;do (format t "~%--~%add ref ~s" i )
+            append (compile-compound i))
+         ;;,@(progn (format t "~%==~% ref ~s" value) nil)
+         ,@(compile-simple value)
+         ,@(coerce-type))
+     )))
+
 (define-structured-walker assemble-ir1 null-ir1-walker
   :form-var whole
-  :labels ((coerce-type ()
-                        (let ((utype (upgraded-type *ir1-dest-type*)))
-                          #++(unless (position utype '(:ignored t nil))
-                               (format t "coerce type to ~s~%" utype))
-                          (cond
-                            ((eq utype nil) nil)
-                            ((eq utype :ignored) '((:pop)))
-                            ((eq utype 'fixnum) '((:convert-integer)))
-                            ((eq utype :int) '((:convert-integer)))
-                            ((eq utype :uint) '((:convert-unsigned)))
-                            ((eq utype :double) '((:convert-double)))
-                            ((eq utype :number) '((:convert-double)))
-                            ;; :coerce-string converts null->"null",
-                            ;;     undefined->"undefined"
-                            ;; :convert-string converts both to NULL
-                            ((eq utype :string) '((:convert-string)))
-                            ((eq utype :bool) '((:convert-boolean)))
-                            ((eq utype t) '((:coerce-any)))
-                            (t '((:coerce-any))))))
+  :labels (
            (set-var-info (var flag value)
                          (setf (getf (getf *ir1-var-info* var nil) flag) value))
            (get-var-info (var flag &optional default)
@@ -371,83 +606,10 @@
            (call-name (form)
                       (and (eq (car form) '%call)
                            (getf (cdr form) 'name)))
-           (add-function-ref (name)
-                             (pushnew name *ir2-function-deps* :test 'equal))
-           (add-class-ref (name)
-                             (pushnew name *ir2-class-deps* :test 'equal))
-           (literal-ref (value code)
-                        `((:get-local ,*literals-local*)
-                          (:push-int ,(coalesce-literal value code))
-                          (:get-property (:multiname-l "" "")))))
+       )
   :forms
   (((quote value)
-    (let ((a `(,@(typecase value
-                             (integer
-                              (cond
-                                ((< (- (expt 2 31)) value (expt 2 31))
-                                 `((:push-int ,value)))
-                                ((< 0 value (expt 2 32))
-                                 `((:push-uint ,value)))
-                                (t
-                                 (warn "storing integer ~s as double" value)
-                                 `((:push-double ,(float value 1d0))))))
-                             (real
-                              `((:push-double ,(float value 1d0))))
-                             (string
-                              `((:push-string ,value)))
-                             (simple-vector
-                              (literal-ref
-                               value
-                               (let ((*ir1-dest-type* t)
-                                     ;; while initializing literal values,
-                                     ;; the literals object is stored in
-                                     ;; local 1 so we have access to
-                                     ;; previously defined literals
-                                     (*literals-local* 1))
-                                 `(,@(loop for i across value
-                                        append (recur `(quote value ,i)))
-                                     (:new-array ,(length value))))))
-                             (symbol
-                              (cond
-                                ((eq value t)
-                                 `((:push-true)))
-                                ((eq value nil)
-                                 `((:push-null)))
-                                (t
-                                 (add-function-ref '%intern)
-                                 (literal-ref
-                                  value
-                                  `((:find-property-strict %intern)
-                                    ;; fixme: handle symbols properly
-                                    (:push-string ,(package-name (or (symbol-package value) :uninterned)))
-                                    (:push-string ,(symbol-name value))
-                                    (:call-property %intern 2))))))
-;;;
-                             (cons
-                              (add-class-ref 'cons-type)
-                              ;; we need to build conses in pieces to handle
-                              ;; circularity
-                              ;; fixme: optimize noncircular lists to build
-                              ;; the conses directly?
-                              (literal-ref
-                               value
-                               (let ((*ir1-dest-type* t)
-                                     (*literals-local* 1))
-                                 (append
-                                  `((:find-property-strict cons-type)
-                                    (:push-null)
-                                    (:push-null)
-                                    (:construct-prop cons-type 2)
-                                    (:dup))
-                                  (recur `(quote value ,(car value)))
-                                  `((:set-property %car)
-                                    (:dup))
-                                  (recur `(quote value ,(cdr value)))
-                                  `((:set-property %cdr))))))
-                             (t
-                              (error "don't know how to compile quoted value ~s" value)))
-                 ,@(coerce-type))))
-        a))
+    (compile-literal value))
 
      ;; type = :local , :normal , :setf , ??
      ;; (:local possibly should be :static, but might want to distinguish based
@@ -690,7 +852,9 @@
             (*live-locals* nil)
             (*ir2-function-deps* (getf flags :function-deps))
             (*ir2-class-deps* (getf flags :class-deps))
-            (*literals-local* nil))
+            (*literals-local* nil)
+            ;; fixme: should this be at higher (or lower?) level?
+            (*literals-seen* (make-hash-table :test #'eq)))
         ;; fixme: implement this properly instead of relying on it picking right numbers on its own
         (loop for i in (lambda-list-vars lambda-list)
              ;; note: (get-local-index i) is needed for side effects
@@ -1157,6 +1321,49 @@
      ;;       (t
      ;;        `(,(car whole) ,@(recur-all (cdr whole))))
      ))
+
+;;; fixme: figure out how to handle this better
+#++(avm2-asm::define-asm-macro :%literal-ref (value code)
+  (declare (ignorable code))
+  #++(format t "literal ref ~s ~s -> ~s~%" value code (avm2-compiler::coalesce-literal value code))
+  (labels ((add-deps (value code)
+             (loop for i in code
+                when (and (consp i) (eq (car i) :%literal-ref))
+                do (add-deps (second i) (third i)))
+             (coalesce-literal value code)))
+    (avm2-asm::%assemble
+     `((:push-int ,(add-deps value code))))))
+
+#++
+(avm2-asm::define-asm-macro-stack :%literal-ref (value code)
+  (declare (ignorable value code))
+  ;;pop push pop-scope push-scope rlocals wlocals klocals flags control-flow labels)
+  (values 0 1  0 0  nil nil nil  0 nil nil))
+
+
+(avm2-asm::define-asm-macro :%literal-add (value code)
+  (declare (ignorable code))
+  (labels ((add-deps (value code)
+             (loop for i in code
+                when (and (consp i) (eq (car i) :%literal-ref))
+                do (add-deps (second i) (third i)))
+             (coalesce-literal value code)))
+    #++(add-deps value code)
+    (coalesce-literal value code)
+    nil))
+
+(avm2-asm::define-asm-macro-stack :%literal-add (value code)
+  (declare (ignorable value code))
+  ;;pop push pop-scope push-scope rlocals wlocals klocals flags control-flow labels)
+  (values 0 0  0 0  nil nil nil  0 nil nil))
+
+(avm2-asm::define-asm-macro :%literal-ref* (value)
+  (avm2-asm::%assemble
+   `((:push-int ,(find-literal value)))))
+
+(avm2-asm::define-asm-macro-stack :%literal-ref* (value)
+  (declare (ignorable value))
+  (values 0 1  0 0  nil nil nil  0 nil nil))
 
 (defparameter *ir1-dump-asm* nil)
 (defun c2 (form &optional (top-level-name :top-level))

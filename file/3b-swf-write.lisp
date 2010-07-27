@@ -423,8 +423,10 @@
                ;; if we have any literals in the code, create them before
                ;; running top-level
                ,@ (when (plusp (literals-index compiler-context))
-                    (format t "initializing literals on global ~s~%"
-                            (literals-global-name compiler-context))
+                    #++(format t "initializing literals on global ~s ~s~% ~s~%"
+                            (literals-global-name compiler-context)
+                            (literals-index compiler-context)
+                            (alexandria:hash-table-alist (literals-hash compiler-context)))
                     `(;; we can't build the literals all at once, since they
                       ;; might need to refer to previously built literals
                       ;; for example in '(foo)
@@ -440,8 +442,11 @@
                       ;; add the literals to the array
                       ,@(loop
                            for (nil . (i code))
-                           in (sort (alexandria:hash-table-alist
-                                     (literals-hash compiler-context))
+                           in (sort (append
+                                     (alexandria:hash-table-alist
+                                      (eql-literals-hash compiler-context))
+                                     (alexandria:hash-table-alist
+                                      (literals-hash compiler-context)))
                                     #'< :key #'cadr)
                            collect '(:dup)
                            collect `(:push-int ,i)
