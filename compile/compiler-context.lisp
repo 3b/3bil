@@ -24,7 +24,8 @@
    (inherited :initform nil :initarg :inherit :accessor inherited-symbol-tables)
    (setf-functions :initform (make-hash-table) :initarg :setf :accessor setf-functions)
    (macro-functions :initform (make-hash-table) :accessor macro-functions)
-   (cmacro-functions :initform (make-hash-table) :accessor cmacro-functions)))
+   (cmacro-functions :initform (make-hash-table) :accessor cmacro-functions)
+   (setf-expansions :initform (make-hash-table) :accessor setf-expansions)))
 
 (defparameter *player-symbol-table* (make-instance 'symbol-table))
 
@@ -47,6 +48,7 @@
 (define-swf-find-foo find-swf-setf-function setf-functions)
 (define-swf-find-foo find-swf-macro-function macro-functions)
 (define-swf-find-foo find-swf-cmacro-function cmacro-functions)
+(define-swf-find-foo find-setf-expansion setf-expansions)
 (define-swf-find-foo find-swf-accessor accessors)
 ;;(inherited-symbol-tables *symbol-table*)
 ;;(find-swf-static-method '%flash:random )
@@ -59,6 +61,7 @@
 #+nil(define-swf-add-foo add-swf-property properties)
 (define-swf-add-foo add-swf-macro-function macro-functions)
 (define-swf-add-foo add-swf-cmacro-function cmacro-functions)
+(define-swf-add-foo add-setf-expansion setf-expansions)
 (defun add-swf-property (symbol swf-name &optional (s *symbol-table*))
   (pushnew swf-name
            (gethash symbol (properties s) (list))

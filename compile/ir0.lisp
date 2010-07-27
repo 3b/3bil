@@ -557,7 +557,11 @@
           ;; fixme: add an environment param to macroexpansion
           (macro
            (recur (funcall macro whole nil)))
-
+          ;; hack until funcall #'(setf foo) works and can be optimized away
+          ((and (consp operator) (eq (car operator) 'setf))
+           `(%call type :setf
+                   name ,(second operator)
+                   args (,@(recur-all args))))
           ;; special case SETF until macro can handle it...
           ((member operator '(setf %setf))
            (if (> (length args) 2)
