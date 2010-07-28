@@ -40,10 +40,10 @@
     (string
      (cons (avm2-asm::avm2-string x) 1))
     ((eql t)
-     (cons 0 #x0b))
+     (cons 1 #x0b))
     ;;(false #x0a)
     ((eql nil)
-     (cons 0 #x0c))
+     (cons 1 #x0c))
     #++(undef 0)
     #++(ns 8)
     #++(pks ns x16)
