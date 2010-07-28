@@ -412,7 +412,13 @@
                                  " (already written)" "")))))
 
     ;; script boilerplate
-    (let ((script-init
+    (let* ((literals (sort (append
+                            (alexandria:hash-table-alist
+                             (eql-literals-hash compiler-context))
+                            #++(alexandria:hash-table-alist
+                             (literals-hash compiler-context)))
+                           #'< :key #'cadr))
+           (script-init
            (avm2-asm::avm2-method
             nil 0 () 0 0
             :body
@@ -441,17 +447,18 @@
                       (:set-local 1) ;; fixme: make sure nothing else will use local 1 (toplevel code in particular)
                       ;; add the literals to the array
                       ,@(loop
-                           for (nil . (i code))
-                           in (sort (append
-                                     (alexandria:hash-table-alist
-                                      (eql-literals-hash compiler-context))
-                                     (alexandria:hash-table-alist
-                                      (literals-hash compiler-context)))
-                                    #'< :key #'cadr)
+                           for (nil . (i code)) in literals
                            collect '(:dup)
                            collect `(:push-int ,i)
                            append code
                            collect '(:set-property (:multiname-l "" "")))
+                      ;; then run any code needed to add circularities
+                      ,@(loop
+                           for (v . nil) in literals
+                           for fixup = (gethash v (circularity-fixups compiler-context))
+                           when fixup
+                           collect '(:dup)
+                           and append fixup)
                       (:pop)))
                ;; run any top-level code
                ,@(load-top-level compiler-context)

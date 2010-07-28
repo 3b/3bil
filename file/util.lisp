@@ -58,9 +58,15 @@
   (destructuring-bind (n nid argtypes return-type flags asm
                          &key activation-slots class-name class-static
                          anonymous trait trait-type function-deps class-deps
-                         optional-args)
+                         optional-args literals circularity-fixups )
       data
     (declare (ignore function-deps class-deps))
+    ;(format t "literals = ~s~%" (reverse literals))
+    ;(format t "circ = ~s~%" circularity-fixups)
+    (loop for (value code) in (reverse literals)
+       do (coalesce-literal value code))
+    (loop for (value code) in circularity-fixups
+       do (add-circularity-fixup value code))
     ;;(format t "--assemble-function ~s : ~s : ~s~%" name n nid)
     (let* ((traits (loop for (name index type) in activation-slots
                          ;;do (format t "trait = ~s ~s ~s ~%" name index type)

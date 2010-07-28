@@ -9,6 +9,8 @@
    ;;; that should be run at load time... (maybe should be a list of
    ;;; functions to call instead of literal code to embed in the script init?)
    (load-top-level :initform () :accessor load-top-level)
+   ;; fixme: this literal stuff doesn't belong here anymore
+   ;;        it all happens at 'link time' rather than 'compile time' now
    ;;; for literals in the code, we compile a reference to a specific
    ;;; slot on a global object (or maybe array? not sure there is any
    ;;; benefit to having a specific class for it, aside from maybe
@@ -24,7 +26,11 @@
    ;;   compiled code, and another using EQUAL, which is used to coalesce
    ;;   non-circular literals
    (eql-literals-hash :initform (make-hash-table :test 'eql) :accessor eql-literals-hash)
-   (literals-hash :initform (make-hash-table :test 'equal) :accessor literals-hash)))
+   (literals-hash :initform (make-hash-table :test 'equal) :accessor literals-hash)
+   ;; mapping from objects to any code needed to add circular links to
+   ;; that object after it (and whatever it links to) has been
+   ;; constructed
+   (circularity-fixups :initform (make-hash-table :test 'eql) :accessor circularity-fixups)))
 
 (defparameter *compiler-context* (make-instance 'compiler-context))
 
@@ -47,6 +53,9 @@
                  (t
                   nil))))
       (walk value))))
+
+(defun add-circularity-fixup (value code)
+  (setf (gethash value (circularity-fixups *compiler-context*)) code))
 
 (defun find-literal (value)
   (let ((old (or (gethash value (eql-literals-hash *compiler-context*))

@@ -326,84 +326,6 @@
     ((real single-float float double-float short-float long-float) :number)
     (t type)))
 
-#++
-(defun oldcompile-literal (value)
-  `(,@(typecase value
-                (integer
-                 (cond
-                   ((< (- (expt 2 31)) value (expt 2 31))
-                    `((:push-int ,value)))
-                   ((< 0 value (expt 2 32))
-                    `((:push-uint ,value)))
-                   (t
-                    (warn "storing integer ~s as double" value)
-                    `((:push-double ,(float value 1d0))))))
-                (real
-                 `((:push-double ,(float value 1d0))))
-                (string
-                 `((:push-string ,value)))
-                (simple-vector
-                 (setf (gethash value *literals-seen*) t)
-                 (literal-ref
-                  value
-                  (let ((*ir1-dest-type* t)
-                        ;; while initializing literal values,
-                        ;; the literals object is stored in
-                        ;; local 1 so we have access to
-                        ;; previously defined literals
-                        (*literals-local* 1))
-                    `(,@(loop for i across value
-                           append (recur `(quote value ,i)))
-                        (:new-array ,(length value))))))
-                (symbol
-                 (cond
-                   ((eq value t)
-                    `((:push-true)))
-                   ((eq value nil)
-                    `((:push-null)))
-                   (t
-                    (add-function-ref '%intern)
-                    (setf (gethash value *literals-seen*) t)
-                    (literal-ref
-                     value
-                     `((:find-property-strict %intern)
-                       ;; fixme: handle symbols properly
-                       (:push-string ,(package-name (or (symbol-package value) :uninterned)))
-                       (:push-string ,(symbol-name value))
-                       (:call-property %intern 2))))))
-;;;
-                (cons
-                 (add-class-ref 'cons-type)
-                 ;; we need to build conses in pieces to handle
-                 ;; circularity
-                 ;; fixme: optimize noncircular lists to build
-                 ;;   the conses directly?
-                 ;; fixme: make this iterative instead of recursive
-                 ;;   to avoid problems with long lists?
-                 (cond
-                   ((gethash value *literals-seen*)
-                    (literal-ref* value))
-                   (t
-                    (setf (gethash value *literals-seen*) t)
-                    (literal-ref
-                     value
-                     (let ((*ir1-dest-type* t)
-                           (*literals-local* 1))
-                       (append
-                        `((:find-property-strict cons-type)
-                          (:push-null)
-                          (:push-null)
-                          (:construct-prop cons-type 2)
-                          (:dup))
-                        (recur `(quote value ,(car value)))
-                        `((:set-property %car)
-                          (:dup))
-                        (recur `(quote value ,(cdr value)))
-                        `((:set-property %cdr))))))))
-                (t
-                 (error "don't know how to compile quoted value ~s" value)))
-      ,@(coerce-type)))
-
 (defun coerce-type ()
   (let ((utype (upgraded-type *ir1-dest-type*)))
     #++(unless (position utype '(:ignored t nil))
@@ -443,138 +365,170 @@
     (:%literal-ref* ,value)
     (:get-property (:multiname-l "" ""))))
 
+;; literals referenced in current function
+;;   list of object and code to build object (except any circular references)
+(defparameter *function-literals* nil)
+;; instructions for adding circular refs once objects have been created
+;;   list of object and code to add circular links
+(defparameter *function-circularity-fixups* nil)
+
 (defun compile-literal (value)
-  ;;; literals are a bit messy, since we want to be able to have
-  ;;; multiple references to the same literal in the code (and to
-  ;;; combine 'similar' literals into one to save space. Currently,
-  ;;; literals are stored in a global array at script-init time so we
-  ;;; need to wait to assign indices until the final file is being
-  ;;; built
-  ;;; we also need to be careful about circularity, and making sure
-  ;;; things are built in the right order
-  ;;
-  ;;; to write a literal:
-  ;;;   if simple, just return code
-  ;;;   if compound
-  ;;;     walk children, accumulating a list of literals it it depends on
-  ;;;     then build code to ensure the deps and parent exist
-  ;;;     and finally add code to get a ref to the parent
+  ;; to compile a literal:
+  ;;   if simple, just return code
+  ;;   if directly circular
+  ;;      replace circularity with NIL
+  ;;      add circularity fixup
+  ;;      compile rest as normal
+  ;;   if not directly circular (or circularity removed in previous step)
+  ;;      increment ref count in 'seen' hash
+  ;;      compile components recursively
+  ;;      add code to compile current object
+  ;;      decrement ref count
   (let ((refs nil)
-        (*literals-seen* (make-hash-table :test #'eq)))
-   (labels ((collect-refs (value)
-              ;; add all complex values to refs
-              (typecase value
-                (simple-vector
-                 (unless (gethash value *literals-seen*)
-                   (setf (gethash value *literals-seen*) t)
-                   (loop for i across value
-                      unless (gethash i *literals-seen*)
-                      do (collect-refs i))
-                   (push value refs)))
-                (symbol
-                 (unless (or (eq value t) (eq value nil)
-                             (gethash value *literals-seen*))
-                   ;; todo: should probably also add a dep on the package here?
-                   (setf (gethash value *literals-seen*) t)
-                   (push value refs)))
-                (cons
-                 (unless (gethash value *literals-seen*)
-                   (setf (gethash value *literals-seen*) t)
-                   (collect-refs (car value))
-                   (collect-refs (cdr value))
-                   (push value refs)))))
-            (compile-simple (value)
-              (typecase value
-                (integer
-                 (cond
-                   ((< (- (expt 2 31)) value (expt 2 31))
-                    `((:push-int ,value)))
-                   ((< 0 value (expt 2 32))
-                    `((:push-uint ,value)))
+        ;; we use 2 hash tables, *literals-seen* is bound at a higher
+        ;; level, and used to avoid dumping the same object multiple times
+        ;; (probably could skip that, since the extras will be coalesced later
+        ;;  but probably faster to catch it earlier)
+        ;; and one checking for circular references within a specific object
+        (circularity-hash (make-hash-table :test #'eq)))
+    (macrolet ((with-ref ((value) &body body)
+                 `(unwind-protect
+                       (progn
+                         (setf (gethash ,value *literals-seen*) t)
+                         (incf (gethash ,value circularity-hash 0))
+                         ,@body)
+                    (decf (gethash ,value circularity-hash nil)))))
+      (labels ((circular (value)
+                 (plusp (gethash value circularity-hash 0)))
+               (seen (value)
+                 (or (circular value)
+                     (gethash value *literals-seen*)))
+               (compile-simple (value)
+                 (typecase value
+                   (integer
+                    (cond
+                      ((< (- (expt 2 31)) value (expt 2 31))
+                       `((:push-int ,value)))
+                      ((< 0 value (expt 2 32))
+                       `((:push-uint ,value)))
+                      (t
+                       (warn "storing integer ~s as double" value)
+                       `((:push-double ,(float value 1d0))))))
+                   (real
+                    `((:push-double ,(float value 1d0))))
+                   (string
+                    `((:push-string ,value)))
+                   (simple-vector
+                    (literal-ref* value))
+                   (symbol
+                    (cond
+                      ((eq value t)
+                       `((:push-true)))
+                      ((eq value nil)
+                       `((:push-null)))
+                      (t
+                       (literal-ref* value))))
+                   (cons
+                    (literal-ref* value))
                    (t
-                    (warn "storing integer ~s as double" value)
-                    `((:push-double ,(float value 1d0))))))
-                (real
-                 `((:push-double ,(float value 1d0))))
-                (string
-                 `((:push-string ,value)))
-                (simple-vector
-                 (literal-ref* value))
-                (symbol
-                 (cond
-                   ((eq value t)
-                    `((:push-true)))
-                   ((eq value nil)
-                    `((:push-null)))
-                   (t
-                    (literal-ref* value))))
-                (cons
-                 (literal-ref* value))
-                (t
-                 (error "don't know how to compile quoted value ~s" value))))
-            (compile-compound (value)
-              (typecase value
-                (simple-vector
-                 (literal-add
-                  value
-                  `(,@(loop for i across value
-                         append (compile-simple i)
-                         collect '(:coerce-any))
-                      (:new-array ,(length value)))))
-                (symbol
-                 (cond
-                   ((eq value t)
-                    `((:push-true)))
-                   ((eq value nil)
-                    `((:push-null)))
-                   (t
-                    (add-function-ref '%intern)
-                    (literal-add
-                     value
-                     `((:find-property-strict %intern)
-                       ;; fixme: handle symbols properly
-                       (:push-string ,(package-name (or (symbol-package value) :uninterned)))
-                       (:push-string ,(symbol-name value))
-                       (:call-property %intern 2))))))
-                (cons
-                 (add-class-ref 'cons-type)
-                 ;; we need to build conses in pieces to handle
-                 ;; circularity
-                 ;; fixme: optimize noncircular lists to build
-                 ;;   the conses directly?
-                 ;; fixme: make this iterative instead of recursive
-                 ;;   to avoid problems with long lists?
-                 (literal-add
-                  value
-                  (let ((*ir1-dest-type* t)
-                        (*literals-local* 1))
-                    (append
-                     `((:find-property-strict cons-type)
-                       (:push-null)
-                       (:push-null)
-                       (:construct-prop cons-type 2)
-                       (:dup))
-                     (if (eq (car value) value)
-                         '((:dup))
-                         (compile-simple (car value)))
-                     `((:set-property %car)
-                       (:dup))
-                     (if (eq (cdr value) value)
-                         '((:dup))
-                         (compile-simple (cdr value)))
-                     `((:set-property %cdr))))))
-                (t (compile-simple value)))))
-     (collect-refs value)
-     (setf refs (nreverse refs))
-     ;;(format t "~%---~%compile quote ~s~%" value)
-     ;;(format t "refs: ~%~{  ~s~%~}" refs)
-     `(,@(loop for i in refs
-            ;;do (format t "~%--~%add ref ~s" i )
-            append (compile-compound i))
-         ;;,@(progn (format t "~%==~% ref ~s" value) nil)
-         ,@(compile-simple value)
-         ,@(coerce-type))
-     )))
+                    (error "don't know how to compile quoted value ~s" value))))
+               (add-circular-vector (parent fixups)
+                 (assert fixups)
+                 (push (list parent
+                             `(,@(compile-simple parent)
+                                 ,@(loop for (index v) in fixups
+                                      collect `((:dup)
+                                                (:push-int ,index)
+                                                ,@(compile-simple v)
+                                                (:set-property (:multiname-l "" ""))))
+                                 (:pop)))
+                       *function-circularity-fixups*))
+               (add-circular-cons (parent car cdr)
+                 (assert (or car cdr))
+                 (push (list parent
+                             `(,@(compile-simple parent)
+                                 ,@ (when car
+                                      `(,@ (when cdr `((:dup)))
+                                           ,@ (compile-simple car)
+                                           (:set-property %car)))
+                                 ,@ (when cdr
+                                      `(,@ (compile-simple cdr)
+                                           (:set-property %cdr)))))
+                       *function-circularity-fixups*))
+               (literal-add (value code)
+                 (push (list value code) *function-literals*))
+               (compile-compound (value)
+                 (typecase value
+                   (simple-vector
+                    (unless (seen value)
+                      (with-ref (value)
+                        (let ((*literals-local* 1))
+                          (loop for i across value
+                             for index from 0
+                             if (circular i)
+                             collect (list index i) into fixups
+                             else do (compile-compound i)
+                             finally (when fixups
+                                       (add-circular-vector value fixups))))
+                        (literal-add
+                         value
+                         `(,@(loop for i across value
+                                if (circular i)
+                                append (compile-simple NIL)
+                                else append (compile-simple i)
+                                collect '(:coerce-any))
+                             (:new-array ,(length value)))))))
+                   (symbol
+                    ;; don't need circularity checking for symbols...
+                    (unless (gethash value *literals-seen*)
+                      (setf (gethash value *literals-seen*) t)
+                      (cond
+                        ((eq value t)
+                         `((:push-true)))
+                        ((eq value nil)
+                         `((:push-null)))
+                        (t
+                         (add-function-ref '%intern)
+                         (literal-add
+                          value
+                          `((:find-property-strict %intern)
+                            ;; fixme: handle symbols properly
+                            (:push-string ,(package-name (or (symbol-package value) :uninterned)))
+                            (:push-string ,(symbol-name value))
+                            (:call-property %intern 2)))))))
+                   (cons
+                    (add-class-ref 'cons-type)
+                    (unless (seen value)
+                      (with-ref (value)
+                        (let ((*literals-local* 1)
+                              (circular-car (circular (car value)))
+                              (circular-cdr (circular (cdr value))))
+                          (unless circular-car
+                            (compile-compound (car value)))
+                          (unless circular-cdr
+                            (compile-compound (cdr value)))
+                          (when (or circular-car circular-cdr)
+                            (add-circular-cons value
+                                               (when circular-car (car value))
+                                               (when circular-cdr (cdr value)))))
+                        (push value refs)
+                        (literal-add
+                         value
+                         (append
+                          `((:find-property-strict cons-type)
+                            ,@(if (circular (car value))
+                                  (compile-simple nil)
+                                  (compile-simple (car value)))
+                            ,@(if (circular (cdr value))
+                                  (compile-simple nil)
+                                  (compile-simple (cdr value)))
+                            (:construct-prop cons-type 2)))))))
+                   (t (compile-simple value)))))
+        (let ((*literals-local* 1))
+          (compile-compound value))
+        `(,@(compile-simple value)
+            ,@(coerce-type))))))
+
 
 (define-structured-walker assemble-ir1 null-ir1-walker
   :form-var whole
@@ -853,6 +807,10 @@
             (*ir2-function-deps* (getf flags :function-deps))
             (*ir2-class-deps* (getf flags :class-deps))
             (*literals-local* nil)
+            ;; possibly should move these (and *literals-seen*)
+            ;; to compilation-unit level instead?
+            (*function-literals* nil)
+            (*function-circularity-fixups* nil)
             ;; fixme: should this be at higher (or lower?) level?
             (*literals-seen* (make-hash-table :test #'eq)))
         ;; fixme: implement this properly instead of relying on it picking right numbers on its own
@@ -917,6 +875,7 @@
                types ,arg-types
                closed-vars ,closed-vars
                activation-vars ,activation-vars
+               literals ,(list *function-literals* *function-circularity-fixups*)
                body ,asm))))
 
      ((function type name)
@@ -1458,7 +1417,7 @@
       var-info ,var-info
       tag-info ,tag-info
       lambdas ,(recur-all lambdas)))
-       ((%named-lambda name flags lambda-list closed-vars types activation-vars body)
+       ((%named-lambda name flags lambda-list closed-vars types activation-vars literals body)
         ;; optionally add a call to this function to the top-level script-init
         ;; fixme: probably should store the name or a flag in the %compilation-unit instead of tracking it separately like this
         (when (eq name *top-level-function*)
@@ -1565,6 +1524,8 @@
                 :function-deps (getf flags :function-deps)
                 :class-deps (getf flags :class-deps)
                 :optional-args (getf flags :optional)
+                :literals (first literals)
+                :circularity-fixups (second literals)
                 :activation-slots
                 (when activation-vars
                   (loop for (name index) in activation-vars
