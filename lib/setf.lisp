@@ -40,7 +40,7 @@
               (binding (lexenv-get-function-binding (car place)))
               (expander (find-setf-expansion (car place)))
               (setf-accessor (find-swf-accessor (car place))))
-         (format t " cons ~s s-f=~s b=~s e=~s sa=~s~%" place setf-fun
+         #++(format t " cons ~s s-f=~s b=~s e=~s sa=~s~%" place setf-fun
                  binding expander setf-accessor)
          (cond
            (setf-fun
@@ -53,6 +53,7 @@
            ((eq (car binding) :macro)
             (%get-setf-expansion (funcall (cdr binding) (cdr place))))
            ((and (not binding) expander)
+            #++(format t " =~s~%" (multiple-value-list (funcall expander place)))
             (funcall expander place))
            (setf-accessor
             (let ((vars (loop for i in (cdr place) collect (gensym "var")))
@@ -66,7 +67,8 @@
                     (store (gensym "store")))
                 (values vars args (list store)
                         `((setf ,(car place)) ,store ,@vars)
-                        `(,(car place) ,@vars)))))))))
+                        `(,(car place) ,@vars)))))))
+      (t (error "don't know how to get setf-expansion for ~s" place))))
 
   (c3* (gensym)
 

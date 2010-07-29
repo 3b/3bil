@@ -10,6 +10,7 @@
                           (:file "player-ffi-new")
                           (:file "bootstrap")
                           (:file "setf")
+                          (:file "sicl-setf-expanders")
                           (:file "cl")
                           (:file "cl-conses")
                           (:file "sicl-conditionals")

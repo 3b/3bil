@@ -619,7 +619,7 @@
         "top level")
 
       (def-tests "more-tests" ()
-        (if 1 'a)                   ;; compile error
+        (if 1 'a) ;; compile error
         ((lambda () (side-effect "foo")))
         (dotimes (i 10)
           (side-effect (s+ "  i = " i)))
@@ -659,7 +659,40 @@
         (let ((a 9876))
           (let* ((a a))
             a))
-        "more tests")
+        "more tests"
+
+        (LET ((A (list 1 2 3 4 5 6)))
+          (setf (second a) 'a)
+          a)
+
+        (LET ((A (list 1 2 3 4 5 6)))
+          (setf (third a) 'a)
+          a)
+
+        (LET ((A (list 1 2 3 4 5 6)))
+          (setf (fourth a) 'a)
+          a)
+
+        (LET ((A (list 1 2 3 4 5 6)))
+          (setf (fifth a) 'a)
+          a)
+
+        (LET ((A (list 1 2 3 4 5 6)))
+          (push 'a (sixth a))
+          a)
+
+        (LET ((A (list 1 (list 1 2 3 4 5 6 7 8) 3 4 5 6)))
+          (setf (getf (second a) 3) 'a)
+          a)
+
+        (LET ((A (list 1 (list 1 2 3 4 5 6 7 8) 3 4 5 6)))
+          (setf (getf (cddr (getf a 1)) 5) 'a)
+          a)
+
+        (LET ((A (list 1 (list 1 2 3 4 5 (list 1 2 3 4) 7 8) 3 4 5 6)))
+          (remf (getf (cddr (getf a 1)) 5) 1)
+          a)
+        )
 
 
       (def-tests "expected-fail" ()
