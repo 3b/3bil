@@ -39,12 +39,6 @@
       (defmacro return (value)
         `(return-from nil ,value))
 
-
-      (defmacro setf (&rest args)
-        `(progn
-           ,@(loop for (var value) on args by #'cddr
-                collect `(%setf-1 ,var ,value))))
-
       (defmacro psetf (&rest args)
         (let ((temps (loop repeat (/ (length args) 2)
                         collect (gensym))))
@@ -58,12 +52,6 @@
                   collect `(setf ,var ,temp)))))
 
       ;; setq and psetq just calling setf/psetf for now, after checking vars
-      (defmacro setq (&rest args)
-        (loop for (var nil) on args by #'cddr
-           unless (atom var)
-           do (error "variable name is not a symbol in SETQ: ~s" var))
-        `(setf ,@args))
-
       (defmacro psetq (&rest args)
         (loop for (var nil) on args by #'cddr
            unless (atom var)

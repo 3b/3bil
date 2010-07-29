@@ -9,6 +9,7 @@
                           ;(:file "player-ffi-defs")
                           (:file "player-ffi-new")
                           (:file "bootstrap")
+                          (:file "setf")
                           (:file "cl")
                           (:file "cl-conses")
                           (:file "sicl-conditionals")
@@ -21,7 +22,6 @@
                           (:file "sacla-loop")
                           ;; probably should move this earlier at some point
                           (:file "m-v-b")
-                          (:file "setf")
                           (:file "sicl-cons-high")
                           (:file "cl-sequences")
                           (:file "cl-late")

@@ -153,9 +153,6 @@
       (defmacro %funcall (function this-arg &rest rest)
         `(flash:call ,function ,this-arg ,@rest))
 
-      (defmacro %setf-1 (place value)
-        `(%setf ,place ,value))
-
 
       ;; inline math ops, we need at least 0-2 arg versions, since the full
       ;; version is implemented in terms of it
@@ -329,8 +326,8 @@
       (%car %cdr)
       (:fake-accessors t)
       (:constructor (a b)
-        (setf (%car this) a)
-        (setf (%cdr this) b)))
+        (%setf (%car this) a)
+        (%setf (%cdr this) b)))
 
 
 
@@ -404,7 +401,7 @@
                    ,@ (if var
                         ;; typed?
                         `((:coerce-any)
-                          (:@ (setf ,var (%asm-top-of-stack-untyped)) :ignored))
+                          (:@ (%setf ,var (%asm-top-of-stack-untyped)) :ignored))
                         `((:pop)))
                    ;; restore scope stack
                    (:%restore-scope-stack)
@@ -428,7 +425,7 @@
                     (go ,end-tag))
                 ,start-tag
                 (tagbody ,@body)
-                (setf ,var (- ,var 2))
+                (%setf ,var (- ,var 2))
                 (if (>= ,var ,to)
                     (go ,start-tag))
                 ,end-tag)))))
@@ -446,7 +443,7 @@
                     (go ,end-tag))
                 ,start-tag
                 (tagbody ,@body)
-                (setf ,var (+ ,var 1))
+                (%setf ,var (+ ,var 1))
                 (if (< ,var ,to)
                     (go ,start-tag))
                 ,end-tag)))))
@@ -536,19 +533,18 @@
                                           collect
                                           `(when (%key-equal ,k ,kw)
                                              ,@ (when (or p (not (avm2-compiler::simple-default-p d)))
-                                                  `((setf ,pt t))) 
-                                             (setf ,kt ,v)
-                                             (go ,end-tag)))
-                                     #++(flash:trace (+ "key " ,k " =" ,v))
+                                                  `((%setf ,pt t))) 
+                                                (%setf ,kt ,v)
+                                                (go ,end-tag)))
                                      ,@ (unless allow-other-keys
                                           `((if (eql ,k :allow-other-keys)
-                                                (setf ,a-o-k t)
-                                                (setf ,bad-key t))))
+                                                (%setf ,a-o-k t)
+                                                (%setf ,bad-key t))))
                                      ,end-tag)))
                     ;; maybe throw unknown key error
                     ,@ (unless allow-other-keys
                          `((when (and ,bad-key (not ,a-o-k))
-                             (%error (%new- flash:error "unknown key") )))))))
+                             (%error (%new- flash:error "unknown keyword argument"))))))))
               ;; bind keywords
               ;; for every keyword, bind real name to the temp value, or if
               ;; complicated default, check supplied-p and bind to default
