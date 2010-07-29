@@ -1130,6 +1130,8 @@
             (:construct-prop throw-exception-type 2)
             (:throw)))))
 
+   ;; todo: probably should add a strict-= version of IF for
+   ;; performance sensitive stuff?
      ((if condition then else)
       (let ((else-label (gensym "IF-ELSE-"))
             (done-label (gensym "IF-DONE-"))
@@ -1145,10 +1147,14 @@
                #+nil  (:if-false ,else-label)
                ,@(let ((*ir1-dest-type* nil))
                       (recur condition))
-               ;;(:push-null)
-               ;; was :if-strict-eq, but then avm false isn't false in lisp :/
-               ;; unfortunately, this makes 0 and "" false also :/
-               (:if-false ,else-label)
+               (:dup)
+               (:push-null)
+               (:strict-equals)
+               (:swap)
+               (:push-false)
+               (:strict-equals)
+               (:bit-or)
+               (:if-true ,else-label)
                ,@(recur then)
                (:jump ,done-label)
                (:%dlabel ,else-label)

@@ -145,7 +145,8 @@
               (%type-error "ENDP" a))))
 
     (defun null (a)
-      (eq a nil))
+      #++(eq a nil)
+      (if a nil t))
 
 
     (defun listp (a)

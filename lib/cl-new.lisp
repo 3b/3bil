@@ -133,7 +133,8 @@
 
 
     (defun not (x)
-      (%asm
+      (if x nil t)
+      #++(%asm
        (:@ x)
        (:not)))
 
