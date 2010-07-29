@@ -131,7 +131,7 @@
                          (dump-assert (and (= stack (first info))
                                            (= scope (second info)))
                                       "stack mismatch at label ~s expected ~s/~s got ~s"
-                                      label stack scope info)
+                                      label stack scope (subseq info 0 2))
                          (when test-live
                            (dump-assert (compatible-locals-p (third info))
                                         "incompatible locals at label ~s,~% expected ~s~% got ~s"
@@ -181,7 +181,7 @@
                  do (dump-assert (and (= stack (first info))
                                       (= scope (second info)))
                                  "stack mismatch at instr ~s expected ~s/~s got ~s"
-                                 (cons op args) stack scope info)
+                                 (cons op args) stack scope (subseq info 0 2))
                    (when test-live
                     (dump-assert (compatible-locals-p (third info))
                                  "incompatible locals at instr ~s,~% expected ~s~% got ~s"
