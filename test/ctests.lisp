@@ -1315,7 +1315,7 @@
                '(((1)) (2) 3))
 
         (equal (sublis '(((a) . 1) ((b) . 2) ((c) . 3))
-                       '((((a))) ((b)) (c)))
+                       (copy-tree '((((a))) ((b)) (c))))
                '((((a))) ((b)) (c)))
 
         (equal (sublis '(((a) . 1) ((b) . 2) ((c) . 3))
@@ -2003,7 +2003,7 @@
         (equal (nbutlast (list* 1 2 3 4 5 6) 6) '())
         (equal (nbutlast (list* 1 2 3 4 5 6) 7) '())
 
-        (let* ((a '(1 2 3 4 5))
+        (let* ((a (copy-tree '(1 2 3 4 5)))
                (b (nbutlast a 3)))
           (and (eq a b)
                (equal a '(1 2))))
@@ -2854,10 +2854,10 @@
         (equal (adjoin 1 nil) '(1))
         (equal (adjoin nil nil) '(nil))
         (equal (adjoin nil '(nil)) '(nil))
-        (let ((set '((test-item 1))))
+        (let ((set (copy-tree '((test-item 1)))))
           (equal (adjoin '(test-item 1) set) '((test-item 1) (test-item 1))))
 
-        (let ((set '((test-item 1))))
+        (let ((set (copy-tree '((test-item 1)))))
           (equal (adjoin '(test-item 1) set)
                  '((test-item 1) (test-item 1))))
 
@@ -2962,7 +2962,7 @@
           (equal (pushnew '("LOVE" . L) place :test-not (complement #'equal) :key #'car)
                  '(("LOVE" . L) ("love" . l) ("peace" . p))))
 
-        (let ((list '((1) (1 2) (1 2 3))))
+        (let ((list (copy-tree '((1) (1 2) (1 2 3)))))
           (and (equal (pushnew '(1) list) '((1) (1) (1 2) (1 2 3)))
                (equal list '((1) (1) (1 2) (1 2 3)))))
 
