@@ -428,8 +428,13 @@
                ,@script-init-scope-setup
                ;; if we have any literals in the code, create them before
                ;; running top-level
-               ,@ (when (plusp (literals-index compiler-context))
-                    #++(format t "initializing literals on global ~s ~s~% ~s~%"
+               ,@ (;;when (plusp (literals-index compiler-context))
+                   ;; always add literal object for now, since we
+                   ;; currently cache the object even in functions
+                   ;; with no literals
+                   ;; fixme: reenable the test once above is fxed
+                   progn
+                    (format t "initializing literals on global ~s ~s~% ~s~%"
                             (literals-global-name compiler-context)
                             (literals-index compiler-context)
                             (alexandria:hash-table-alist (literals-hash compiler-context)))
@@ -480,7 +485,10 @@
                           'avm2-asm::vkind 0))
          ;; fixme: make this a slot on the script, so it doesn't
          ;; need handled specially here...
-         ,@ (when (plusp (literals-index compiler-context))
+         ,@ (;; when (plusp (literals-index compiler-context))
+             ;; define always for now, since we don't optimize the
+             ;; cached locals away yet
+             progn
               (list
                (make-instance
                 'avm2-asm::trait-info
