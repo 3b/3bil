@@ -305,7 +305,7 @@
 ;;; skipping serious optimization/type inference for now, so
 ;;; just compile ir1 directly to asm to try to get something useable
 ;;; if not super-fast for now...
-(defpackage #:uninterned)
+(defpackage #:uninterned (:use))
 (defparameter *ir1-dest-type* nil)
 ;; alist of (block-name . return-type)
 (defparameter *ir1-block-dest-type* nil)

@@ -148,7 +148,8 @@
                                         (incf ,',',bad)))))))
 
                    ,,@(loop for i in tests
-                         for string = (let ((*print-circle* t)) (format nil "~s" i))
+                         for string = (let ((*print-circle* t))
+                                        (format nil "~s" i))
                          if (and (consp i) (eq (car i) 'test))
                          collect `(quote ,i)
                          else
@@ -613,7 +614,7 @@
         :fixme
         (let ((ababab 1))
           (flet ((bbbaaa () (incf ababab)))
-            (side-effect (s+ "bb:" (bbbaaa)" " (bbbaaa)" " (bbbaaa)) 123)))
+            (side-effect (s+ "bb:" (bbbaaa)" " (bbbaaa) ", " (bbbaaa)) 123)))
         (call0 (let ((a 2)) (flet ((b () a)) (function b))))
         :done
         "top level")
@@ -1045,7 +1046,7 @@
 
         (listp (cons 'a 'b))
 
-        (listp '#1=(1 2 . #1#))
+        #-allegro(listp '#1=(1 2 . #1#))
 
         (not (listp 1))
 
@@ -1091,7 +1092,7 @@
         (let ((a (cons 1 2)))
           (eq (car (list a)) a))
 
-        (eq (car '#2=(a . #2#)) 'a)
+        #-allegro(eq (car '#2=(a . #2#)) 'a)
 
         (eq (cdr '(a . b)) 'b)
         (eq (rest '(a . b)) 'b)
@@ -1104,9 +1105,9 @@
         (let ((a (cons 1 2)))
           (eq (rest (cons 1 a)) a))
 
-        (let ((x '#3=(a . #3#)))
+        #-allegro(let ((x '#3=(a . #3#)))
           (eq (cdr x) x))
-        (let ((x '#4=(a . #4#)))
+        #-allegro(let ((x '#4=(a . #4#)))
           (eq (rest x) x))
 
         (eq (caar '((a) b c)) 'a)
@@ -1733,7 +1734,7 @@
 
         (eql (list-length '(1 2)) 2)
 
-        (null (list-length '#5=(1 2 3 4 . #5#)))
+        #-allegro(null (list-length '#5=(1 2 3 4 . #5#)))
 
 
         (equal (make-list 5) '(nil nil nil nil nil))
@@ -1788,7 +1789,7 @@
         (let ((a (cons 1 2)))
           (eq (first (list a)) a))
 
-        (eq (first '#6=(a . #6#)) 'a)
+        #-allegro(eq (first '#6=(a . #6#)) 'a)
 
         (eql (first   '(1 2 3)) '1)
         (eql (second  '(1 2 3)) '2)

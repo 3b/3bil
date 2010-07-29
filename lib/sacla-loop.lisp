@@ -1028,10 +1028,10 @@
         (append binding-form0 (list (with-binding-forms rest form))))))
 
 (defun with-temporaries (temporary-specs form)
-  (destructuring-bind (temporaries &key ignorable) temporary-specs
+  (destructuring-bind (temporaries &key ((:ignorable ignorable-vars))) temporary-specs
     (if temporaries
         `(let ,temporaries
-          ,@(when ignorable `((declare (ignorable ,@ignorable))))
+          ,@(when ignorable-vars `((declare (ignorable ,@ignorable-vars))))
           ,form)
         form)))
 
