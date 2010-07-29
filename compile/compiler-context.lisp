@@ -128,7 +128,7 @@
 
 ;;; handler for normal form evaluation, evaluate ARGS, and call
 ;;; function/member/whatever identified by OPERATOR
-(defmethod scompile-cons (operator args)
+#++(defmethod scompile-cons (operator args)
   (let ((tmp))
     (cond
       #+nil((and (consp operator) (setf tmp (find-swf-setf-function (first operator) *symbol-table*)))
