@@ -73,12 +73,15 @@
   (c3* (gensym)
 
     (defmacro define-setf-expander (access-fn lambda-list &body body)
-      (add-setf-expansion
-       access-fn
-       (coerce `(lambda (form)
-                  (destructuring-bind ,lambda-list (cdr form)
-                    ,@body))
-               'function))
+      (multiple-value-bind (lambda-list env-var)
+          (remove-&environment-from-macro-lambda-list lambda-list)
+        (let ((env-var (or env-var (gensym))))
+          (add-setf-expansion
+          access-fn
+          (coerce `(lambda (form &optional ,env-var)
+                     (destructuring-bind ,lambda-list (cdr form)
+                       ,@body))
+                  'function))))
       `',access-fn)
 
     (defmacro %setq-1 (place value)
