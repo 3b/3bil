@@ -68,9 +68,11 @@
       (defun 1+ (a)
         (+ a 1))
 
-      (defun floor (number)
+      (defun floor (number &optional divisor)
         ;; todo implement optional divisor arg (need multiple values)
-        (flash:math.floor number))
+        (if divisor
+            (flash:math.floor (/ number divisor))
+            (flash:math.floor number)))
 
       (defun cos (radians)
         (flash:math.cos radians))
