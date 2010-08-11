@@ -636,3 +636,133 @@ in adition to those listed in EXPORTS, T to keep everything
                    '%swf:bitmap-data
                    (make-instance '%swf:bitmap-tag-data-rgba-argb
                                   '%swf:bitmap-data data))))
+
+(defun mp3-tag (character-id filename &key (seek 0))
+  (declare (ignorable character-id))
+  (with-open-file (s filename :element-type '(unsigned-byte 8))
+    (let ((frames (make-array (list (file-length s))
+                              :element-type '(unsigned-byte 8)
+                              :fill-pointer 0))
+          (samples 0)
+          (rate)
+          (stereo nil))
+      (format t "~%~%create tag from mp3 file ~s~%" filename)
+      (labels ((encode-rate (rate)
+                 (ecase rate
+                   ((5512 5500) 0)
+                   ((11025 11000) 1)
+                   ((22050 22000) 2)
+                   ((44100 44000) 3)))
+               (bitrate (version  encoded)
+                 (* 1000
+                    (if (= version 3)
+                        ;; mpeg 1
+                        (aref #(:free 32 40 48 56 64 80 96 112 128 160 192 224 256 320 :bad1b) encoded)
+                        ;; mpeg 2.x
+                        (aref #(:free  8 16 24 32 40 48 56  64  80  96 112 128 144 160 :bad2b) encoded))))
+               (sampling-rate (version encoded)
+                 (ecase version
+                   (0 ;; mpeg 2.5
+                    (aref #(11025 12000 8000 :bad3) encoded))
+                   (2 ;; mpeg2
+                    (aref #(22050 24000 16000 :bad2) encoded))
+                   (3 ;; mpeg1
+                    (aref #(44100 48000 32000 :bad1) encoded))))
+               (next-frame ()
+                 (loop
+                    for octet = (read-byte s nil nil) then next
+                    for next = (read-byte s nil nil)
+                    always (and octet next)
+                    when (and (= octet #xff) (= (ldb (byte 3 5) next) #b111))
+                    return
+                      (let ((h3 (read-byte s))
+                            (h4 (read-byte s)))
+                        (vector-push-extend octet frames)
+                        (vector-push-extend next frames)
+                        (vector-push-extend h3 frames)
+                        (vector-push-extend h4 frames)
+                        (list (ldb (byte 2 3) next) ; version
+                              (ldb (byte 2 1) next) ; layer
+                              (ldb (byte 1 0) next) ; crc flag 1=no crc
+                              (ldb (byte 4 4) h3) ; bitrate
+                              (ldb (byte 2 2) h3) ; samplerate
+                              (ldb (byte 1 1) h3) ; padding
+                              (ldb (byte 1 0) h3) ;reserved
+                              (ldb (byte 2 6) h4) ;channel mode
+                              (ldb (byte 2 4) h4) ;mode ext
+                              (ldb (byte 1 3) h4) ;copy
+                              (ldb (byte 1 2) h4) ;original
+                              (ldb (byte 2 0) h4))) ;emphasis
+                    #++ #+else do (unless (zerop octet) (format t "skip octet ~8,'0b = ~s~%" octet
+                                                         (code-char octet))))))
+
+        (loop 
+
+           for header = (next-frame)
+           while header
+           do (destructuring-bind (version layer crc bitrate samplerate
+                                            padding reserved channelmode
+                                            mode-ext copy original emphasis)
+                  header
+                (declare (ignorable version layer crc bitrate samplerate
+                                    padding reserved channelmode
+                                    mode-ext copy original emphasis))
+                #++(format t "frame: version ~s layer ~s crc ~s ~
+                           br ~s, sr ~s, pad ~s res~s ~
+                           ch~s me ~s @~s orig ~s em ~s~%"
+                        version layer crc bitrate samplerate padding
+                        reserved channelmode mode-ext copy original
+                        emphasis)
+                #++(format t "  pos=~s ~%" (file-position s))
+                (let* ((mpeg1 (= version 3))
+                       (size  (+ (floor (* (if mpeg1  144 72)
+                                          (bitrate version bitrate))
+                                       (sampling-rate version samplerate))
+                                 padding -4)))
+                  (incf samples (if mpeg1 1152 576))
+                  (if rate
+                      (assert (= rate (sampling-rate version samplerate)))
+                      (setf rate (sampling-rate version samplerate)))
+                  (when (or (= channelmode 0) (= channelmode 1))
+                    ;; fixme: detect changes between frames?
+                    ;; should dual channel count as stereo?
+                    (setf stereo t))
+                  #++(format t "size = ~s ~s ~s ~s ~s~%" size
+                          (bitrate version bitrate)  (sampling-rate version samplerate) padding mpeg1)
+                  ;; crc is counted in size calc
+                  #++(when (zerop crc)
+                    (vector-push-extend (read-byte s) frames)
+                    (vector-push-extend (read-byte s) frames))
+                  (loop repeat size
+                     do (vector-push-extend (read-byte s) frames))
+                  #++(format t "  pos=~s ~%" (file-position s)))))
+        (make-instance '%swf:define-sound-tag
+                       '%swf:character-id character-id
+                       '%swf:sound-format 2 ;; 2=mp3
+                       '%swf:sound-rate (encode-rate rate)
+                       '%swf:16bit t ; ignored for compressed formats
+                       '%swf:stereo stereo
+                       '%swf:sound-sample-count samples
+                       '%swf:sound-data
+                       (make-instance '%swf:mp3-sound-data
+                                      '%swf:seek-samples seek
+                                      '%swf:mp3-frames frames))
+)
+    
+
+      #++
+      (flet ((argb (a r g b)
+               (dpb r (byte 8 24) (dpb g (byte 8 16) (dpb b (byte 8 8) a)))))
+        (loop with orig = (png:aimage-data png)
+           for x below (png:aimage-width png)
+           do (loop for y below (png:aimage-height png)
+                 for i = (* 4 (+ x (* y (png:aimage-width png))))
+                 for a = (aref orig (+ i 3))
+                 for r = (floor (/ (* a (aref orig (+ i 0))) 255))
+                 for g = (floor (/ (* a (aref orig (+ i 1))) 255))
+                 for b = (floor (/ (* a (aref orig (+ i 2))) 255))
+                 do (setf (aref data x y) (argb a r g b)))))
+      #++
+      (format t "writing png tag ~sx~s~%"  (png:aimage-width png)  (png:aimage-height png))
+      
+    )))
