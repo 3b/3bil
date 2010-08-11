@@ -620,7 +620,7 @@ in adition to those listed in EXPORTS, T to keep everything
     ;; no color table size, only handling 32bit for now
     ;; flash wants premultiplied alpha, argb so convert from rgba and fix rgb
     (flet ((argb (a r g b)
-             (dpb r (byte 8 24) (dpb g (byte 8 16) (dpb b (byte 8 8) a)))))
+             (dpb b (byte 8 24) (dpb g (byte 8 16) (dpb r (byte 8 8) a)))))
       (loop with orig = (png:aimage-data png)
          for x below (png:aimage-width png)
          do (loop for y below (png:aimage-height png)
