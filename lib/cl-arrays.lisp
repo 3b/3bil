@@ -46,12 +46,13 @@
     (defun %make-simple-array-with-element (size initial-element)
       (let ((a (%new- flash:Array size)))
         (dotimes (i size a)
-          (%set-aref a i initial-element))))
+          (%set-aref-1 a i initial-element))))
 
     (defun %array-row-major-index (array subscripts)
       (let ((dims (%dimensions-array array))
             (index 0))
         (unless (= (length subscripts) (length dims))
+          (ftrace (+ "dims=" (length dims) " subs=" (length subscripts)))
           (%error "wrong number of subscripts in array-row-major-index"))
         (dotimes (i (length subscripts) index)
           (setf index (* index (%aref-1 dims i)))
@@ -61,24 +62,31 @@
       (%array-row-major-index array subscripts))
 
     (defun %aref-n (array &arest subscripts)
-         (%aref-1 (%displaced-to array)
-                  (+ (%displaced-offset array)
-                     (%array-row-major-index array subscripts))))
+      (%aref-1 (%displaced-to array)
+               (+ (%displaced-offset array)
+                  (%array-row-major-index array subscripts))))
+
+    (defun %aref-n* (array subscripts)
+      (if (%typep array flash:array)
+          (%aref-1 array (%aref-1 subscripts 0))
+          (%aref-1 (%displaced-to array)
+                   (+ (%displaced-offset array)
+                      (%array-row-major-index array subscripts)))))
+
+    (defun %setf-aref-n (array subscripts value)
+      (if (%typep array flash:array)
+          (%set-aref-1 array (%aref-1 subscripts 0) value)
+          (%set-aref-1 (%displaced-to array)
+                       (+ (%displaced-offset array)
+                          (%array-row-major-index array subscripts))
+                       value)))
 
     (defun arrayp (a)
       (or (%typep a flash:array)
           (%typep a not-simple-array-type)))
 
-    #+nil(swf-defmemfun make-array (dimensions &key element-type initial-element initial-contents adjustable fill-pointer displaced-to displaced-index-offset)
-           (if (or adjustable fill-pointer displaced-index-offset displaced-to (> (list-length dimensions) 1))
-               ;; non-simple array
-               (let ((linear-size (car dimensions)))
-                 (dolist (dim (cdr dimensions))
-                   (setf linear-size (* linear-size dim)))
-                 (unless displaced-to
-                   (setf displaced-to (%make-simple-array linear-size))))
-               )
-           )
+    ;; make-array in late.lisp
+
 
 
     #+nil(let ((*symbol-table* (make-instance 'symbol-table :inherit (list *cl-symbol-table* *player-symbol-table*))))

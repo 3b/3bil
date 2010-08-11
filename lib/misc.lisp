@@ -89,22 +89,24 @@
                 (if (%typep a flash:string)
                     (flash:char-at a i)
                     (if (%typep a not-simple-array-type)
-                        (%aref-n a subscripts)
+                        (%aref-n* a subscripts)
                         (svref a subscripts))))
-            (%aref-n a subscripts))))
+            (%aref-n* a subscripts))))
 
-    (defun (setf aref) (value a subscript)
-      ;; fixme: support multiple dimensions (need &rest, apply?)
-      (if (%typep a flash:array)
-          (progn (%set-aref-1 a subscript value) value)
-          (if (%typep a flash:string)
-              ;; fixme: is there a better way to do this?
-              (flash:concat (flash:substr a 0 subscript)
-                             value
-                             (flash:substr a (1+ subscript)))
-              (if (%typep a not-simple-array-type)
-                  (%setf-aref-n a subscript value)
-                  (setf (svref a subscript) value)))))
+    (defun (setf aref) (value a &arest subscripts)
+      (let ((subscript (%aref-1 subscripts 0)))
+        (if (%typep a flash:array)
+            (progn (%set-aref-1 a subscript value) value)
+            (if (%typep a flash:string)
+                ;; fixme: is there a better way to do this?
+                (flash:concat (flash:substr a 0 subscript)
+                              value
+                              (flash:substr a (1+ subscript)))
+                (if (%typep a not-simple-array-type)
+                    (%setf-aref-n a subscripts value)
+                    (setf (svref a subscript) value))))))
+    ;; fixme: add compiler-macro or setf expander or something to optimize
+    ;; for single subscript
     #++
     (defun-setf aref (value a subscript)
       ;; fixme: support multiple dimensions (need &rest, apply?)
