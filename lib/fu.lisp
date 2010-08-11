@@ -216,6 +216,17 @@
              :end)
             (+ s ")"))))
 
+    (defmacro drop-shadow (&key (distance 4.0) (angle 45) (color 0)
+                           (alpha 1.0) (blur-x 4.0) (blur-y 4.0)
+                           (strength 1.0) (quality 1)
+                           (inner nil) (knockout nil)
+                           (hide-object nil))
+      `(%new- flash:flash.filters.drop-shadow-filter
+              ,distance ,angle ,color
+              ,alpha ,blur-x ,blur-y
+              ,strength ,quality
+              ,inner ,knockout
+              ,hide-object))
 
-    ))
+))
 
