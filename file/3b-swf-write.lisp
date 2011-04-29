@@ -117,6 +117,8 @@
   (make-instance (%swf::subclass-from-id '%swf::abc-trait-info (avm2-asm::kind trait))
                  '%swf:slot-id (avm2-asm::slot-id trait)
                  '%swf:method-id (avm2-asm::method-id trait)
+                 '%swf:override-p (getf (avm2-asm::flags trait) :override)
+                 '%swf:final-p (getf (avm2-asm::flags trait) :final)
                  '%swf:name name
                  '%swf:metadata metadata))
 

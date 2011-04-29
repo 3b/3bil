@@ -99,13 +99,26 @@
                     `(:qname "" ,trait))))
       (if class-name
           ;; member function
-          (let ((class (find-swf-class class-name)))
+          (let ((class (find-swf-class class-name))
+                (override-p nil))
             (assert class) ;; fixme: handle this better
-            (macrolet ((add (n mid alist)
+            (when class
+              (loop for super = (extends class) then (extends sc)
+                 for sc = (find-swf-class super)
+                 while (and super sc)
+                 do (format t "check for inherited method ~s in class ~s, super=~s~% ~s~%" n class-name super (functions sc))
+                 when (member n (functions sc) :test 'equal :key 'car)
+                 do (setf override-p t)
+                 (loop-finish))
+              (when override-p (format t "===> got override~%" )))
+            ;(find-swf-class 'flash:object)
+            (macrolet ((add (n mid alist &optional flags)
                          `(progn
                             (let ((c (assoc ,n ,alist :test 'equal)))
                               (if c (rplacd c (list ,mid))
-                                  (push (list ,n ,mid) ,alist))))))
+                                  (push (list ,n ,mid ,@(when flags
+                                                              (list flags)))
+                                        ,alist))))))
               (cond
                 ((getf (flags class) :methods-as-properties)
                  ;; for some stuff like setf, we want functions as
@@ -122,7 +135,8 @@
 
                 (class-static
                  (add n mid (class-functions class)))
-                (t (add n mid (functions class))))))
+                (t (add n mid (functions class)
+                        (list :override override-p))))))
           ;; normal function
           (cond
             ;; fixme: should these use trait instead of n ?
@@ -189,7 +203,7 @@
                                         'avm2-asm::vindex 0 ;; no value
                                         'avm2-asm::vkind 0 ;; no value
                                         )))
-                  (loop for (name index) in instance-functions
+                  (loop for (name index fflags) in instance-functions
                         collect
                         (make-instance
                          'avm2-asm::trait-info
@@ -197,7 +211,8 @@
                          'avm2-asm::trait-data
                          (make-instance 'avm2-asm::trait-data-method/get/set
                                         'avm2-asm::slot-id 0 ;; none
-                                        'avm2-asm::method index))))
+                                        'avm2-asm::method index
+                                        'avm2-asm::flags fflags))))
                  class-init
                  :protected-ns junk
                  :class-traits
@@ -215,7 +230,7 @@
                                         'avm2-asm::vindex 0 ;; no value
                                         'avm2-asm::vkind 0 ;; no value
                                         )))
-                  (loop for (name index) in class-functions
+                  (loop for (name index fflags) in class-functions
                      collect
                      (make-instance
                       'avm2-asm::trait-info
@@ -230,7 +245,8 @@
                                          'avm2-asm::vkind 0) ;; no value
                           (make-instance 'avm2-asm::trait-data-method/get/set
                                          'avm2-asm::slot-id 0 ;; none
-                                         'avm2-asm::method index)))))
+                                         'avm2-asm::method index
+                                         'avm2-asm::flags fflags)))))
                  ;; todo: class traits
                  ;; :class-traits nil
                  )))

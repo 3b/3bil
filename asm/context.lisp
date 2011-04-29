@@ -254,6 +254,8 @@
 
 (defclass trait-data-method/get/set ()
   ((kind :initform 1 :initarg kind :accessor kind) ;;1 2 3
+  ; (override :initform nil :initarg :override :accessor override)
+   (flags :initform nil :initarg flags :accessor flags)
    (slot-id :initarg slot-id :accessor slot-id)
    (method-id :initarg method :accessor method-id)))
 
