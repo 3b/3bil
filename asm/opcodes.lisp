@@ -22,6 +22,9 @@ for that here and return count of extra args"
 ;;; http://ncannasse.fr/blog/adobe_alchemy
 ;;;-- missing some from this one:
 ;;; http://www.libspark.org/svn/as3/ByteCodeDisassembler/org/libspark/disassemble/abc/AbcParser.as
+;;; more opcode lists:
+;;;    http://opensource.adobe.com/svn/opensource/flex/sdk/trunk/modules/asc/src/java/adobe/abc/OptimizerConstants.java
+;;;    http://opensource.adobe.com/svn/opensource/flex/sdk/trunk/modules/asc/src/java/macromedia/abc/Opcodes.java   and OpcodeVisitor.java
 
 ;;; name   (args)    opcode    pop push ;; (should push/pop be &key?)
 ;;;    &key (pop-scope 0) (push-scope 0)
@@ -40,8 +43,8 @@ for that here and return count of extra args"
   (:dxnslate   ()                      #x07  1 0 :flags +set-dxns+)
   (:kill       ((local-index u30))     #x08  0 0 :kill-locals (list local-index))
   (:label      ()                      #x09  0 0)
-  ;; #x0a
-  ;; #x0b
+  ;; #x0a ; phi
+  ;; #x0b ; xarg
   (:if-nlt     ((offset ofs24))   #x0c  2 0 :label offset)
   (:if-nle     ((offset ofs24))   #x0d  2 0 :label offset)
   (:if-ngt     ((offset ofs24))   #x0e  2 0 :label offset)
@@ -81,8 +84,8 @@ for that here and return count of extra args"
   (:push-scope     ()                                             #x30  1 0 :pop-scope 0 :push-scope 1)
   (:push-namespace ((namespace namespace-q30))                    #x31  0 1)
   (:has-next-2     ((object-local-reg u30) (index-local-reg u30)) #x32  0 1 :read-locals (list object-local-reg index-local-reg))
-  ;; #x33
-  ;; #x34
+  ;; #x33 ; push-decimal
+  ;; #x34 ; push-dnan
   ;; #x35-#x3e: flash 10/alchemy instrs
   ;; see http://ncannasse.fr/blog/adobe_alchemy
   ;; (are these backwards? tamarin has li*/lf* then si*/sf*
@@ -157,8 +160,8 @@ for that here and return count of extra args"
   (:convert-boolean  () #x76  1 1)
   (:convert-object   () #x77  1 1)
   (:check-filter     () #x78  1 1)
-  ;; #x79
-  ;; #x7a
+  ;; #x79 ; convert_m
+  ;; #x7a ; convert_m_p
   ;; #x7b
   ;; #x7c
   ;; #x7d
@@ -179,7 +182,7 @@ for that here and return count of extra args"
   ;; #x8c
   ;; #x8d
   ;; #x8e
-  ;; #x8f
+  ;; #x8f ; negate_p
   (:negate    ()                  #x90  1 1)
   (:increment ()                  #x91  1 1)
   (:inc-local ((local-index u30)) #x92  0 0 :read-locals (list local-index) :write-locals (list local-index))
@@ -188,12 +191,14 @@ for that here and return count of extra args"
   (:type-of    ()                 #x95  1 1)
   (:not       ()                  #x96  1 1)
   (:bit-not   ()                  #x97  1 1)
+  ;; #x98
+  ;; #x99
   ;; (:concat ?                   #x9a ? ?)
   ;; (:add_d  ?                   #x9b ? ?)
-  ;; #x9b
-  ;; #x9e
-  ;; #x9d
-  ;; #x9f
+  ;; #x9b ; increment_p
+  ;; #x9e ; inclocal_p
+  ;; #x9d ; decrement_p
+  ;; #x9f ; declocal_p
   (:add             () #xa0  2 1)
   (:subtract        () #xa1  2 1)
   (:multiply        () #xa2  2 1)
@@ -217,11 +222,11 @@ for that here and return count of extra args"
   (:is-type        ((multiname multiname-q30)) #xb2  1 1)
   (:is-type-late   ()                      #xb3  2 1)
   (:in             ()                      #xb4  2 1)
-  ;; #xb5
-  ;; #xb6
-  ;; #xb7
-  ;; #xb8
-  ;; #xb9
+  ;; #xb5 ; add_p
+  ;; #xb6 ; subtract_p
+  ;; #xb7 ; multiply_p
+  ;; #xb8 ; divide_p
+  ;; #xb9 ; modulo_p
   ;; #xba
   ;; #xbb
   ;; #xbc
@@ -280,6 +285,7 @@ for that here and return count of extra args"
   (:debug-file ((string string-u30)) #xf1  0 0)
   #+ (or) (:breakpoint-line ((line ?) #xf2))
   (:timestamp () #xf3 0 0)
+  ;; #xf4
   ;;(:verify-pass ? #xf5 ? ?)
   ;;(:alloc       ? #xf6 ? ?)
   ;;(:mark        ? #xf7 ? ?)
