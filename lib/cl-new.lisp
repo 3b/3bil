@@ -81,6 +81,13 @@
         (when (< a (%aref-1 x i)) (return nil))
         (setf a (%aref-1 x i))))
 
+    (defun /= (&arest x)
+      (dotimes (i (1- (%length x)) t)
+        (let ((a (%aref-1 x i)))
+          (dotimes (j (- (%length x) i 1) t)
+            (when (eq a (%aref-1 x (+ j 1))) ;; eql?
+              (return-from /= nil))))))
+
     (defun - (a &arest x)
       (let ((sum a))
         (if (= (%length x) 0)
