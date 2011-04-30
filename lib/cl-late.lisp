@@ -121,7 +121,10 @@
            a))
         (initial-contents
          (error "initial contents not vector or list?"))
-        (t (%make-simple-array (car dimensions))))
-      )
+        (t (%make-simple-array (car dimensions)))))
 
+    (defun apply (x &arest args)
+      ;; flash 'pop' removes from end of an array
+      (let ((l (flash:pop args)))
+        (flash:apply x nil (flash:concat args (%list->vector l)))))
 ))
