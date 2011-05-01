@@ -175,6 +175,15 @@
     (defun string-equal (x y)
       (= (flash:to-locale-upper-case x) (flash:to-locale-upper-case y)))
 
+    (defun string (x)
+      (if (typep x 'flash:string)
+          x
+          ;; (fixme: if we add characters, support those here)
+          ;; fixme: handle symbols once they are implemented
+          ;; CLHS says we are allowed to perform additional conversions,
+          ;; so we'll just call .toString on things
+          (flash:to-string x)))
+
     ;; chars are just 1 element strings for now...
     (defun char (string index)
       (flash:char-at string index))
@@ -182,7 +191,10 @@
       (= x y))
     (defun char-equal (x y)
       (= (flash:to-locale-upper-case x) (flash:to-locale-upper-case y)))
-
+    (defun char-code (x)
+      (flash:char-code-at x 0))
+    (defun code-char (x)
+      (flash:string.from-char-code x))
 
     (defun identity (x) x)
 
