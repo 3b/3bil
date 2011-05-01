@@ -79,49 +79,50 @@
       ;; todo: element-type
       ;; todo: fill-pointer/adjustable stuff?
       ;; (not sure those need anything here beyond setting the flag in object?)
-      (cond
-        ((or adjustable fill-pointer displaced-index-offset displaced-to (> (list-length dimensions) 1))
-         ;; non-simple array
-         (let ((linear-size (car dimensions) #++(reduce #'* dimensions)))
-           (loop for i in (cdr dimensions)
-              do (setf linear-size (* linear-size i)))
-           ;; can't initialize a displaced array
-           (assert (not (and displaced-to
-                             (or initial-contents initial-element))))
-           (assert (not (and displaced-index-offset (not displaced-to))))
-           (unless displaced-to
-             (setf displaced-to
-                   (if initial-element
-                       (%make-simple-array-with-element linear-size
-                                                        initial-element)
-                       (%make-simple-array linear-size))
-                   displaced-index-offset 0)
-             (assert (not (and initial-contents initial-element)))
-             (when initial-contents
-               (error "initial contents not supported yet in MAKE-ARRAY...")))
-           (%new- not-simple-array-type
-                  (%list->vector dimensions)
-                  adjustable fill-pointer displaced-to displaced-index-offset)))
-        (initial-element
-         (%make-simple-array-with-element (car dimensions) initial-element))
-        ((and initial-contents (%typep initial-contents flash:array))
-         (assert (= (car dimensions) (length initial-contents)))
-         (let ((a (%make-simple-array (car dimensions))))
-           (loop for i from 0
-              for el across initial-contents
-              do (setf (%aref-1 a i) el))
-           a))
-        ((and initial-contents (listp initial-contents))
-         ;; fixme: don't traverse list twice to check length then copy
-         (assert (= (car dimensions) (length initial-contents)))
-         (let ((a (%make-simple-array (car dimensions))))
-           (loop for i from 0
-              for el in initial-contents
-              do (setf (%aref-1 a i) el))
-           a))
-        (initial-contents
-         (error "initial contents not vector or list?"))
-        (t (%make-simple-array (car dimensions)))))
+      (let ((dimensions (if (consp dimensions) dimensions (list dimensions))))
+        (cond
+          ((or adjustable fill-pointer displaced-index-offset displaced-to (> (list-length dimensions) 1))
+           ;; non-simple array
+           (let ((linear-size (car dimensions) #++(reduce #'* dimensions)))
+             (loop for i in (cdr dimensions)
+                do (setf linear-size (* linear-size i)))
+             ;; can't initialize a displaced array
+             (assert (not (and displaced-to
+                               (or initial-contents initial-element))))
+             (assert (not (and displaced-index-offset (not displaced-to))))
+             (unless displaced-to
+               (setf displaced-to
+                     (if initial-element
+                         (%make-simple-array-with-element linear-size
+                                                          initial-element)
+                         (%make-simple-array linear-size))
+                     displaced-index-offset 0)
+               (assert (not (and initial-contents initial-element)))
+               (when initial-contents
+                 (error "initial contents not supported yet in MAKE-ARRAY...")))
+             (%new- not-simple-array-type
+                    (%list->vector dimensions)
+                    adjustable fill-pointer displaced-to displaced-index-offset)))
+          (initial-element
+           (%make-simple-array-with-element (car dimensions) initial-element))
+          ((and initial-contents (%typep initial-contents flash:array))
+           (assert (= (car dimensions) (length initial-contents)))
+           (let ((a (%make-simple-array (car dimensions))))
+             (loop for i from 0
+                for el across initial-contents
+                do (setf (%aref-1 a i) el))
+             a))
+          ((and initial-contents (listp initial-contents))
+           ;; fixme: don't traverse list twice to check length then copy
+           (assert (= (car dimensions) (length initial-contents)))
+           (let ((a (%make-simple-array (car dimensions))))
+             (loop for i from 0
+                for el in initial-contents
+                do (setf (%aref-1 a i) el))
+             a))
+          (initial-contents
+           (error "initial contents not vector or list?"))
+          (t (%make-simple-array (car dimensions))))))
 
     (defun apply (x &arest args)
       ;; flash 'pop' removes from end of an array
