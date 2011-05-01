@@ -15,6 +15,7 @@
     ;; Function TREE-EQUAL
 
     ;; fixme: write iterative version of copy-list
+    #++
     (defun copy-list (list)
       (flet ((do-copy (list)
                (if (consp list)
@@ -23,13 +24,13 @@
         (if (not (listp list))
             (%type-error "COPY-LIST" list)
             (do-copy list))))
-
+    #++
     (defun list (&arest rest)
       (let ((list nil)
             (length (flash:.length rest)))
         (dotimes (i length list)
           (push (%aref-1 rest (- length i 1)) list))))
-
+    #++
     (defun list* (&arest rest)
       (when (zerop (flash:.length rest))
         (%error "not enough arguments"))
@@ -40,7 +41,7 @@
 
 
 
-
+    #++
     (defun list-length (list)
       (if (endp list)
           0
@@ -63,12 +64,13 @@
     ;; PUSH, POP in cl-conses
 
     ;; FIRST - TENTH in cl-conses
-
+    #++
     (defun nth (n list)
       (car (dotimes (x n list)
              (setf list (cdr list)))))
 
     ;; ENDP, NULL in cl-conses
+    #++
     (defun nconc (&arest lists)
       (let* ((a (if (zerop (slot-value lists 'flash:length))
                     nil
@@ -86,6 +88,7 @@
     ;;Function BUTLAST, NBUTLAST
 
     ;; fixme: add optional count arg
+    #++
     (defun last (a)
       (if (endp a)
           nil
@@ -99,10 +102,11 @@
     ;;Function LDIFF, TAILP
 
     ;;Function NTHCDR
+    #++
     (defun nthcdr (n list)
       (dotimes (a n list)
         (setf list (cdr list))))
-
+    #++
     (defun rest (a)
       (cdr a))
 
