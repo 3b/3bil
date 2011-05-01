@@ -152,4 +152,29 @@
             (loop for i across sorted collect i)
             sorted)))
 
+    (defun make-hash-table (&key (test #'eql) &allow-other-keys)
+      (if (or (eq test #'eq) (eq test #'eql))
+          ;; flash.utils.dictionary isn't quite 'eq/eql' since it uses
+          ;; something more like = for numbers, and probably gets a
+          ;; few other things wrong too, but close enough for now...
+          (%new- flash:flash.utils.dictionary)
+          ;; todo: implement equal/equalp hash tables...
+          (%make-hash-table-with-test test)))
+
+    (defun gethash (key hash-table &optional (default nil))
+      (let ((a (%aref-1 hash-table key)))
+        (%asm
+         (:@ a)
+         (:push-undefined)
+         (:if-strict-ne found)
+         (:@ default)
+         (:coerce-any)
+         (:jump done)
+         (:%dlabel found)
+         (:@ a)
+         (:coerce-any)
+         (:%dlabel done))))
+
+    (defun (setf gethash) (n key hash-table &optional default)
+      (%set-aref-1 hash-table key n))
 ))
