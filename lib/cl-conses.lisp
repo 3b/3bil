@@ -34,7 +34,7 @@
       (if (consp object) nil t))
 
     (defun %type-error (fun arg)
-      (%error (%new- flash:error (+ "type-error: unknown type in " fun ":" (%type-of arg)))))
+      (%error (%new- flash:type-error (+ "type-error: unknown type in " fun ":" (%type-of arg)))))
 
     (defun car (a)
       (if (eq a nil)
