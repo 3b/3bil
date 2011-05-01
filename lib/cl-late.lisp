@@ -128,4 +128,28 @@
       ;; flash 'pop' removes from end of an array
       (let ((l (flash:pop args)))
         (flash:apply x nil (flash:concat args (%list->vector l)))))
+
+    (defun sort (seq predicate &key key)
+      (let* ((seq2 (if (typep seq 'list)
+                       (%list->vector seq)
+                       seq))
+             (sorted (flash:sort seq2 (if key
+                                          (lambda (a b)
+                                            (let ((ak (funcall key a))
+                                                  (bk (funcall key b)))
+                                              (if (funcall predicate ak bk)
+                                                  -1
+                                                  (if (funcall predicate bk ak)
+                                                      1
+                                                      0))))
+                                          (lambda (a b)
+                                            (if (funcall predicate a b)
+                                                -1
+                                                (if (funcall predicate b a)
+                                                    1
+                                                    0)))))))
+        (if (typep seq 'list)
+            (loop for i across sorted collect i)
+            sorted)))
+
 ))
