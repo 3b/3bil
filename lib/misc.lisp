@@ -168,6 +168,8 @@
                                         (:next-value)))))
                            (setf ,',index next)
                            (setf ,',values (%array next-p key val )))))
+             ;; 0 seems to not be quite the right place to start?
+             (multiple-value-setq () (,name))
              ,@body))))
 
     (defun get-universal-time ()
