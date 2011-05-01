@@ -77,11 +77,37 @@
   (c3* (gensym)
 
    (defmacro %typep (object type)
-     `(%asm
-       (:@mark-class-dependency ,type)
-       (:@ ,object)
-       (:get-lex ,(or (swf-name (find-swf-class type)) type))
-       (:is-type-late)))
+     (case type
+       ;; special case some types we can't check for real yet
+       (list
+        (let ((true (gensym))
+              (false (gensym))
+              (done(gensym)))
+          `(%asm
+            (:@mark-class-dependency cons-type)
+            (:@ ,object)
+            (:dup)
+            (:get-lex ,(or (swf-name (find-swf-class 'cons-type)) 'cons-type))
+            (:is-type-late)
+            (:if-true ,true)
+            (:dup) ;; extra copy to keep stack consistent at jump target
+            (:@ nil)
+            (:strict-equals)
+            (:if-false ,false)
+            (:%dlabel ,true)
+            (:pop)
+            (:push-true)
+            (:jump ,done)
+            (:%dlabel ,false)
+            (:pop)
+            (:push-false)
+            (:%dlabel ,done))))
+       (t
+        `(%asm
+          (:@mark-class-dependency ,type)
+          (:@ ,object)
+          (:get-lex ,(or (swf-name (find-swf-class type)) type))
+          (:is-type-late)))))
 
    (defmacro %type-of (object)
      `(%asm
@@ -93,28 +119,43 @@
        (:@ ,object)
        (:throw)))
 
+   ;; we can't create instances from class names yet, so not bothering
+   ;; with a real function for now...
+   (defmacro error (type &rest args)
+     (if (and (consp type) (eql (car type) 'quote))
+         `(%error (%new- ,(second type) ,@args))
+         `(%error ,type)))
+   ;; might as well pretend we have typep too, for stuff that doesn't
+   ;; want to funcall it or pass types as variables
+   (defmacro typep (&whole w object type)
+     (if (and (consp type)
+              (eql (car type) 'quote)
+              (symbolp (second type)))
+         `(%typep ,object ,(second type))
+         (error "can't handle full TYPEP yet in ~s" w)))
+
    (defmacro check-type (object type &optional (string (format nil "~s" type)))
      (cond
        ((eq type 'null)
         `(when ,object
-           (%error (%new- flash:error (+ "check-type failed, expected " ,string " got " (%type-of ,object))))))
+           (%error (%new- flash:type-error (+ "check-type failed, expected " ,string " got " (%type-of ,object))))))
        ((eq type 'cons)
         `(unless (%typep ,object cons-type)
-           (%error (%new- flash:error (+ "check-type failed, expected " ,string " got " (%type-of ,object))))))
+           (%error (%new- flash:type-error (+ "check-type failed, expected " ,string " got " (%type-of ,object))))))
        ((eq type 'list)
         `(unless (or (eq ,object nil) (%typep ,object cons-type))
-           (%error (%new- flash:error (+ "check-type failed, expected " ,string " got " (%type-of ,object))))))
+           (%error (%new- flash:type-error (+ "check-type failed, expected " ,string " got " (%type-of ,object))))))
        ((and (consp type) (eq (car type) 'integer))
         `(unless (and (%typep ,object flash:number)
                       ,@ (when (second type)
                            `((>= ,object ,(second type))))
                       ,@ (when (third type)
                            `((<= ,object ,(third type)))))
-           (%error (%new- flash:error (+ "check-type failed, expected " ,string
+           (%error (%new- flash:type-error (+ "check-type failed, expected " ,string
                        " got " (%type-of ,object))))))
        (t
         `(unless  (%typep ,object ,type)
-           (%error (%new- flash:error (+ "check-type failed, expected " ,string
+           (%error (%new- flash:type-error (+ "check-type failed, expected " ,string
                        " got " (%type-of ,object)))))
         ))
      )
