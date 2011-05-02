@@ -178,6 +178,11 @@
   (if *side-effect-fun*
       (apply *side-effect-fun* a)
       (error "test stuff broken? no side effect function")))
+(defun flash:to-string (a)
+  (typecase a
+    (cons "[object consType]")
+    ;; todo: more types as needed
+    (t (format nil "~a" a))))
 (defun x0 ()
   (side-effect 'x0 'x0))
 (defun x1 (x)
@@ -269,9 +274,22 @@
           (setf (flash:.text (text (app)))
                 (s+ (flash:.text (text (app))) c)))
 
+        (defun atom->str (l)
+          (typecase l
+              (flash:string l)
+              (flash:number (s+ "" l))
+              (t
+               (ftrace (s+ "converting <" l "> of type <" (%type-of l) "> to string:"))
+               #++(ftrace (s+ "..."))
+               #++(ftrace (s+ " = " (flash:to-string l)))
+               (if l
+                   (or (flash:to-string l)
+                       (s+ " " l))
+                   l)))
+)
         (defun list->str (l)
           (if (atom l)
-              (if l (flash:to-string l) l)
+              (atom->str l)
               (let ((s "("))
                 (tagbody
                  :start
@@ -693,6 +711,14 @@
         (LET ((A (list 1 (list 1 2 3 4 5 (list 1 2 3 4) 7 8) 3 4 5 6)))
           (remf (getf (cddr (getf a 1)) 5) 1)
           a)
+
+        "to-string tests"
+        (flash:to-string "blah")
+        (flash:to-string 123)
+        (flash:to-string (cons 1 2))
+
+        (- 1)
+        (mapcar #'- '(1 2 3))
         )
 
 
