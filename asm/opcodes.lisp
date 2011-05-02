@@ -25,7 +25,8 @@ for that here and return count of extra args"
 ;;; more opcode lists:
 ;;;    http://opensource.adobe.com/svn/opensource/flex/sdk/trunk/modules/asc/src/java/adobe/abc/OptimizerConstants.java
 ;;;    http://opensource.adobe.com/svn/opensource/flex/sdk/trunk/modules/asc/src/java/macromedia/abc/Opcodes.java   and OpcodeVisitor.java
-
+;;;    http://www.yogda.com/bytecodes
+;;;    http://learn.adobe.com/wiki/display/AVM2/5.+AVM2+instructions
 ;;; name   (args)    opcode    pop push ;; (should push/pop be &key?)
 ;;;    &key (pop-scope 0) (push-scope 0)
 ;;;         (read-locals nil) (write-locals nil)  (kill-locals nil)
