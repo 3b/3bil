@@ -42,7 +42,8 @@
       (:constructor (name)
         (setf (.name this) name)))
 
-    (defmethod-swf flash:to-string ((this named-error))
+    (defmethod-swf :to-string ((this named-error))
+      (declare (values "String" &optional))
       (s+ "error: " (%type-of this)
           " in function " (.name this)))
 
@@ -59,7 +60,8 @@
         (setf (.name this) name
               (.type this) expected-type)))
 
-    (defmethod-swf flash:to-string ((this named-type-error))
+    (defmethod-swf :to-string ((this named-type-error))
+      (declare (values "String" &optional))
       (s+ "error: " (%type-of this)
           " in function " (.name this)
           ": expected type " (.type this)))
