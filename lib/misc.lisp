@@ -105,21 +105,36 @@
                 (if (%typep a not-simple-array-type)
                     (%setf-aref-n a subscripts value)
                     (setf (svref a subscript) value))))))
-    ;; fixme: add compiler-macro or setf expander or something to optimize
-    ;; for single subscript
-    #++
-    (defun-setf aref (value a subscript)
-      ;; fixme: support multiple dimensions (need &rest, apply?)
-      (if (%typep a flash:array)
-          (%set-aref-1 a subscript value)
-          (if (%typep a flash:string)
-              ;; fixme: is there a better way to do this?
-              (flash:concat (flash:substr a 0 subscript)
-                             value
-                             (flash:substr a (1+ subscript)))
-              (if (%typep a not-simple-array-type)
-                  (%setf-aref-n a subscript value)
-                  (setf (svref a subscript) value)))))
+
+    ;; optimize for common case of a single-dimenaional array
+    (define-compiler-macro aref (&whole w array &rest subscripts)
+      (if (/= 1 (length subscripts))
+          w
+          (let ((atmp (gensym)))
+            `(let ((,atmp ,array))
+               (if (%typep ,atmp flash:array)
+                  (%asm
+                   (:@ ,atmp)
+                   (:@ ,(car subscripts))
+                   (:get-property (:multiname-l "" "")))
+                  (%aref-1 ,atmp ,(car subscripts)))))))
+
+    ;; todo: setf expander for (setf aref) of vector?
+    (define-compiler-macro (setf aref) (&whole w new array &rest subscripts)
+      (if (/= 1 (length subscripts))
+          w
+          (let ((atmp (gensym))
+                (ntmp (gensym)))
+            `(let ((,atmp ,array)
+                   (,ntmp ,new))
+               (if (%typep ,array flash:array)
+                   (%asm
+                    (:@ ,atmp)
+                    (:@ ,(car subscripts))
+                    (:@ ,ntmp)
+                    (:set-property (:multiname-l "" ""))
+                    (:@ ,ntmp))
+                  (%setf-aref-1 ,atmp ,(car subscripts) ,ntmp))))))
 
     (defmacro %array (&rest args)
       ;; (%array ... ) -> array
